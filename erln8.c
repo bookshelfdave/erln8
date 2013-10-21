@@ -53,10 +53,24 @@ void download_erlang() {
   }
 }
 
+void check_path() {
+  gchar *out;
+  gchar *err;
+  gint   status;
+  GError *error;
+  g_spawn_command_line_sync ("which erl", &out, &err, &status, &error);
+  if(!status) {
+    printf("Erlang already exists in the path\n");
+  }
+}
+
 
 int main(int argc, char* argv[]) {
   printf("erln8 v0.0\n");
   printf("%s\n",argv[0]);
+
+  //check_path();
+
   char *erlversion = load_config();
   printf("Config loaded\n");
   char *s = g_strconcat("/Users/dparfitt/erlang-", erlversion, "/bin/", argv[0], (char*)0);
