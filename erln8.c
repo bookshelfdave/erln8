@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <glib.h>
 #include <curl/curl.h>
@@ -7,9 +8,13 @@
 #include <sys/stat.h>
 
 #define G_LOG_DOMAIN    ((gchar*) 0)
+#define SOURCES "sources"
+#define MD5     "MD5"
 static gboolean init_erln8 = FALSE;
 static gboolean debug      = FALSE;
 static const gchar* homedir;
+
+static unsigned int last_pcnt = 0;
 
 static GOptionEntry entries[] =
 {
@@ -76,19 +81,35 @@ size_t erln8_read_func(void *ptr, size_t size, size_t nmemb, FILE *stream) {
 }
 
 int erln8_progress_func(void *unused,
-                     double t, /* dltotal */ 
-                     double d, /* dlnow */ 
-                     double ultotal,
-                     double ulnow) {
-  int it = (int)t;
-  int id = (int)d;
-  printf("%d of %d\n", id, it);
+                        double t, /* dltotal */ 
+                        double d, /* dlnow */ 
+                        double ultotal,
+                        double ulnow) {
+  int prefixlen = 14;
+  if(t > 0 && d > 0) {
+    int pcnt = (int)((100.0) * d / t);
+    int len = 0;
+    int i = 0;
+    if(pcnt < 10) {
+      len = 1 + prefixlen;
+    } else if(pcnt < 100) {
+      len = 2 + prefixlen;
+    } else if(pcnt >= 100) {
+      len = 3 + prefixlen;
+    }
+
+    for(i = 0; i < len + 1; i++) {
+      printf("\b");
+      fflush(stdout);
+    }
+    printf("Downloading: %d%%", pcnt);
+    last_pcnt = pcnt;
+  }
   return 0;
 }
 
 
-void download_erlang() {
-  char *url =  "http://www.erlang.org/download/otp_src_R16B02.tar.gz";
+void download_file(char *url, char *filename) {
   CURL *curl;
   CURLcode res;
   FILE *outfile;
@@ -96,7 +117,7 @@ void download_erlang() {
   curl = curl_easy_init();
   if(curl)
   {
-    outfile = fopen("otp16.tar.gz", "w");
+    outfile = fopen(filename, "w");
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, outfile);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, erln8_write_func);
@@ -110,9 +131,22 @@ void download_erlang() {
     fclose(outfile);
     /* always cleanup */ 
     curl_easy_cleanup(curl);
+    // print up a newline after the progress meter stops
+    printf("\n");
   }
+}
 
-  return NULL;
+
+gchar* get_configdir_file_name(char *subdir, char* filename) {
+  gchar *configfilename = g_strconcat(homedir, "/.erln8.d/", subdir, "/", filename, (char*)0);
+  return configfilename;
+}
+
+void download_configdir_file(char *url, char *subdir, char *filename) {
+  gchar *configfilename = get_configdir_file_name(subdir, filename);
+  printf("Downloading %s\n", filename);
+  download_file(url, configfilename);
+  g_free(configfilename);
 }
 
 void check_path() {
@@ -124,6 +158,42 @@ void check_path() {
   if(!status) {
     erln8_error_and_exit("Erlang already exists in the path\n");
   }
+}
+
+//gint compare_names(gconstpointer namea, gconstpointer nameb) {
+//  return ((gint)strcmp((char*)namea, (char*)nameb));
+//}
+
+void parse_md5s() {
+  gchar *configfilename = get_configdir_file_name(SOURCES, MD5);
+  gboolean result = g_file_test(configfilename, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR);
+  gchar *contents;
+  GError *err;
+  gboolean result2 = g_file_get_contents(configfilename, &contents, NULL, &err);
+  printf("Contents = \n%s\n", contents);
+  gchar** lines = g_strsplit(contents,"\n", 1000);
+  GSList *otplist = NULL;
+  //TODO: FREE REGEX STUFF
+  for(;*lines != NULL; *lines++) {
+    GError *reerr;
+    GRegex *gre = g_regex_new("MD5\\(otp_src_(R[0-9]+[A-Z](-)?([0-9]+)?).tar.gz\\)=\\ ([a-zA-Z0-9]+)",
+                              0,
+                              0,
+                              &reerr);
+    GMatchInfo *match_info;
+    g_regex_match (gre, *lines, 0, &match_info);
+    if(g_match_info_matches(match_info)) {
+      gchar* vsn = g_match_info_fetch(match_info, 1);
+      printf("%s\n",vsn);
+      //list = g_slist_append(otplist, vsn);
+
+      //printf(">>> %s\n", *lines);
+    }
+    free(*lines);
+  }
+  //g_strfreev(lines);
+  g_free(contents);
+  g_free(configfilename);
 }
 
 
@@ -166,7 +236,33 @@ void initialize() {
     mk_config_subdir("sources"); // location of .tar.gz source files
     mk_config_subdir("opts");    // location of compiled otp source files
     mk_config_subdir("configs"); // specific configs to use for a build
+    mk_config_subdir("patches"); // specific patches to use for a build
   }
+}
+
+gboolean file_exists(char *filename) {
+  return g_file_test(filename, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR);
+}
+
+
+void detect_platform() {
+  if(file_exists("/etc/SuSE-release")) {
+    printf("SUSE\n");
+  } else if(file_exists("/etc/redhat-release")) {
+    printf("Redhat\n");
+  } else if(file_exists("/etc/fedora-release")) {
+    printf("Fedora\n");
+  } else if(file_exists("/etc/debian-version")) {
+    printf("Debian\n");
+  } else if(file_exists("/etc/slackware-version")) {
+    printf("Slackware\n");
+  } else if(file_exists("/mach_kernel")) {
+    printf("OSX\n");
+  }
+  //if(file_exists("/proc/version")) {
+  //}
+  // lsb_release -rd
+  // cat /proc/version
 }
 
 int main(int argc, char* argv[]) {
@@ -186,7 +282,8 @@ int main(int argc, char* argv[]) {
   homedir = g_get_home_dir();
   g_debug("home directory = %s\n", homedir);
 
-  download_erlang();
+  //download_configdir_file("http://www.erlang.org/download/MD5","sources", "MD5");
+  parse_md5s();
 
 /*  if(init_erln8) {
     initialize();
