@@ -136,7 +136,6 @@ void download_file(char *url, char *filename) {
   }
 }
 
-
 gchar* get_configdir_file_name(char *subdir, char* filename) {
   gchar *configfilename = g_strconcat(homedir, "/.erln8.d/", subdir, "/", filename, (char*)0);
   return configfilename;
@@ -149,14 +148,37 @@ void download_configdir_file(char *url, char *subdir, char *filename) {
   g_free(configfilename);
 }
 
-void check_path() {
+void download_current_erlang() {
+  // TODO: don't hardcode the latest version, duh :-)
+  download_configdir_file("http://www.erlang.org/download/otp_src_R16B02.tar.gz", "sources", "otp_src_R16B02.tar.gz");
+}
+
+void build_erlang() {
+  char *fname = "otp_src_R16B02.tar.gz";
+  char *fn = get_configdir_file_name("sources","otp_src_R16B02.tar.gz");
+  // TODO: check MD5
+  gchar *cmd = g_strconcat("tar xf ", fn, " --strip-components 1 -C ", homedir, "/.erln8.d/otps/default/", (char*)0);
+  gchar *in;
+  gchar *out;
+  gint status;
+  GError *err;
+  printf("%s\n", cmd);
+  gboolean result = g_spawn_command_line_sync(cmd, &in, &out, &status, &err);
+  g_free(cmd);
+  g_free(fn);
+}
+
+
+gboolean erl_on_path() {
   gchar *out;
   gchar *err;
   gint   status;
   GError *error;
   g_spawn_command_line_sync ("which erl", &out, &err, &status, &error);
   if(!status) {
-    erln8_error_and_exit("Erlang already exists in the path\n");
+    return 1;
+  } else {
+    return 0;
   }
 }
 
@@ -176,7 +198,7 @@ void parse_md5s() {
   //TODO: FREE REGEX STUFF
   for(;*lines != NULL; *lines++) {
     GError *reerr;
-    GRegex *gre = g_regex_new("MD5\\(otp_src_(R[0-9]+[A-Z](-)?([0-9]+)?).tar.gz\\)=\\ ([a-zA-Z0-9]+)",
+    GRegex *gre = g_regex_new("MD5\\(otp_src_(R[0-9]+[A-Z](-)?([0-9]+)?)\\.tar\\.gz\\)=\\ ([a-zA-Z0-9]+)",
                               0,
                               0,
                               &reerr);
@@ -222,6 +244,8 @@ void mk_config_subdir(char *subdir) {
 void initialize() {
   if(check_config()) {
     erln8_error_and_exit("Configuration directory ~/.erln8.d already exists");
+  //} //else if(erl_on_path()) {
+    //erln8_error_and_exit("Erlang already exists on the current PATH");
   } else {
     // create the top level config directory, then create all subdirs
     gchar* dirname = g_strconcat(homedir, "/.erln8.d",(char*)0);
@@ -234,9 +258,12 @@ void initialize() {
       g_free(dirname);
     }
     mk_config_subdir("sources"); // location of .tar.gz source files
-    mk_config_subdir("opts");    // location of compiled otp source files
+    mk_config_subdir("sources/default"); // location of .tar.gz source files
+    mk_config_subdir("otps");    // location of compiled otp source files
+    mk_config_subdir("otps/default");    // location of compiled otp source files
     mk_config_subdir("configs"); // specific configs to use for a build
     mk_config_subdir("patches"); // specific patches to use for a build
+    download_current_erlang();
   }
 }
 
@@ -265,6 +292,9 @@ void detect_platform() {
   // cat /proc/version
 }
 
+
+
+
 int main(int argc, char* argv[]) {
   printf("erln8 v0.0\n");
   GError *error = NULL;
@@ -283,18 +313,17 @@ int main(int argc, char* argv[]) {
   g_debug("home directory = %s\n", homedir);
 
   //download_configdir_file("http://www.erlang.org/download/MD5","sources", "MD5");
-  parse_md5s();
+  //parse_md5s();
 
-/*  if(init_erln8) {
+  if(init_erln8) {
     initialize();
   } else {
     if(!check_config()) {
       erln8_error_and_exit("Please initialize erln8 with -i or --init");
     }
   }
-*/
 
-  //check_path();
+  build_erlang();
 
   /*
   char *erlversion = load_config();
