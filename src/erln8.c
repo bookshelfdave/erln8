@@ -3,7 +3,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <glib.h>
-#include <curl/curl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -53,6 +52,21 @@ void erln8_error_and_exit(char *msg) {
   exit(-1);
 }
 
+
+
+gboolean erl_on_path() {
+  gchar *out;
+  gchar *err;
+  gint   status;
+  GError *error;
+  g_spawn_command_line_sync ("which erl", &out, &err, &status, &error);
+  if(!status) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
 char* load_config() {
   g_debug("Parsing config file...\n");
 
@@ -80,88 +94,15 @@ char* load_config() {
   }
 }
 
-// TODO: move the download stuff to another module
-size_t erln8_write_func(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-  return fwrite(ptr, size, nmemb, stream);
-}
-
-size_t erln8_read_func(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-  return fread(ptr, size, nmemb, stream);
-}
-
-int erln8_progress_func(void *unused,
-                        double t, /* dltotal */ 
-                        double d, /* dlnow */ 
-                        double ultotal,
-                        double ulnow) {
-  int prefixlen = 14;
-  if(t > 0 && d > 0) {
-    int pcnt = (int)((100.0) * d / t);
-    int len = 0;
-    int i = 0;
-    if(pcnt < 10) {
-      len = 1 + prefixlen;
-    } else if(pcnt < 100) {
-      len = 2 + prefixlen;
-    } else if(pcnt >= 100) {
-      len = 3 + prefixlen;
-    }
-
-    for(i = 0; i < len + 1; i++) {
-      printf("\b");
-      fflush(stdout);
-    }
-    printf("  Progress: %d%%", pcnt);
-    last_pcnt = pcnt;
-  }
-  return 0;
-}
-
-
-void download_file(char *url, char *filename) {
-  CURL *curl;
-  CURLcode res;
-  FILE *outfile;
-
-  curl = curl_easy_init();
-  if(curl)
-  {
-    outfile = fopen(filename, "w");
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, outfile);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, erln8_write_func);
-    curl_easy_setopt(curl, CURLOPT_READFUNCTION, erln8_read_func);
-    curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
-    curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, erln8_progress_func);
-    curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, NULL);
-
-    res = curl_easy_perform(curl);
-
-    fclose(outfile);
-    /* always cleanup */ 
-    curl_easy_cleanup(curl);
-    // print up a newline after the progress meter stops
-    printf("\n");
-  }
-}
-
-gchar* get_configdir_file_name(char *subdir, char* filename) {
-  gchar *configfilename = g_strconcat(homedir, "/.erln8.d/", subdir, "/", filename, (char*)0);
+gchar* get_configdir_file_name(char* filename) {
+  gchar *configfilename = g_strconcat(homedir, "/.erln8.d/", filename, (char*)0);
   return configfilename;
 }
 
-void download_configdir_file(char *url, char *subdir, char *filename) {
-  gchar *configfilename = get_configdir_file_name(subdir, filename);
-  printf("Downloading %s\n", filename);
-  download_file(url, configfilename);
-  g_free(configfilename);
+gchar* get_config_subdir_file_name(char *subdir, char* filename) {
+  gchar *configfilename = g_strconcat(homedir, "/.erln8.d/", subdir, "/", filename, (char*)0);
+  return configfilename;
 }
-
-
-/*void download_erlang(char *version) {
-  // TODO: don't hardcode the latest version, duh :-)
-  download_configdir_file("http://www.erlang.org/download/otp_src_R16B02.tar.gz", "sources", "otp_src_R16B02.tar.gz");
-}*/
 
 /*
 void build_erlang() {
@@ -180,8 +121,6 @@ void build_erlang() {
 }
 */
 
-
-
 gint git_command(char *command) {
   gchar *cmd = g_strconcat("git ", command, NULL);
   gchar *in;
@@ -199,57 +138,8 @@ gint git_command(char *command) {
   return result;
 }
 
-gboolean erl_on_path() {
-  gchar *out;
-  gchar *err;
-  gint   status;
-  GError *error;
-  g_spawn_command_line_sync ("which erl", &out, &err, &status, &error);
-  if(!status) {
-    return 1;
-  } else {
-    return 0;
-  }
-}
 
-//gint compare_names(gconstpointer namea, gconstpointer nameb) {
-//  return ((gint)strcmp((char*)namea, (char*)nameb));
-//}
-
-void parse_md5s() {
-  gchar *configfilename = get_configdir_file_name(SOURCES, MD5);
-  gboolean result = g_file_test(configfilename, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR);
-  gchar *contents;
-  GError *err;
-  gboolean result2 = g_file_get_contents(configfilename, &contents, NULL, &err);
-  printf("Contents = \n%s\n", contents);
-  gchar** lines = g_strsplit(contents,"\n", 1000);
-  GSList *otplist = NULL;
-  //TODO: FREE REGEX STUFF
-  for(;*lines != NULL; *lines++) {
-    GError *reerr;
-    GRegex *gre = g_regex_new("MD5\\(otp_src_(R[0-9]+[A-Z](-)?([0-9]+)?)\\.tar\\.gz\\)=\\ ([a-zA-Z0-9]+)",
-                              0,
-                              0,
-                              &reerr);
-    GMatchInfo *match_info;
-    g_regex_match (gre, *lines, 0, &match_info);
-    if(g_match_info_matches(match_info)) {
-      gchar* vsn = g_match_info_fetch(match_info, 1);
-      printf("%s\n",vsn);
-      //list = g_slist_append(otplist, vsn);
-
-      //printf(">>> %s\n", *lines);
-    }
-    free(*lines);
-  }
-  //g_strfreev(lines);
-  g_free(contents);
-  g_free(configfilename);
-}
-
-
-gboolean check_config() {
+gboolean check_home() {
   gchar *configdir = g_strconcat(homedir, "/.erln8.d", (char*)0);
   g_debug("Checking config dir %s\n", configdir);
   //g_path_get_basename ()
@@ -257,7 +147,6 @@ gboolean check_config() {
   free(configdir);
   return result;
 }
-
 
 void mk_config_subdir(char *subdir) {
   gchar* dirname = g_strconcat(homedir, "/.erln8.d/", subdir, (char*)0);
@@ -271,8 +160,55 @@ void mk_config_subdir(char *subdir) {
   }
 }
 
+
+void build_erlang(char *repo, char *tag, char *config) {
+  // TODO: also check config_env
+}
+
+void init_main_config() {
+  GKeyFile *kf = g_key_file_new();
+  g_key_file_set_string(kf,
+                        "Repos",
+                        "default",
+                        "https://github.com/erlang/otp.git");
+
+  g_key_file_set_string(kf,
+                        "Repos",
+                        "basho",
+                        "https://github.com/basho/otp.git");
+
+
+  g_key_file_set_string(kf,
+                        "Configs",
+                        "osx_llvm",
+                        "--disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll --enable-darwin-64bit");
+
+  g_key_file_set_string(kf,
+                        "Configs",
+                        "osx_gcc",
+                        "--disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll --enable-darwin-64bit");
+
+  g_key_file_set_string(kf,
+                        "Configs",
+                        "osx_gcc_env",
+                        "CC=gcc-4.2 CPPFLAGS='-DNDEBUG' MAKEFLAGS='-j 3'");
+
+  GError *error;
+  gchar* d = g_key_file_to_data (kf, NULL, &error);
+  gchar* fn = get_configdir_file_name("config");
+  printf("Writing to %s\n", fn);  
+  GError *error2;
+  if(!g_file_set_contents(fn, d, -1, &error2)) {
+    printf("Error writing config file :-(\n");
+  }
+  printf("DATA = %s\n", d);
+  free(fn);
+  g_key_file_free(kf);
+}
+
+
 void initialize() {
-  if(check_config()) {
+  if(check_home()) {
     erln8_error_and_exit("Configuration directory ~/.erln8.d already exists");
   //} //else if(erl_on_path()) {
     //erln8_error_and_exit("Erlang already exists on the current PATH");
@@ -287,44 +223,13 @@ void initialize() {
     } else {
       g_free(dirname);
     }
-    mk_config_subdir("sources"); // location of .tar.gz source files
     mk_config_subdir("otps");    // location of compiled otp source files
-    mk_config_subdir("otps/default");    // location of compiled otp source files
-    mk_config_subdir("configs"); // specific configs to use for a build
-    mk_config_subdir("logs"); // logs!
-    mk_config_subdir("source_repos"); // location of git repos
-    mk_config_subdir("source_repos/github_otp"); // location of git repos
-    //download_current_erlang();
+    mk_config_subdir("logs");    // logs!
+    mk_config_subdir("repos"); // location of git repos
+    mk_config_subdir("repos/github_otp"); // location of git repos
+    init_main_config();
   }
-  download_configdir_file("http://www.erlang.org/download/MD5","sources", "MD5");
-
 }
-
-gboolean file_exists(char *filename) {
-  return g_file_test(filename, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR);
-}
-
-
-void detect_platform() {
-  if(file_exists("/etc/SuSE-release")) {
-    printf("SUSE\n");
-  } else if(file_exists("/etc/redhat-release")) {
-    printf("Redhat\n");
-  } else if(file_exists("/etc/fedora-release")) {
-    printf("Fedora\n");
-  } else if(file_exists("/etc/debian-version")) {
-    printf("Debian\n");
-  } else if(file_exists("/etc/slackware-version")) {
-    printf("Slackware\n");
-  } else if(file_exists("/mach_kernel")) {
-    printf("OSX\n");
-  }
-  //if(file_exists("/proc/version")) {
-  //}
-  // lsb_release -rd
-  // cat /proc/version
-}
-
 
 char* configcheck(char *d) {
   char *retval = NULL;
@@ -376,29 +281,38 @@ int main(int argc, char* argv[]) {
   homedir = g_get_home_dir();
   g_debug("home directory = %s\n", homedir);
 
+  // used for GIO
   g_type_init();
+
+
+
+ if(init_erln8) {
+    initialize();
+ } else {
+   if(!check_home()) {
+      erln8_error_and_exit("Please initialize erln8 with -i or --init");
+    }
+  }
+
+/*
+./erln8 init
+./erln8 clone
+./erln8 fetch
+./erln8 build default:R15B01 R15B01
+./erln8 build basho:R15B01p  R15B01p
+./erln8 genconfig basho_patched_R15B01
+./erl
+./erlc
+./escript
+*/
+
+
   char *cfg = configcheckfromcwd();
   if(cfg != NULL) {
     printf("Using config file [%s]\n", cfg);
   } else {
     printf("erln8 config not found\n");
   }
-
-  //download_configdir_file("http://www.erlang.org/download/MD5","sources", "MD5");
-  //parse_md5s();
-
-//  if(init_erln8) {
-//    initialize();
-// } else {
-//   if(!check_config()) {
-//      erln8_error_and_exit("Please initialize erln8 with -i or --init");
-//    }
-//  }
-
-//  build_erlang();
-
-
-
 
   /*
   char *erlversion = load_config();
