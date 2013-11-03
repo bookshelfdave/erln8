@@ -6,6 +6,8 @@
 #include <curl/curl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <sys/param.h>
 
 // GIO stuff
 #include <glib-object.h>
@@ -19,13 +21,14 @@
 static gboolean init_erln8 = FALSE;
 static gboolean debug      = FALSE;
 static const gchar* homedir;
-
+static gchar** dl_otps = NULL;
 static unsigned int last_pcnt = 0;
 
 static GOptionEntry entries[] =
 {
   { "init", 'i', 0, G_OPTION_ARG_NONE, &init_erln8, "Initialize Erln8", NULL },
-  { "debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "Debug Erln8", NULL },
+  { "download", 'd', 0, G_OPTION_ARG_STRING_ARRAY, &dl_otps, "Initialize Erln8", NULL },
+  { "debug", 'D', 0, G_OPTION_ARG_NONE, &debug, "Debug Erln8", NULL },
   { NULL }
 };
 
@@ -108,7 +111,7 @@ int erln8_progress_func(void *unused,
       printf("\b");
       fflush(stdout);
     }
-    printf("Downloading: %d%%", pcnt);
+    printf("  Progress: %d%%", pcnt);
     last_pcnt = pcnt;
   }
   return 0;
@@ -154,11 +157,13 @@ void download_configdir_file(char *url, char *subdir, char *filename) {
   g_free(configfilename);
 }
 
-void download_current_erlang() {
+
+/*void download_erlang(char *version) {
   // TODO: don't hardcode the latest version, duh :-)
   download_configdir_file("http://www.erlang.org/download/otp_src_R16B02.tar.gz", "sources", "otp_src_R16B02.tar.gz");
-}
+}*/
 
+/*
 void build_erlang() {
   char *fname = "otp_src_R16B02.tar.gz";
   char *fn = get_configdir_file_name("sources","otp_src_R16B02.tar.gz");
@@ -168,12 +173,31 @@ void build_erlang() {
   gchar *out;
   gint status;
   GError *err;
-  printf("%s\n", cmd);
+  printf("Uncompressing sources\n");
   gboolean result = g_spawn_command_line_sync(cmd, &in, &out, &status, &err);
   g_free(cmd);
   g_free(fn);
 }
+*/
 
+
+
+gint git_command(char *command) {
+  gchar *cmd = g_strconcat("git ", command, NULL);
+  gchar *in;
+  gchar *out;
+  gint status;
+  GError *err;
+  //printf("cmd: %s\n", cmd);
+  gboolean result = g_spawn_command_line_sync(cmd, &in, &out, &status, &err);
+  g_free(cmd);
+  if(err != NULL) {
+    printf("ERROR: %s\n", err->message);
+  }
+  // TODO: free in/out?
+  printf("Output: %s\n", in);
+  return result;
+}
 
 gboolean erl_on_path() {
   gchar *out;
@@ -264,16 +288,16 @@ void initialize() {
       g_free(dirname);
     }
     mk_config_subdir("sources"); // location of .tar.gz source files
-    //mk_config_subdir("sources/default"); // location of .tar.gz source files
     mk_config_subdir("otps");    // location of compiled otp source files
     mk_config_subdir("otps/default");    // location of compiled otp source files
     mk_config_subdir("configs"); // specific configs to use for a build
-    //mk_config_subdir("patches"); // specific patches to use for a build
     mk_config_subdir("logs"); // logs!
     mk_config_subdir("source_repos"); // location of git repos
     mk_config_subdir("source_repos/github_otp"); // location of git repos
-    download_current_erlang();
+    //download_current_erlang();
   }
+  download_configdir_file("http://www.erlang.org/download/MD5","sources", "MD5");
+
 }
 
 gboolean file_exists(char *filename) {
@@ -300,7 +324,6 @@ void detect_platform() {
   // lsb_release -rd
   // cat /proc/version
 }
-
 
 
 char* configcheck(char *d) {
@@ -335,7 +358,6 @@ char* configcheckfromcwd() {
   free(d);
   return retval;
 }
-
 
 int main(int argc, char* argv[]) {
   printf("erln8 v0.0\n");
