@@ -6,6 +6,8 @@
 #include <curl/curl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <sys/param.h>
 
 #define G_LOG_DOMAIN    ((gchar*) 0)
 #define SOURCES "sources"
@@ -13,13 +15,14 @@
 static gboolean init_erln8 = FALSE;
 static gboolean debug      = FALSE;
 static const gchar* homedir;
-
+static gchar** dl_otps = NULL;
 static unsigned int last_pcnt = 0;
 
 static GOptionEntry entries[] =
 {
   { "init", 'i', 0, G_OPTION_ARG_NONE, &init_erln8, "Initialize Erln8", NULL },
-  { "debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "Debug Erln8", NULL },
+  { "download", 'd', 0, G_OPTION_ARG_STRING_ARRAY, &dl_otps, "Initialize Erln8", NULL },
+  { "debug", 'D', 0, G_OPTION_ARG_NONE, &debug, "Debug Erln8", NULL },
   { NULL }
 };
 
@@ -102,7 +105,7 @@ int erln8_progress_func(void *unused,
       printf("\b");
       fflush(stdout);
     }
-    printf("Downloading: %d%%", pcnt);
+    printf("  Progress: %d%%", pcnt);
     last_pcnt = pcnt;
   }
   return 0;
@@ -148,11 +151,13 @@ void download_configdir_file(char *url, char *subdir, char *filename) {
   g_free(configfilename);
 }
 
-void download_current_erlang() {
+
+/*void download_erlang(char *version) {
   // TODO: don't hardcode the latest version, duh :-)
   download_configdir_file("http://www.erlang.org/download/otp_src_R16B02.tar.gz", "sources", "otp_src_R16B02.tar.gz");
-}
+}*/
 
+/*
 void build_erlang() {
   char *fname = "otp_src_R16B02.tar.gz";
   char *fn = get_configdir_file_name("sources","otp_src_R16B02.tar.gz");
@@ -162,12 +167,31 @@ void build_erlang() {
   gchar *out;
   gint status;
   GError *err;
-  printf("%s\n", cmd);
+  printf("Uncompressing sources\n");
   gboolean result = g_spawn_command_line_sync(cmd, &in, &out, &status, &err);
   g_free(cmd);
   g_free(fn);
 }
+*/
 
+
+
+gint git_command(char *command) {
+  gchar *cmd = g_strconcat("git ", command, NULL);
+  gchar *in;
+  gchar *out;
+  gint status;
+  GError *err;
+  //printf("cmd: %s\n", cmd);
+  gboolean result = g_spawn_command_line_sync(cmd, &in, &out, &status, &err);
+  g_free(cmd);
+  if(err != NULL) {
+    printf("ERROR: %s\n", err->message);
+  }
+  // TODO: free in/out?
+  printf("Output: %s\n", in);
+  return result;
+}
 
 gboolean erl_on_path() {
   gchar *out;
@@ -263,8 +287,9 @@ void initialize() {
     mk_config_subdir("otps/default");    // location of compiled otp source files
     mk_config_subdir("configs"); // specific configs to use for a build
     mk_config_subdir("patches"); // specific patches to use for a build
-    download_current_erlang();
   }
+  download_configdir_file("http://www.erlang.org/download/MD5","sources", "MD5");
+
 }
 
 gboolean file_exists(char *filename) {
@@ -293,7 +318,38 @@ void detect_platform() {
 }
 
 
+get_cwd_minus() {
+  char *cwd = getcwd(NULL, MAXPATHLEN);
+  printf("CWD = [%s]\n", cwd);
+  char *token;
+  GSList *p = NULL;
+  while((token = strsep(&cwd, "/")) != NULL) {
+    printf("%s\n", token);
+    p = g_slist_append(p, token);
+  }
 
+  int length = g_slist_length(p);
+  printf("Length = %d\n", length);
+
+  GString *gs = g_string_new("");
+  int i = 0;
+
+  GSList *paths = NULL;
+
+  for(i = 0; i < length; i++) {
+    g_string_append_printf(gs, "%s/", (char*)g_slist_nth_data(p, i));
+    char *fname = g_strconcat(strdup(gs->str), "erln8.config", NULL);
+    paths = g_slist_prepend(paths, fname);
+  }
+  //printf("%s\n", gs->str);
+
+  for(i = 0; i < g_slist_length(paths); i++) {
+    printf("%s\n", (char*)g_slist_nth_data(paths, i));
+  }
+  g_string_free(gs, TRUE);
+  // TODO: free items from list
+  free(cwd);
+}
 
 int main(int argc, char* argv[]) {
   printf("erln8 v0.0\n");
@@ -307,23 +363,25 @@ int main(int argc, char* argv[]) {
   }
 
   g_log_set_handler(G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,  erln8_log, NULL);
+  get_cwd_minus();
+//  g_debug("argv[0] = [%s]\n",argv[0]);
+ // homedir = g_get_home_dir();
+ // g_debug("home directory = %s\n", homedir);
 
-  g_debug("argv[0] = [%s]\n",argv[0]);
-  homedir = g_get_home_dir();
-  g_debug("home directory = %s\n", homedir);
 
-  //download_configdir_file("http://www.erlang.org/download/MD5","sources", "MD5");
-  //parse_md5s();
+//  if(init_erln8) {
+//    initialize();
+//  } else {
+//    if(!check_config()) {
+//      erln8_error_and_exit("Please initialize erln8 with -i or --init");
+//    }
+//  }
+//
+//  git_command("clone https://github.com/erlang/otp.git ./otp_source");
 
-  if(init_erln8) {
-    initialize();
-  } else {
-    if(!check_config()) {
-      erln8_error_and_exit("Please initialize erln8 with -i or --init");
-    }
-  }
-
-  build_erlang();
+  //for(;*dl_otps != NULL; *dl_otps++) {
+  //  printf("%s\n", *dl_otps);
+ // }
 
   /*
   char *erlversion = load_config();
