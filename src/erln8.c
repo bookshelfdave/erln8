@@ -7,6 +7,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+// GIO stuff
+#include <glib-object.h>
+#include <gio/gio.h>
+#include <sys/param.h>
+
+
 #define G_LOG_DOMAIN    ((gchar*) 0)
 #define SOURCES "sources"
 #define MD5     "MD5"
@@ -258,11 +264,14 @@ void initialize() {
       g_free(dirname);
     }
     mk_config_subdir("sources"); // location of .tar.gz source files
-    mk_config_subdir("sources/default"); // location of .tar.gz source files
+    //mk_config_subdir("sources/default"); // location of .tar.gz source files
     mk_config_subdir("otps");    // location of compiled otp source files
     mk_config_subdir("otps/default");    // location of compiled otp source files
     mk_config_subdir("configs"); // specific configs to use for a build
-    mk_config_subdir("patches"); // specific patches to use for a build
+    //mk_config_subdir("patches"); // specific patches to use for a build
+    mk_config_subdir("logs"); // logs!
+    mk_config_subdir("source_repos"); // location of git repos
+    mk_config_subdir("source_repos/github_otp"); // location of git repos
     download_current_erlang();
   }
 }
@@ -294,6 +303,39 @@ void detect_platform() {
 
 
 
+char* configcheck(char *d) {
+  char *retval = NULL;
+  char *f = g_strconcat(d, "/erln8.config", NULL);
+  GFile *gf = g_file_new_for_path(f);
+  GFile *gd = g_file_new_for_path(d);
+
+  if(g_file_query_exists(gf, NULL)) {
+      char *cf = g_file_get_path(gf);
+      //g_free(cf);
+      retval = cf;
+  } else {
+      if(g_file_has_parent(gd, NULL)) {
+        GFile *parent = g_file_get_parent(gd);
+        char *pp = g_file_get_path(parent);
+        retval = configcheck(pp);
+        g_object_unref(parent);
+        g_free(pp);
+      }
+  }
+
+  g_free(f);
+  g_object_unref(gf);
+  g_object_unref(gd);
+  return retval;
+}
+
+char* configcheckfromcwd() {
+  char *d = getcwd(NULL, MAXPATHLEN);
+  char *retval = configcheck(d);
+  free(d);
+  return retval;
+}
+
 
 int main(int argc, char* argv[]) {
   printf("erln8 v0.0\n");
@@ -312,18 +354,29 @@ int main(int argc, char* argv[]) {
   homedir = g_get_home_dir();
   g_debug("home directory = %s\n", homedir);
 
+  g_type_init();
+  char *cfg = configcheckfromcwd();
+  if(cfg != NULL) {
+    printf("Using config file [%s]\n", cfg);
+  } else {
+    printf("erln8 config not found\n");
+  }
+
   //download_configdir_file("http://www.erlang.org/download/MD5","sources", "MD5");
   //parse_md5s();
 
-  if(init_erln8) {
-    initialize();
-  } else {
-    if(!check_config()) {
-      erln8_error_and_exit("Please initialize erln8 with -i or --init");
-    }
-  }
+//  if(init_erln8) {
+//    initialize();
+// } else {
+//   if(!check_config()) {
+//      erln8_error_and_exit("Please initialize erln8 with -i or --init");
+//    }
+//  }
 
-  build_erlang();
+//  build_erlang();
+
+
+
 
   /*
   char *erlversion = load_config();
