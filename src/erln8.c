@@ -415,8 +415,7 @@ int erln8(int argc, char* argv[]) {
 
 
 int main(int argc, char* argv[]) {
-  printf("erln8 v0.0\n");
-  printf("%s\n", argv[0]);
+  printf("erln8 v0.1\n");
   homedir = g_get_home_dir();
   g_debug("home directory = %s\n", homedir);
 
@@ -425,11 +424,11 @@ int main(int argc, char* argv[]) {
   } else {
     char *erl = which_erlang();
     char *path = get_linked_path(erl);
-    printf("Using erlang %s\n", erl);
-    printf("  ->%s\n", path);
+    g_debug("Using erlang %s\n", erl);
+    g_debug("  ->%s\n", path);
 
     char *s = g_strconcat(path, "/bin/", argv[0], (char*)0);
-    printf("%s\n",s);
+    g_debug("%s\n",s);
     // can't free s
     execv(s, argv);
   }
