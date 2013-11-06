@@ -29,6 +29,7 @@ static gboolean opt_init_erln8 = FALSE;
 static gboolean opt_debug      = FALSE;
 static gchar*   opt_use        = NULL;
 static gboolean opt_list       = FALSE;
+static gboolean opt_buildable  = FALSE;
 static gboolean opt_fetch      = FALSE;
 static gboolean opt_build      = FALSE;
 static gboolean opt_show       = FALSE;
@@ -47,6 +48,7 @@ static GOptionEntry entries[] =
   { "clone", 'c', 0, G_OPTION_ARG_STRING, &opt_clone, "Clone source repos", NULL },
   { "build", 'b', 0, G_OPTION_ARG_NONE, &opt_build, "Build a specific version of OTP from source", NULL },
   { "show", 's', 0, G_OPTION_ARG_NONE, &opt_show, "Show the configured version of Erlang", NULL },
+  { "buildable-otps", 'o', 0, G_OPTION_ARG_NONE, &opt_buildable, "List tags to build from configured source repos", NULL },
   { NULL }
 };
 
@@ -355,7 +357,15 @@ char *get_config_kv(char *group, char *key) {
 void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   char pattern[] = "/tmp/erln8.buildXXXXXX";
   char* tmp = g_mkdtemp(pattern);
-  printf("%s\n", tmp);
+  g_debug("building in %s\n", tmp);
+  gchar* output_path = get_config_subdir_file_name("otps",id);
+  gchar* source_path = get_config_subdir_file_name("repos/default",opt_clone);
+
+  printf("Output path = %s\n", output_path);
+  printf("Source path = %s\n", source_path);
+
+  printf("Copying source...\n");
+  ///git archive branchname | (cd otherpath; tar x)
   // copy source to a temp dir
   // check for compile flags
   // check for env
@@ -377,9 +387,6 @@ int erln8(int argc, char* argv[]) {
   g_log_set_handler(G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,  erln8_log, NULL);
 
   g_debug("argv[0] = [%s]\n",argv[0]);
-
-  // used for GIO
-  g_type_init();
 
   if(opt_init_erln8) {
     initialize();
@@ -417,6 +424,11 @@ int erln8(int argc, char* argv[]) {
     printf("Not implemented\n");
   }
 
+
+  if(opt_buildable) {
+    printf("Not implemented\n");
+  }
+
   if(opt_show) {
     char* erl = which_erlang();
     printf("%s", erl);
@@ -428,11 +440,16 @@ int erln8(int argc, char* argv[]) {
 
 int main(int argc, char* argv[]) {
   printf("erln8 v0.1\n");
+  // compiler will whine about it being deprecated, but taking it out
+  // blows things up
+  // used for GIO
+  g_type_init();
+
   homedir = g_get_home_dir();
   g_debug("home directory = %s\n", homedir);
 
   build_erlang("default","OTP_R16B02", "R16B02", NULL);
-
+/*
   if((!strcmp(argv[0], "erln8")) || (!strcmp(argv[0], "./erln8"))) {
     erln8(argc, argv);
   } else {
@@ -446,4 +463,6 @@ int main(int argc, char* argv[]) {
     // can't free s
     execv(s, argv);
   }
+  */
+
  }
