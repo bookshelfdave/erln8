@@ -363,12 +363,11 @@ char *get_linked_path(char *id) {
 }
 
 
-int main(int argc, char* argv[]) {
-  printf("erln8 v0.0\n");
+
+int erln8(int argc, char* argv[]) {
   GError *error = NULL;
   GOptionContext *context;
 
-  // TODO: only parse argv if argv[0] == erln8
   context = g_option_context_new ("");
   g_option_context_add_main_entries (context, entries, NULL);
   if (!g_option_context_parse (context, &argc, &argv, &error)) {
@@ -378,12 +377,9 @@ int main(int argc, char* argv[]) {
   g_log_set_handler(G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,  erln8_log, NULL);
 
   g_debug("argv[0] = [%s]\n",argv[0]);
-  homedir = g_get_home_dir();
-  g_debug("home directory = %s\n", homedir);
-
+ 
   // used for GIO
   g_type_init();
-
 
   if(opt_init_erln8) {
     initialize();
@@ -402,11 +398,11 @@ int main(int argc, char* argv[]) {
   }
 
   if(opt_fetch) {
-
+    printf("Not implemented\n");
   }
 
   if(opt_build) {
-
+    printf("Not implemented\n");
   }
 
   if(opt_show) {
@@ -414,40 +410,28 @@ int main(int argc, char* argv[]) {
     printf("%s", erl);
     free(erl);
   }
-  //char *erl = which_erlang();
-  //printf("Using erlang %s\n", erl);
-  //char *path = get_linked_path(erl);
-  //printf("  ->%s\n", path);
-
-  //char *s = g_strconcat(path, "/bin/", argv[0], (char*)0);
-  //char *s = g_strconcat(path, "/bin/erl", (char*)0);
-  //printf("%s\n",s);
-  // can't free s
-  //execl(s,"erl",(char *)0);
+  return 0;
+}
 
 
-/*
-./erln8 init
-./erln8 clone
-./erln8 fetch
-./erln8 build default:R15B01 R15B01
-./erln8 build basho:R15B01p  R15B01p
-./erln8 genconfig basho_patched_R15B01
-./erl
-./erlc
-./escript
-*/
+int main(int argc, char* argv[]) {
+  printf("erln8 v0.0\n");
+  printf("%s\n", argv[0]);
+  homedir = g_get_home_dir();
+  g_debug("home directory = %s\n", homedir);
 
-
-  /*char *cfg = configcheckfromcwd();
-  if(cfg != NULL) {
-    printf("Using config file [%s]\n", cfg);
+  if((!strcmp(argv[0], "erln8")) || (!strcmp(argv[0], "./erln8"))) {
+    erln8(argc, argv);
   } else {
-    printf("erln8 config not found\n");
+    char *erl = which_erlang();
+    char *path = get_linked_path(erl);
+    printf("Using erlang %s\n", erl);
+    printf("  ->%s\n", path);
+
+    char *s = g_strconcat(path, "/bin/", argv[0], (char*)0);
+    printf("%s\n",s);
+    // can't free s
+    execv(s, argv);
   }
-
- */
-
-
 
  }
