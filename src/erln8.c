@@ -14,20 +14,37 @@
 #include <sys/param.h>
 
 
+/*
+ * TODO:
+ *   free all GErrors (and... everything else)
+ *   error checking for all calls
+ *   g_strfreev(keys);
+ *   don't hardcode my paths in the default config :-)
+ */
+
 #define G_LOG_DOMAIN    ((gchar*) 0)
 #define SOURCES "sources"
 #define MD5     "MD5"
-static gboolean init_erln8 = FALSE;
-static gboolean debug      = FALSE;
+static gboolean opt_init_erln8 = FALSE;
+static gboolean opt_debug      = FALSE;
+static gchar*   opt_use        = NULL;
+static gboolean opt_list       = FALSE;
+static gboolean opt_fetch      = FALSE;
+static gboolean opt_build      = FALSE;
+static gboolean opt_show       = FALSE;
+
 static const gchar* homedir;
-static gchar** dl_otps = NULL;
-static unsigned int last_pcnt = 0;
+//static unsigned int last_pcnt = 0;
 
 static GOptionEntry entries[] =
 {
-  { "init", 'i', 0, G_OPTION_ARG_NONE, &init_erln8, "Initialize Erln8", NULL },
-  { "download", 'd', 0, G_OPTION_ARG_STRING_ARRAY, &dl_otps, "Initialize Erln8", NULL },
-  { "debug", 'D', 0, G_OPTION_ARG_NONE, &debug, "Debug Erln8", NULL },
+  { "init", 'i', 0, G_OPTION_ARG_NONE, &opt_init_erln8, "Initialize Erln8", NULL },
+  { "debug", 'D', 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
+  { "use", 'u', 0, G_OPTION_ARG_STRING, &opt_use, "Setup Erlang version in cwd", NULL },
+  { "list", 'l', 0, G_OPTION_ARG_NONE, &opt_list, "List available Erlang installations", NULL },
+  { "fetch", 'f', 0, G_OPTION_ARG_NONE, &opt_fetch, "Update source repos", NULL },
+  { "build", 'b', 0, G_OPTION_ARG_NONE, &opt_build, "Build a specific version of OTP from source", NULL },
+  { "show", 's', 0, G_OPTION_ARG_NONE, &opt_show, "Show the configured version of Erlang", NULL },
   { NULL }
 };
 
@@ -35,7 +52,7 @@ void erln8_log( const gchar *log_domain,
                 GLogLevelFlags log_level,
                 const gchar *message,
                 gpointer user_data ) {
-  if(debug) {
+  if(opt_debug) {
     printf("%s",message);
   }
   return;
@@ -68,31 +85,7 @@ gboolean erl_on_path() {
 }
 
 char* load_config() {
-  g_debug("Parsing config file...\n");
-
-  if(g_file_test("./erln8.conf", G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)) {
-    GKeyFile* kf = g_key_file_new();
-    GError* err;
-    gboolean b = g_key_file_load_from_file(kf, "./erln8.conf", G_KEY_FILE_NONE, &err);
-    if(!g_key_file_has_group(kf, "Erlang")) {
-      erln8_error_and_exit("erln8 Erlang group not defined in erln8.conf\n");
-      return NULL;
-    } else {
-      if(g_key_file_has_key(kf, "Erlang", "version", &err)) {
-        gchar* erlversion = g_key_file_get_string(kf, "Erlang", "version", &err);
-        printf("Running erlang version %s\n", erlversion);
-        // THIS VALUE MUST BE FREED
-        return erlversion;
-      } else {
-        erln8_error_and_exit("Missing Erlang | version\n");
-        return NULL;
-      }
-    }
-  } else {
-    erln8_error_and_exit("Config file does not exist\n");
-    return NULL;
   }
-}
 
 gchar* get_configdir_file_name(char* filename) {
   gchar *configfilename = g_strconcat(homedir, "/.erln8.d/", filename, (char*)0);
@@ -193,6 +186,21 @@ void init_main_config() {
                         "osx_gcc_env",
                         "CC=gcc-4.2 CPPFLAGS='-DNDEBUG' MAKEFLAGS='-j 3'");
 
+  g_key_file_set_string(kf,
+                        "Erlangs",
+                        "R15B01p",
+                        "/Users/dparfitt/erlang_R15B01p");
+
+  g_key_file_set_string(kf,
+                        "Erlangs",
+                        "R15B01",
+                        "/Users/dparfitt/erlang_R15B01");
+
+  g_key_file_set_string(kf,
+                        "Erlangs",
+                        "R16B02",
+                        "/Users/dparfitt/erlang-R16B02");
+
   GError *error;
   gchar* d = g_key_file_to_data (kf, NULL, &error);
   gchar* fn = get_configdir_file_name("config");
@@ -202,6 +210,52 @@ void init_main_config() {
     printf("Error writing config file :-(\n");
   }
   printf("DATA = %s\n", d);
+  free(fn);
+  g_key_file_free(kf);
+}
+
+
+void init_here(char* erlang) {
+  GKeyFile *kf = g_key_file_new();
+  g_key_file_set_string(kf,
+                        "Config",
+                        "Erlang",
+                        erlang);
+
+  GError *error = NULL;
+  gchar* d = g_key_file_to_data (kf, NULL, &error);
+  gchar* fn = "./erln8.config";
+  printf("Writing to %s\n", fn);  
+
+  GError *error2 = NULL;
+  if(!g_file_set_contents(fn, d, -1, &error2)) {
+    printf("Error writing config file :-(\n");
+    if (error2 != NULL) {
+      fprintf (stderr, "Unable to read file: %s\n", error2->message);
+    }
+  }
+  // TODO
+  //g_key_file_free(kf);
+}
+
+
+void list_erlangs() {
+  GKeyFile *kf = g_key_file_new();
+  GError *error;
+  GError *error2;
+  gsize keycount;
+  gchar* fn = get_configdir_file_name("config");
+  if(g_key_file_load_from_file(kf, fn, G_KEY_FILE_NONE, &error)) {
+    printf("Available Erlang installations:\n");
+    gchar** keys = g_key_file_get_keys(kf, "Erlangs", &keycount, &error2);
+    int i = 0;
+    for(i = 0; i < keycount; i++) {
+      printf("  %s\n",*keys++);
+    }
+    // TODO
+    //g_strfreev(keys);
+  }
+  // TODO: free error
   free(fn);
   g_key_file_free(kf);
 }
@@ -264,11 +318,57 @@ char* configcheckfromcwd() {
   return retval;
 }
 
+
+// TODO: this function leaks badly!
+char* which_erlang() {
+  char* cfgfile = configcheckfromcwd();
+  // TODO: free
+  if(g_file_test(cfgfile, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)) {
+    GKeyFile* kf = g_key_file_new();
+    GError* err;
+    // TODO: free kf
+    // TODO: free err
+    gboolean b = g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err);
+    if(!g_key_file_has_group(kf, "Config")) {
+      erln8_error_and_exit("erln8 Config group not defined in erln8.config\n");
+      return NULL;
+    } else {
+      if(g_key_file_has_key(kf, "Config", "Erlang", &err)) {
+        gchar* erlversion = g_key_file_get_string(kf, "Config", "Erlang", &err);
+        // THIS VALUE MUST BE FREED
+        return erlversion;
+      } else {
+        erln8_error_and_exit("Missing Erlang | version\n");
+        return NULL;
+      }
+    }
+  } else {
+    erln8_error_and_exit("Config file does not exist\n");
+    return NULL;
+  }
+}
+
+char *get_linked_path(char *id) {
+  gchar* cfgfile = get_configdir_file_name("config");
+  GKeyFile* kf = g_key_file_new();
+  GError* err;
+  // TODO: free kf
+  // TODO: free err
+  gboolean b = g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err);
+
+  // TODO: check for an exact match
+  gchar* erlpath = g_key_file_get_string(kf, "Erlangs", id, &err);
+  free(cfgfile);
+  return erlpath;
+}
+
+
 int main(int argc, char* argv[]) {
   printf("erln8 v0.0\n");
   GError *error = NULL;
   GOptionContext *context;
 
+  // TODO: only parse argv if argv[0] == erln8
   context = g_option_context_new ("");
   g_option_context_add_main_entries (context, entries, NULL);
   if (!g_option_context_parse (context, &argc, &argv, &error)) {
@@ -285,14 +385,46 @@ int main(int argc, char* argv[]) {
   g_type_init();
 
 
-
- if(init_erln8) {
+  if(opt_init_erln8) {
     initialize();
- } else {
-   if(!check_home()) {
+  } else {
+    if(!check_home()) {
       erln8_error_and_exit("Please initialize erln8 with -i or --init");
     }
   }
+
+  if(opt_use) {
+    init_here(opt_use);
+  }
+
+  if(opt_list) {
+   list_erlangs();
+  }
+
+  if(opt_fetch) {
+
+  }
+
+  if(opt_build) {
+
+  }
+
+  if(opt_show) {
+    char* erl = which_erlang();
+    printf("%s", erl);
+    free(erl);
+  }
+  //char *erl = which_erlang();
+  //printf("Using erlang %s\n", erl);
+  //char *path = get_linked_path(erl);
+  //printf("  ->%s\n", path);
+
+  //char *s = g_strconcat(path, "/bin/", argv[0], (char*)0);
+  //char *s = g_strconcat(path, "/bin/erl", (char*)0);
+  //printf("%s\n",s);
+  // can't free s
+  //execl(s,"erl",(char *)0);
+
 
 /*
 ./erln8 init
@@ -307,20 +439,15 @@ int main(int argc, char* argv[]) {
 */
 
 
-  char *cfg = configcheckfromcwd();
+  /*char *cfg = configcheckfromcwd();
   if(cfg != NULL) {
     printf("Using config file [%s]\n", cfg);
   } else {
     printf("erln8 config not found\n");
   }
 
-  /*
-  char *erlversion = load_config();
-  printf("Config loaded\n");
-  char *s = g_strconcat("/Users/dparfitt/erlang-", erlversion, "/bin/", argv[0], (char*)0);
-  printf("%s\n",s);
-  g_free(erlversion);
-  // can't free s
-  execl(s,"erl",(char *)0);
-  */
-}
+ */
+
+
+
+ }
