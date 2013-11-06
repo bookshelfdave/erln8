@@ -354,23 +354,38 @@ char *get_config_kv(char *group, char *key) {
 }
 
 
+// TODO: free strings!
 void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   char pattern[] = "/tmp/erln8.buildXXXXXX";
   char* tmp = g_mkdtemp(pattern);
   g_debug("building in %s\n", tmp);
   gchar* output_path = get_config_subdir_file_name("otps",id);
-  gchar* source_path = get_config_subdir_file_name("repos/default",opt_clone);
+  gchar* source_path = get_config_subdir_file_name("repos", repo);
+  gchar* ld = g_strconcat("logs/build_", id, NULL);
+  gchar* log_path    = get_configdir_file_name(ld);
+  free(ld);
 
   printf("Output path = %s\n", output_path);
   printf("Source path = %s\n", source_path);
+  printf("Log path = %s\n", log_path);
 
   printf("Copying source...\n");
-  ///git archive branchname | (cd otherpath; tar x)
-  // copy source to a temp dir
+  char *copycmd = g_strconcat("cd ", source_path, " && git archive ", tag, " | (cd ", tmp, "; tar x)", NULL);
+  system(copycmd);
+  free(copycmd);
+  printf("Building source...\n");
+  char *buildcmd = g_strconcat("(cd ", tmp,
+      " && ./otp_build autoconf && ./configure --prefix=",
+      output_path," && make && make install) | tee ",log_path, NULL);
+  printf("%s\n",buildcmd);
+  system(buildcmd);
+  free(buildcmd);
+  free(log_path);
+
+  // TODO:
+  // make "tee" optional? -q: quiet build
   // check for compile flags
   // check for env
-  // checkout tag
-  // built to ~/.erln8.d/otps/id
   // write to config "Erlangs"
 }
 
