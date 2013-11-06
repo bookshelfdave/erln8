@@ -32,6 +32,7 @@ static gboolean opt_list       = FALSE;
 static gboolean opt_fetch      = FALSE;
 static gboolean opt_build      = FALSE;
 static gboolean opt_show       = FALSE;
+static gboolean opt_clone      = FALSE;
 
 static const gchar* homedir;
 //static unsigned int last_pcnt = 0;
@@ -43,6 +44,7 @@ static GOptionEntry entries[] =
   { "use", 'u', 0, G_OPTION_ARG_STRING, &opt_use, "Setup Erlang version in cwd", NULL },
   { "list", 'l', 0, G_OPTION_ARG_NONE, &opt_list, "List available Erlang installations", NULL },
   { "fetch", 'f', 0, G_OPTION_ARG_NONE, &opt_fetch, "Update source repos", NULL },
+  { "clone", 'c', 0, G_OPTION_ARG_NONE, &opt_clone, "Clone source repos", NULL },
   { "build", 'b', 0, G_OPTION_ARG_NONE, &opt_build, "Build a specific version of OTP from source", NULL },
   { "show", 's', 0, G_OPTION_ARG_NONE, &opt_show, "Show the configured version of Erlang", NULL },
   { NULL }
@@ -96,41 +98,6 @@ gchar* get_config_subdir_file_name(char *subdir, char* filename) {
   gchar *configfilename = g_strconcat(homedir, "/.erln8.d/", subdir, "/", filename, (char*)0);
   return configfilename;
 }
-
-/*
-void build_erlang() {
-  char *fname = "otp_src_R16B02.tar.gz";
-  char *fn = get_configdir_file_name("sources","otp_src_R16B02.tar.gz");
-  // TODO: check MD5
-  gchar *cmd = g_strconcat("tar xf ", fn, " --strip-components 1 -C ", homedir, "/.erln8.d/otps/default/", (char*)0);
-  gchar *in;
-  gchar *out;
-  gint status;
-  GError *err;
-  printf("Uncompressing sources\n");
-  gboolean result = g_spawn_command_line_sync(cmd, &in, &out, &status, &err);
-  g_free(cmd);
-  g_free(fn);
-}
-*/
-
-gint git_command(char *command) {
-  gchar *cmd = g_strconcat("git ", command, NULL);
-  gchar *in;
-  gchar *out;
-  gint status;
-  GError *err;
-  //printf("cmd: %s\n", cmd);
-  gboolean result = g_spawn_command_line_sync(cmd, &in, &out, &status, &err);
-  g_free(cmd);
-  if(err != NULL) {
-    printf("ERROR: %s\n", err->message);
-  }
-  // TODO: free in/out?
-  printf("Output: %s\n", in);
-  return result;
-}
-
 
 gboolean check_home() {
   gchar *configdir = g_strconcat(homedir, "/.erln8.d", (char*)0);
@@ -280,7 +247,6 @@ void initialize() {
     mk_config_subdir("otps");    // location of compiled otp source files
     mk_config_subdir("logs");    // logs!
     mk_config_subdir("repos"); // location of git repos
-    mk_config_subdir("repos/github_otp"); // location of git repos
     init_main_config();
   }
 }
@@ -348,21 +314,47 @@ char* which_erlang() {
   }
 }
 
-char *get_linked_path(char *id) {
+char *get_config_kv(char *group, char *key) {
   gchar* cfgfile = get_configdir_file_name("config");
   GKeyFile* kf = g_key_file_new();
   GError* err;
+  gchar* val = NULL;
+
   // TODO: free kf
   // TODO: free err
-  gboolean b = g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err);
+  if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
+      if(err != NULL) {
+        fprintf (stderr,
+            "Unable to load keyfile ~/.erln8.d/config: %s\n",
+            group,
+            key,
+            err->message);
+        g_error_free(err);
+      } else {
+         fprintf(stderr, "Unable to load keyfile ~/.erln8.d/config\n");
+         // TODO: exit etc
+      }
+  } else {
+    GError *kferr = NULL;
+    if(g_key_file_has_key(kf, group, key, kferr)) {
+       val = g_key_file_get_string(kf, group, key, &err);
+    } else {
+      if(kferr != NULL) {
+        fprintf (stderr,
+            "Unable to read group %s, key %s from ~/.erln8.d/config: %s\n",
+            group,
+            key,
+            kferr->message);
+        g_error_free(kferr);
+      } else {
+        fprintf(stderr, "Unable to read group %s, key %s in ~/.erln8.d/config\n", group, key);
+      }
+    }
+  }
 
-  // TODO: check for an exact match
-  gchar* erlpath = g_key_file_get_string(kf, "Erlangs", id, &err);
   free(cfgfile);
-  return erlpath;
+  return val;
 }
-
-
 
 int erln8(int argc, char* argv[]) {
   GError *error = NULL;
@@ -377,7 +369,7 @@ int erln8(int argc, char* argv[]) {
   g_log_set_handler(G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,  erln8_log, NULL);
 
   g_debug("argv[0] = [%s]\n",argv[0]);
- 
+
   // used for GIO
   g_type_init();
 
@@ -395,6 +387,10 @@ int erln8(int argc, char* argv[]) {
 
   if(opt_list) {
    list_erlangs();
+  }
+
+  if(opt_clone) {
+    system("git clone https://github.com/erlang/otp.git /Users/dparfitt/.erlnd.8/repos/default/");
   }
 
   if(opt_fetch) {
@@ -423,7 +419,7 @@ int main(int argc, char* argv[]) {
     erln8(argc, argv);
   } else {
     char *erl = which_erlang();
-    char *path = get_linked_path(erl);
+    char *path = get_config_kv("Erlangs", erl);
     g_debug("Using erlang %s\n", erl);
     g_debug("  ->%s\n", path);
 
@@ -432,5 +428,4 @@ int main(int argc, char* argv[]) {
     // can't free s
     execv(s, argv);
   }
-
  }
