@@ -13,7 +13,7 @@
 #include <gio/gio.h>
 #include <sys/param.h>
 
-
+#include <errno.h>
 /*
  * TODO:
  *   free all GErrors (and... everything else)
@@ -32,7 +32,7 @@ static gboolean opt_list       = FALSE;
 static gboolean opt_fetch      = FALSE;
 static gboolean opt_build      = FALSE;
 static gboolean opt_show       = FALSE;
-static gboolean opt_clone      = FALSE;
+static gchar*   opt_clone      = NULL;
 
 static const gchar* homedir;
 //static unsigned int last_pcnt = 0;
@@ -44,7 +44,7 @@ static GOptionEntry entries[] =
   { "use", 'u', 0, G_OPTION_ARG_STRING, &opt_use, "Setup Erlang version in cwd", NULL },
   { "list", 'l', 0, G_OPTION_ARG_NONE, &opt_list, "List available Erlang installations", NULL },
   { "fetch", 'f', 0, G_OPTION_ARG_NONE, &opt_fetch, "Update source repos", NULL },
-  { "clone", 'c', 0, G_OPTION_ARG_NONE, &opt_clone, "Clone source repos", NULL },
+  { "clone", 'c', 0, G_OPTION_ARG_STRING, &opt_clone, "Clone source repos", NULL },
   { "build", 'b', 0, G_OPTION_ARG_NONE, &opt_build, "Build a specific version of OTP from source", NULL },
   { "show", 's', 0, G_OPTION_ARG_NONE, &opt_show, "Show the configured version of Erlang", NULL },
   { NULL }
@@ -67,7 +67,7 @@ void erln8_error(char *msg) {
 }
 
 void erln8_error_and_exit(char *msg) {
-  printf("ERROR: %s\n", msg);
+  fprintf(stderr, "ERROR: %s\n", msg);
   exit(-1);
 }
 
@@ -118,11 +118,6 @@ void mk_config_subdir(char *subdir) {
   } else {
     g_free(dirname);
   }
-}
-
-
-void build_erlang(char *repo, char *tag, char *config) {
-  // TODO: also check config_env
 }
 
 void init_main_config() {
@@ -336,7 +331,7 @@ char *get_config_kv(char *group, char *key) {
       }
   } else {
     GError *kferr = NULL;
-    if(g_key_file_has_key(kf, group, key, kferr)) {
+    if(g_key_file_has_key(kf, group, key, &kferr)) {
        val = g_key_file_get_string(kf, group, key, &err);
     } else {
       if(kferr != NULL) {
@@ -354,6 +349,19 @@ char *get_config_kv(char *group, char *key) {
 
   free(cfgfile);
   return val;
+}
+
+
+void build_erlang(char *repo, char *tag, char *id, char *build_config) {
+  char pattern[] = "/tmp/erln8.buildXXXXXX";
+  char* tmp = g_mkdtemp(pattern);
+  printf("%s\n", tmp);
+  // copy source to a temp dir
+  // check for compile flags
+  // check for env
+  // checkout tag
+  // built to ~/.erln8.d/otps/id
+  // write to config "Erlangs"
 }
 
 int erln8(int argc, char* argv[]) {
@@ -390,7 +398,15 @@ int erln8(int argc, char* argv[]) {
   }
 
   if(opt_clone) {
-    system("git clone https://github.com/erlang/otp.git /Users/dparfitt/.erlnd.8/repos/default/");
+    gchar* repo = get_config_kv("Repos", opt_clone);
+    gchar* path = get_config_subdir_file_name("repos",opt_clone);
+    if(repo == NULL || path == NULL) {
+      erln8_error_and_exit("Repository not configured\n");
+    } else {
+      gchar* cmd = g_strconcat("git clone ", repo, " ", path, NULL);
+      system(cmd);
+      free(cmd);
+    }
   }
 
   if(opt_fetch) {
@@ -414,6 +430,8 @@ int main(int argc, char* argv[]) {
   printf("erln8 v0.1\n");
   homedir = g_get_home_dir();
   g_debug("home directory = %s\n", homedir);
+
+  build_erlang("default","OTP_R16B02", "R16B02", NULL);
 
   if((!strcmp(argv[0], "erln8")) || (!strcmp(argv[0], "./erln8"))) {
     erln8(argc, argv);
