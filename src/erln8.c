@@ -35,21 +35,34 @@ static gboolean opt_build      = FALSE;
 static gboolean opt_show       = FALSE;
 static gchar*   opt_clone      = NULL;
 static gboolean opt_color      = TRUE;
+
+static gchar*   opt_repo       = NULL;
+static gchar*   opt_tag        = NULL;
+static gchar*   opt_id         = NULL;
+static gchar*   opt_config     = NULL;
+
 static const gchar* homedir;
 //static unsigned int last_pcnt = 0;
 
 static GOptionEntry entries[] =
 {
-  { "init", 'i', 0, G_OPTION_ARG_NONE, &opt_init_erln8, "Initialize Erln8", NULL },
-  { "use", 'u', 0, G_OPTION_ARG_STRING, &opt_use, "Setup Erlang version in cwd", NULL },
-  { "list", 'l', 0, G_OPTION_ARG_NONE, &opt_list, "List available Erlang installations", NULL },
+  { "init", 0, 0, G_OPTION_ARG_NONE, &opt_init_erln8, "Initialize Erln8", NULL },
+  { "use", 0, 0, G_OPTION_ARG_STRING, &opt_use, "Setup Erlang version in cwd", NULL },
+  { "list", 0, 0, G_OPTION_ARG_NONE, &opt_list, "List available Erlang installations", NULL },
   { "clone", 'c', 0, G_OPTION_ARG_STRING, &opt_clone, "Clone source repos", NULL },
-  { "fetch", 'f', 0, G_OPTION_ARG_NONE, &opt_fetch, "Update source repos", NULL },
-  { "build", 'b', 0, G_OPTION_ARG_NONE, &opt_build, "Build a specific version of OTP from source", NULL },
-  { "show", 's', 0, G_OPTION_ARG_NONE, &opt_show, "Show the configured version of Erlang", NULL },
-  { "debug", 'D', 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
-  { "no-color", 'N', 0, G_OPTION_ARG_NONE, &opt_color, "Don't use color output", NULL },
-  { "buildable-otps", 'o', 0, G_OPTION_ARG_NONE, &opt_buildable, "List tags to build from configured source repos", NULL },
+  //{ "fetch", 'f', 0, G_OPTION_ARG_NONE, &opt_fetch, "Update source repos", NULL },
+
+
+  { "build", 0, 0, G_OPTION_ARG_NONE, &opt_build, "Build a specific version of OTP from source", NULL },
+      { "repo", 0, 0, G_OPTION_ARG_STRING, &opt_repo, "Specifies repo name to build from", NULL },
+      { "tag", 0, 0, G_OPTION_ARG_STRING, &opt_tag, "Specifies repo branch/tag to build from", NULL },
+      { "id", 0, 0, G_OPTION_ARG_STRING, &opt_id, "A user assigned name for ", NULL },
+      { "config", 0, 0, G_OPTION_ARG_STRING, &opt_config, "Build configuration", NULL },
+
+  { "show", 0, 0, G_OPTION_ARG_NONE, &opt_show, "Show the configured version of Erlang", NULL },
+  { "debug", 0, 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
+  //{ "no-color", 'N', 0, G_OPTION_ARG_NONE, &opt_color, "Don't use color output", NULL },
+  //{ "buildable-otps", 'o', 0, G_OPTION_ARG_NONE, &opt_buildable, "List tags to build from configured source repos", NULL },
   { NULL }
 };
 
@@ -174,7 +187,6 @@ void init_main_config() {
   if(!g_file_set_contents(fn, d, -1, &error2)) {
     printf("Error writing config file :-(\n");
   }
-  printf("DATA = %s\n", d);
   free(fn);
   g_key_file_free(kf);
 }
@@ -453,7 +465,7 @@ int erln8(int argc, char* argv[]) {
     initialize();
   } else {
     if(!check_home()) {
-      erln8_error_and_exit("Please initialize erln8 with -i or --init");
+      erln8_error_and_exit("Please initialize erln8 with --init");
     }
   }
 
@@ -483,6 +495,29 @@ int erln8(int argc, char* argv[]) {
 
   if(opt_build) {
     printf("Not implemented\n");
+    gchar *repo = NULL;
+    if(opt_repo == NULL) {
+      printf("Repo not specified, using default\n");
+      repo = "default";
+    } else {
+      repo = opt_repo;
+    }
+    if(repo == NULL) {
+      erln8_error_and_exit("build repo not specified");
+    }
+    if(opt_tag == NULL) {
+      erln8_error_and_exit("build tag not specified");
+    }
+    if(opt_id == NULL) {
+      erln8_error_and_exit("build id not specified");
+    }
+    // opt_config is optional
+    printf("repo:%s\n", repo);
+    printf("tag :%s\n", opt_tag);
+    printf("id  :%s\n", opt_id);
+    printf("cfg :%s\n", opt_config);
+
+    build_erlang(repo, opt_tag, opt_id, opt_config);
   }
 
 
@@ -514,8 +549,10 @@ int main(int argc, char* argv[]) {
   homedir = g_get_home_dir();
   g_debug("home directory = %s\n", homedir);
 
-  build_erlang("default","OTP_R16B02", "R16B02", NULL);
-/*
+  // erln8 --build --repo default --tag OTP_R16B02 --id R16B02
+
+
+
   if((!strcmp(argv[0], "erln8")) || (!strcmp(argv[0], "./erln8"))) {
     erln8(argc, argv);
   } else {
@@ -529,6 +566,5 @@ int main(int argc, char* argv[]) {
     // can't free s
     execv(s, argv);
   }
-  */
 
  }
