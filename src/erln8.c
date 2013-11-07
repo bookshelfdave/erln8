@@ -164,21 +164,6 @@ void init_main_config() {
                         "osx_gcc_env",
                         "CC=gcc-4.2 CPPFLAGS='-DNDEBUG' MAKEFLAGS='-j 3'");
 
-  g_key_file_set_string(kf,
-                        "Erlangs",
-                        "R15B01p",
-                        "/Users/dparfitt/erlang_R15B01p");
-
-  g_key_file_set_string(kf,
-                        "Erlangs",
-                        "R15B01",
-                        "/Users/dparfitt/erlang_R15B01");
-
-  g_key_file_set_string(kf,
-                        "Erlangs",
-                        "R16B02",
-                        "/Users/dparfitt/erlang-R16B02");
-
   GError *error;
   gchar* d = g_key_file_to_data (kf, NULL, &error);
   gchar* fn = get_configdir_file_name("config");
