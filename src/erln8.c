@@ -41,6 +41,11 @@ static gchar*   opt_tag        = NULL;
 static gchar*   opt_id         = NULL;
 static gchar*   opt_config     = NULL;
 
+static gboolean  opt_configs     = FALSE;
+static gboolean  opt_repos       = FALSE;
+static gchar*    opt_link        = NULL;
+
+
 static const gchar* homedir;
 //static unsigned int last_pcnt = 0;
 
@@ -60,7 +65,21 @@ static GOptionEntry entries[] =
       { "config", 0, 0, G_OPTION_ARG_STRING, &opt_config, "Build configuration", NULL },
 
   { "show", 0, 0, G_OPTION_ARG_NONE, &opt_show, "Show the configured version of Erlang", NULL },
+  { "configs", 0, 0, G_OPTION_ARG_NONE, &opt_configs, "", NULL },
+  { "repos", 0, 0, G_OPTION_ARG_NONE, &opt_repos, "", NULL },
+
+  { "link", 0, 0, G_OPTION_ARG_STRING, &opt_link, "", NULL },
+  //{ "unlink", 0, 0, G_OPTION_ARG_STRING, &opt_link, "", NULL },
+
+  //{ "rm-repo", 0, 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
+  //{ "add-repo", 0, 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
+
+  //{ "rm-config", 0, 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
+  //{ "add-config", 0, 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
+
+
   { "debug", 0, 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
+
   //{ "no-color", 'N', 0, G_OPTION_ARG_NONE, &opt_color, "Don't use color output", NULL },
   //{ "buildable-otps", 'o', 0, G_OPTION_ARG_NONE, &opt_buildable, "List tags to build from configured source repos", NULL },
   { NULL }
@@ -319,6 +338,7 @@ char *get_config_kv(char *group, char *key) {
   // TODO: free err
   if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
       if(err != NULL) {
+        // TODO: this err msg is broken
         fprintf (stderr,
             "Unable to load keyfile ~/.erln8.d/config: %s\n",
             group,
@@ -345,6 +365,36 @@ char *get_config_kv(char *group, char *key) {
         fprintf(stderr, "Unable to read group %s, key %s in ~/.erln8.d/config\n", group, key);
       }
     }
+  }
+
+  free(cfgfile);
+  return val;
+}
+
+
+// TODO: free list of strings returned somewhere else
+char **get_config_keys(char *group) {
+  gchar* cfgfile = get_configdir_file_name("config");
+  GKeyFile* kf = g_key_file_new();
+  GError* err;
+  gchar** val = NULL;
+
+  // TODO: free kf
+  // TODO: free err
+  if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
+      if(err != NULL) {
+        fprintf (stderr,
+            "Unable to load keyfile ~/.erln8.d/config: %s\n",
+            group,
+            err->message);
+        g_error_free(err);
+      } else {
+         fprintf(stderr, "Unable to load keyfile ~/.erln8.d/config\n");
+         // TODO: exit etc
+      }
+  } else {
+    GError *kferr = NULL;
+    val = g_key_file_get_keys(kf, group, NULL, &kferr);
   }
 
   free(cfgfile);
@@ -433,6 +483,7 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
  }
 
 int erln8(int argc, char* argv[]) {
+  //printf("erln8 v0.1\n");
   GError *error = NULL;
   GOptionContext *context;
 
@@ -474,12 +525,25 @@ int erln8(int argc, char* argv[]) {
     }
   }
 
+  if(opt_repos) {
+    gchar **repos = get_config_keys("Repos");
+    for(;*repos != NULL; *repos++) {
+      printf("%s\n", *repos);
+    }
+  }
+
+  if(opt_configs) {
+    gchar **configs = get_config_keys("Configs");
+    for(;*configs != NULL; *configs++) {
+      printf("%s\n", *configs);
+    }
+  }
+
   if(opt_fetch) {
     printf("Not implemented\n");
   }
 
   if(opt_build) {
-    printf("Not implemented\n");
     gchar *repo = NULL;
     if(opt_repo == NULL) {
       printf("Repo not specified, using default\n");
@@ -496,11 +560,12 @@ int erln8(int argc, char* argv[]) {
     if(opt_id == NULL) {
       erln8_error_and_exit("build id not specified");
     }
+
     // opt_config is optional
-    printf("repo:%s\n", repo);
-    printf("tag :%s\n", opt_tag);
-    printf("id  :%s\n", opt_id);
-    printf("cfg :%s\n", opt_config);
+    g_debug("repo:%s\n", repo);
+    g_debug("tag :%s\n", opt_tag);
+    g_debug("id  :%s\n", opt_id);
+    g_debug("cfg :%s\n", opt_config);
 
     build_erlang(repo, opt_tag, opt_id, opt_config);
   }
@@ -512,7 +577,7 @@ int erln8(int argc, char* argv[]) {
 
   if(opt_show) {
     char* erl = which_erlang();
-    printf("%s", erl);
+    printf("%s\n", erl);
     free(erl);
   }
   return 0;
@@ -524,8 +589,6 @@ int erln8(int argc, char* argv[]) {
 
 
 int main(int argc, char* argv[]) {
-  //printf("%c[%d;%d;%dmerln8", 0x1B, BRIGHT,RED,BG_BLACK);
-  printf("erln8 v0.1\n");
   // compiler will whine about it being deprecated, but taking it out
   // blows things up
   // used for GIO
@@ -534,17 +597,16 @@ int main(int argc, char* argv[]) {
   homedir = g_get_home_dir();
   g_debug("home directory = %s\n", homedir);
 
-  // erln8 --build --repo default --tag OTP_R16B02 --id R16B02
-
-
-
   if((!strcmp(argv[0], "erln8")) || (!strcmp(argv[0], "./erln8"))) {
     erln8(argc, argv);
   } else {
     char *erl = which_erlang();
+    if(erl == NULL) {
+     erln8_error_and_exit("Can't find an erln8.config file to use\n");
+    }
     char *path = get_config_kv("Erlangs", erl);
     g_debug("Using erlang %s\n", erl);
-    g_debug("  ->%s\n", path);
+    //g_debug("  ->%s\n", path);
 
     char *s = g_strconcat(path, "/bin/", argv[0], (char*)0);
     g_debug("%s\n",s);
