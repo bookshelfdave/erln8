@@ -34,20 +34,21 @@ static gboolean opt_fetch      = FALSE;
 static gboolean opt_build      = FALSE;
 static gboolean opt_show       = FALSE;
 static gchar*   opt_clone      = NULL;
-
+static gboolean opt_color      = TRUE;
 static const gchar* homedir;
 //static unsigned int last_pcnt = 0;
 
 static GOptionEntry entries[] =
 {
   { "init", 'i', 0, G_OPTION_ARG_NONE, &opt_init_erln8, "Initialize Erln8", NULL },
-  { "debug", 'D', 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
   { "use", 'u', 0, G_OPTION_ARG_STRING, &opt_use, "Setup Erlang version in cwd", NULL },
   { "list", 'l', 0, G_OPTION_ARG_NONE, &opt_list, "List available Erlang installations", NULL },
-  { "fetch", 'f', 0, G_OPTION_ARG_NONE, &opt_fetch, "Update source repos", NULL },
   { "clone", 'c', 0, G_OPTION_ARG_STRING, &opt_clone, "Clone source repos", NULL },
+  { "fetch", 'f', 0, G_OPTION_ARG_NONE, &opt_fetch, "Update source repos", NULL },
   { "build", 'b', 0, G_OPTION_ARG_NONE, &opt_build, "Build a specific version of OTP from source", NULL },
   { "show", 's', 0, G_OPTION_ARG_NONE, &opt_show, "Show the configured version of Erlang", NULL },
+  { "debug", 'D', 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
+  { "no-color", 'N', 0, G_OPTION_ARG_NONE, &opt_color, "Don't use color output", NULL },
   { "buildable-otps", 'o', 0, G_OPTION_ARG_NONE, &opt_buildable, "List tags to build from configured source repos", NULL },
   { NULL }
 };
@@ -354,8 +355,54 @@ char *get_config_kv(char *group, char *key) {
 }
 
 
+char *set_config_kv(char *group, char *key, char *val) {
+  gchar* cfgfile = get_configdir_file_name("config");
+  GKeyFile* kf = g_key_file_new();
+  GError* err = NULL;
+
+  // TODO: free kf
+  // TODO: free err
+  if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
+      if(err != NULL) {
+        fprintf (stderr,
+            "Unable to load keyfile ~/.erln8.d/config: %s\n",
+            group,
+            key,
+            err->message);
+        g_error_free(err);
+      } else {
+         fprintf(stderr, "Unable to load keyfile ~/.erln8.d/config\n");
+         // TODO: exit etc
+      }
+  } else {
+    g_key_file_set_string(kf, group, key, val);
+    GError *error = NULL;
+    gchar* d = g_key_file_to_data (kf, NULL, &error);
+    gchar* fn = get_configdir_file_name("config");
+    printf("Writing to %s\n", fn);
+    GError *error2 = NULL;
+    if(!g_file_set_contents(fn, d, -1, &error2)) {
+      printf("Error writing config file :-(\n");
+    }
+    free(fn);
+    g_key_file_free(kf);
+  }
+
+  free(cfgfile);
+  return val;
+}
+
+
+
+
 // TODO: free strings!
 void build_erlang(char *repo, char *tag, char *id, char *build_config) {
+  // TODO:
+  // make "tee" optional? -q: quiet build
+  // check for compile flags
+  // check for env
+  // write to config "Erlangs"
+
   char pattern[] = "/tmp/erln8.buildXXXXXX";
   char* tmp = g_mkdtemp(pattern);
   g_debug("building in %s\n", tmp);
@@ -379,15 +426,14 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
       output_path," && make && make install) | tee ",log_path, NULL);
   printf("%s\n",buildcmd);
   system(buildcmd);
+
+  set_config_kv("Erlangs", id, output_path);
   free(buildcmd);
   free(log_path);
+  free(source_path);
+  free(output_path);
 
-  // TODO:
-  // make "tee" optional? -q: quiet build
-  // check for compile flags
-  // check for env
-  // write to config "Erlangs"
-}
+ }
 
 int erln8(int argc, char* argv[]) {
   GError *error = NULL;
@@ -452,8 +498,13 @@ int erln8(int argc, char* argv[]) {
   return 0;
 }
 
+#define BRIGHT 1
+#define RED 31
+#define BG_BLACK 40
+
 
 int main(int argc, char* argv[]) {
+  //printf("%c[%d;%d;%dmerln8", 0x1B, BRIGHT,RED,BG_BLACK);
   printf("erln8 v0.1\n");
   // compiler will whine about it being deprecated, but taking it out
   // blows things up
