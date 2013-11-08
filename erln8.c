@@ -112,7 +112,7 @@ gboolean erl_on_path() {
   gchar *out;
   gchar *err;
   gint   status;
-  GError *error;
+  GError *error = NULL;
   g_spawn_command_line_sync ("which erl", &out, &err, &status, &error);
   if(!status) {
     return 1;
@@ -187,7 +187,7 @@ void init_main_config() {
   gchar* d = g_key_file_to_data (kf, NULL, &error);
   gchar* fn = get_configdir_file_name("config");
   printf("Writing to %s\n", fn);  
-  GError *error2;
+  GError *error2 = NULL;
   if(!g_file_set_contents(fn, d, -1, &error2)) {
     printf("Error writing config file :-(\n");
   }
@@ -222,8 +222,8 @@ void init_here(char* erlang) {
 
 void list_erlangs() {
   GKeyFile *kf = g_key_file_new();
-  GError *error;
-  GError *error2;
+  GError *error = NULL;
+  GError *error2 = NULL;
   gsize keycount;
   gchar* fn = get_configdir_file_name("config");
   if(g_key_file_load_from_file(kf, fn, G_KEY_FILE_NONE, &error)) {
@@ -305,7 +305,7 @@ char* which_erlang() {
   // TODO: free
   if(g_file_test(cfgfile, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)) {
     GKeyFile* kf = g_key_file_new();
-    GError* err;
+    GError* err = NULL;
     // TODO: free kf
     // TODO: free err
     gboolean b = g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err);
@@ -331,7 +331,7 @@ char* which_erlang() {
 char *get_config_kv(char *group, char *key) {
   gchar* cfgfile = get_configdir_file_name("config");
   GKeyFile* kf = g_key_file_new();
-  GError* err;
+  GError* err = NULL;
   gchar* val = NULL;
 
   // TODO: free kf
@@ -376,7 +376,7 @@ char *get_config_kv(char *group, char *key) {
 char **get_config_keys(char *group) {
   gchar* cfgfile = get_configdir_file_name("config");
   GKeyFile* kf = g_key_file_new();
-  GError* err;
+  GError* err = NULL;
   gchar** val = NULL;
 
   // TODO: free kf
