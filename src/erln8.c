@@ -54,7 +54,7 @@ static GOptionEntry entries[] =
   { "init", 0, 0, G_OPTION_ARG_NONE, &opt_init_erln8, "Initialize Erln8", NULL },
   { "use", 0, 0, G_OPTION_ARG_STRING, &opt_use, "Setup Erlang version in cwd", NULL },
   { "list", 0, 0, G_OPTION_ARG_NONE, &opt_list, "List available Erlang installations", NULL },
-  { "clone", 'c', 0, G_OPTION_ARG_STRING, &opt_clone, "Clone source repos", NULL },
+  { "clone", 0, 0, G_OPTION_ARG_STRING, &opt_clone, "Clone source repos", NULL },
   //{ "fetch", 'f', 0, G_OPTION_ARG_NONE, &opt_fetch, "Update source repos", NULL },
 
 
