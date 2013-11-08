@@ -457,6 +457,11 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   gchar* source_path = get_config_subdir_file_name("repos", repo);
   gchar* ld = g_strconcat("logs/build_", id, NULL);
   gchar* log_path    = get_configdir_file_name(ld);
+  gchar* bc = "";
+  if(build_config != NULL) {
+    bc = get_config_kv("Configs", build_config);
+  }
+
   free(ld);
 
   printf("Output path = %s\n", output_path);
@@ -470,7 +475,7 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   printf("Building source...\n");
   char *buildcmd = g_strconcat("(cd ", tmp,
       " && ./otp_build autoconf && ./configure --prefix=",
-      output_path," && make && make install) | tee ",log_path, NULL);
+      output_path," ", bc, " && make && make install) | tee ",log_path, NULL);
   printf("%s\n",buildcmd);
   system(buildcmd);
 
@@ -479,7 +484,8 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   free(log_path);
   free(source_path);
   free(output_path);
-
+  // TODO:
+  //free(bc);
  }
 
 int erln8(int argc, char* argv[]) {
