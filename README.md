@@ -7,6 +7,7 @@ erln8 (erl-in-ate) allows you to compile and manage multiple versions of Erlang 
 
 The cool thing about erln8 is that you only need to add it to your PATH to use it. No funny environment tweaking ;-) It works by reading an `erln8.config` config file out of the current directory, or by searching up the directory tree until it finds one. All the magic happens with the [execv](http://linux.die.net/man/3/execv) call, which has been around since the 70's. The erln8 process is *replaced* with erl, erlc, etc. Yay Unix!
 
+
 Watch my ~1 minute, low-tech demo of how it works [here](https://vimeo.com/78917182): 
 
 ## Status
@@ -16,6 +17,7 @@ Watch my ~1 minute, low-tech demo of how it works [here](https://vimeo.com/78917
 - going to add repo-add, repo-rm, config-add, config-rm commands, list tags from repos
 - lots of TODO's in the source
 - planning on adding a command to output something you can use in your prompt
+
 
 ## Installation
 
@@ -46,7 +48,10 @@ export PATH=$PATH:/where/you/put/erln8
 * gio-2.0
 
 ## Initial setup
-run this once, it creates `~/.erln8.d` and `~/.erln8.d/config`
+
+***If you haven't added the erln8 directory to your path, do it now. If you already have Erlang in your path, REMOVE IT!**
+
+Run this once, it creates `~/.erln8.d` and `~/.erln8.d/config`
 
 ```
 erln8 --init
