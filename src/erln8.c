@@ -61,7 +61,7 @@ static GOptionEntry entries[] =
   { "build", 0, 0, G_OPTION_ARG_NONE, &opt_build, "Build a specific version of OTP from source", NULL },
       { "repo", 0, 0, G_OPTION_ARG_STRING, &opt_repo, "Specifies repo name to build from", NULL },
       { "tag", 0, 0, G_OPTION_ARG_STRING, &opt_tag, "Specifies repo branch/tag to build from", NULL },
-      { "id", 0, 0, G_OPTION_ARG_STRING, &opt_id, "A user assigned name for ", NULL },
+      { "id", 0, 0, G_OPTION_ARG_STRING, &opt_id, "A user assigned name for a version of Erlang", NULL },
       { "config", 0, 0, G_OPTION_ARG_STRING, &opt_config, "Build configuration", NULL },
 
   { "show", 0, 0, G_OPTION_ARG_NONE, &opt_show, "Show the configured version of Erlang", NULL },
