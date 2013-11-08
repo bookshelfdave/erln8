@@ -3,7 +3,7 @@ erln8 - an Erlang version manager
 
 ## What is it?
 
-erln8 (erl-in-ate) allows you to compile and manage multiple versions of Erlang from source. Instead of downloading individual source packages, it downloads the Github OTP mirror so you are essentially downloading any available version to compile :-) Additionaly, you'll be able to add your own repos to support custom OTP patches etc.
+erln8 (erl-in-ate) allows you to compile and manage multiple versions of Erlang from source. Instead of downloading individual source packages, it downloads the Github OTP mirror so you are essentially downloading all available versions at once  :-) Additionaly, you'll be able to add your own repos to support custom OTP patches etc.
 
 The cool thing about erln8 is that you only need to add it to your PATH to use it. No funny environment tweaking ;-) It works by reading an `erln8.config` config file out of the current directory, or by searching up the directory tree until it finds one. All the magic happens with the [execv](http://linux.die.net/man/3/execv) call, which has been around since the 70's. The erln8 process is *replaced* with erl, erlc, etc. Yay Unix!
 
@@ -11,6 +11,7 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 Watch my ~1 minute, low-tech demo of how it works [here](https://vimeo.com/78917182): 
 
 ## Status
+- looking to cleanup mem mgmt, error handling etc weekend of 11/9+
 - only supports erl, erlc, escript commands from Erlang dist
 	- if there are any other binaries you need from an Erlang distro, just symlink the binary to erln8 (see the Makefile for an example of how this works)
 - Pretty buggy/crashy at the moment, simple fixes. Definitely not ready for prime time yet.
@@ -102,6 +103,9 @@ This command simply creates an `erln8.config` file in the cwd. You can even edit
 [Config]
 Erlang=r16b02
 ```
+
+## Setting up a default version to use
+
 
 
 ##Linking an Existing Erlang
