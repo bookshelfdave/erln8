@@ -11,7 +11,8 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 Watch my ~1 minute, low-tech demo of how it works [here](https://vimeo.com/78917182): 
 
 ## Status
-
+- only supports erl, erlc, escript commands from Erlang dist
+	- if there are any other binaries you need from an Erlang distro, just symlink the binary to erln8 (see the Makefile for an example of how this works)
 - Pretty buggy/crashy at the moment, simple fixes. Definitely not ready for prime time yet.
 - multi-repo cloning/building probably doesn't work atm
 - going to add repo-add, repo-rm, config-add, config-rm commands, list tags from repos
