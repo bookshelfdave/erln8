@@ -183,7 +183,7 @@ void init_main_config() {
                         "osx_gcc_env",
                         "CC=gcc-4.2 CPPFLAGS='-DNDEBUG' MAKEFLAGS='-j 3'");
 
-  GError *error;
+  GError *error = NULL;
   gchar* d = g_key_file_to_data (kf, NULL, &error);
   gchar* fn = get_configdir_file_name("config");
   printf("Writing to %s\n", fn);  
