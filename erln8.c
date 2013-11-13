@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/param.h>
+#include <glib/gstdio.h>
 
 // GIO stuff
 #include <glib-object.h>
@@ -23,8 +24,12 @@
  */
 
 #define G_LOG_DOMAIN    ((gchar*) 0)
-#define SOURCES "sources"
-#define MD5     "MD5"
+
+#define BRIGHT 1
+#define RED 31
+#define BG_BLACK 40
+
+
 static gboolean opt_init_erln8 = FALSE;
 static gboolean opt_debug      = FALSE;
 static gchar*   opt_use        = NULL;
@@ -34,16 +39,22 @@ static gboolean opt_fetch      = FALSE;
 static gboolean opt_build      = FALSE;
 static gboolean opt_show       = FALSE;
 static gchar*   opt_clone      = NULL;
-static gboolean opt_color      = TRUE;
+//static gboolean opt_color      = TRUE;
 
 static gchar*   opt_repo       = NULL;
 static gchar*   opt_tag        = NULL;
 static gchar*   opt_id         = NULL;
 static gchar*   opt_config     = NULL;
 
-static gboolean  opt_configs     = FALSE;
-static gboolean  opt_repos       = FALSE;
-static gchar*    opt_link        = NULL;
+static gboolean  opt_configs   = FALSE;
+static gboolean  opt_repos     = FALSE;
+static gchar*    opt_link      = NULL;
+static gchar*    opt_unlink    = NULL;
+
+//static gchar*    opt_repoadd   = NULL;
+//static gchar*    opt_reporm    = NULL;
+//static gchar*    opt_configadd = NULL;
+//static gchar*    opt_configrm  = NULL;
 
 
 static const gchar* homedir;
@@ -55,8 +66,7 @@ static GOptionEntry entries[] =
   { "use", 0, 0, G_OPTION_ARG_STRING, &opt_use, "Setup Erlang version in cwd", NULL },
   { "list", 0, 0, G_OPTION_ARG_NONE, &opt_list, "List available Erlang installations", NULL },
   { "clone", 0, 0, G_OPTION_ARG_STRING, &opt_clone, "Clone source repos", NULL },
-  //{ "fetch", 'f', 0, G_OPTION_ARG_NONE, &opt_fetch, "Update source repos", NULL },
-
+  { "fetch", 'f', 0, G_OPTION_ARG_NONE, &opt_fetch, "Update source repos", NULL },
 
   { "build", 0, 0, G_OPTION_ARG_NONE, &opt_build, "Build a specific version of OTP from source", NULL },
       { "repo", 0, 0, G_OPTION_ARG_STRING, &opt_repo, "Specifies repo name to build from", NULL },
@@ -69,14 +79,13 @@ static GOptionEntry entries[] =
   { "repos", 0, 0, G_OPTION_ARG_NONE, &opt_repos, "", NULL },
 
   { "link", 0, 0, G_OPTION_ARG_STRING, &opt_link, "", NULL },
-  //{ "unlink", 0, 0, G_OPTION_ARG_STRING, &opt_link, "", NULL },
+  { "unlink", 0, 0, G_OPTION_ARG_STRING, &opt_unlink, "", NULL },
 
-  //{ "rm-repo", 0, 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
-  //{ "add-repo", 0, 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
+  //{ "repo-add", 0, 0, G_OPTION_ARG_NONE, &opt_repoadd, "Add a repo", NULL },
+  //{ "repo-rm", 0, 0, G_OPTION_ARG_NONE, &opt_reporm, "Remote a repo", NULL },
 
-  //{ "rm-config", 0, 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
-  //{ "add-config", 0, 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
-
+  //{ "config-add", 0, 0, G_OPTION_ARG_NONE, &opt_configadd, "Add a compile config", NULL },
+  //{ "config-rm", 0, 0, G_OPTION_ARG_NONE, &opt_configrm, "Remove a compile config", NULL },
 
   { "debug", 0, 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
 
@@ -90,7 +99,7 @@ void erln8_log( const gchar *log_domain,
                 const gchar *message,
                 gpointer user_data ) {
   if(opt_debug) {
-    printf("%s",message);
+    fprintf(stderr, "%s",message);
   }
   return;
 }
@@ -98,31 +107,23 @@ void erln8_log( const gchar *log_domain,
 // TODO: move glib logging
 // also, I always hated the critical output from glib
 void erln8_error(char *msg) {
-  printf("ERROR: %s\n", msg);
+  fprintf(stderr, "ERROR: %s\n", msg);
 }
 
 void erln8_error_and_exit(char *msg) {
   fprintf(stderr, "ERROR: %s\n", msg);
-  exit(-1);
+  exit(42);
 }
 
-
-
 gboolean erl_on_path() {
-  gchar *out;
-  gchar *err;
-  gint   status;
-  GError *error = NULL;
-  g_spawn_command_line_sync ("which erl", &out, &err, &status, &error);
-  if(!status) {
+  int status = system("which erl");
+  // checking the codes explicitly, not very C like
+  if(status == 0) {
     return 1;
   } else {
     return 0;
   }
 }
-
-char* load_config() {
-  }
 
 gchar* get_configdir_file_name(char* filename) {
   gchar *configfilename = g_strconcat(homedir, "/.erln8.d/", filename, (char*)0);
@@ -137,7 +138,6 @@ gchar* get_config_subdir_file_name(char *subdir, char* filename) {
 gboolean check_home() {
   gchar *configdir = g_strconcat(homedir, "/.erln8.d", (char*)0);
   g_debug("Checking config dir %s\n", configdir);
-  //g_path_get_basename ()
   gboolean result = g_file_test(configdir, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR);
   free(configdir);
   return result;
@@ -149,7 +149,6 @@ void mk_config_subdir(char *subdir) {
   if(g_mkdir(dirname, S_IRWXU)) {
     g_free(dirname);
     erln8_error_and_exit("Can't create directory");
-    return;
   } else {
     g_free(dirname);
   }
@@ -245,9 +244,10 @@ void list_erlangs() {
 void initialize() {
   if(check_home()) {
     erln8_error_and_exit("Configuration directory ~/.erln8.d already exists");
-  //} //else if(erl_on_path()) {
-    //erln8_error_and_exit("Erlang already exists on the current PATH");
   } else {
+    if(erl_on_path()) {
+      g_warning("Erlang already exists on the current PATH");
+    }
     // create the top level config directory, then create all subdirs
     gchar* dirname = g_strconcat(homedir, "/.erln8.d",(char*)0);
     g_debug("Creating %s\n", dirname);
@@ -308,7 +308,7 @@ char* which_erlang() {
     GError* err = NULL;
     // TODO: free kf
     // TODO: free err
-    gboolean b = g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err);
+    /*gboolean b =*/ g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err);
     if(!g_key_file_has_group(kf, "Config")) {
       erln8_error_and_exit("erln8 Config group not defined in erln8.config\n");
       return NULL;
@@ -338,11 +338,8 @@ char *get_config_kv(char *group, char *key) {
   // TODO: free err
   if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
       if(err != NULL) {
-        // TODO: this err msg is broken
         fprintf (stderr,
             "Unable to load keyfile ~/.erln8.d/config: %s\n",
-            group,
-            key,
             err->message);
         g_error_free(err);
       } else {
@@ -385,7 +382,6 @@ char **get_config_keys(char *group) {
       if(err != NULL) {
         fprintf (stderr,
             "Unable to load keyfile ~/.erln8.d/config: %s\n",
-            group,
             err->message);
         g_error_free(err);
       } else {
@@ -413,8 +409,6 @@ char *set_config_kv(char *group, char *key, char *val) {
       if(err != NULL) {
         fprintf (stderr,
             "Unable to load keyfile ~/.erln8.d/config: %s\n",
-            group,
-            key,
             err->message);
         g_error_free(err);
       } else {
@@ -533,15 +527,15 @@ int erln8(int argc, char* argv[]) {
 
   if(opt_repos) {
     gchar **repos = get_config_keys("Repos");
-    for(;*repos != NULL; *repos++) {
-      printf("%s\n", *repos);
+    while(*repos) {
+      printf("%s\n", *repos++);
     }
   }
 
   if(opt_configs) {
     gchar **configs = get_config_keys("Configs");
-    for(;*configs != NULL; *configs++) {
-      printf("%s\n", *configs);
+    while(*configs) {
+      printf("%s\n", *configs++);
     }
   }
 
@@ -589,9 +583,6 @@ int erln8(int argc, char* argv[]) {
   return 0;
 }
 
-#define BRIGHT 1
-#define RED 31
-#define BG_BLACK 40
 
 
 int main(int argc, char* argv[]) {
@@ -619,5 +610,5 @@ int main(int argc, char* argv[]) {
     // can't free s
     execv(s, argv);
   }
-
+  return 0;
  }
