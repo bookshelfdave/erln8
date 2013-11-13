@@ -97,25 +97,27 @@ void erln8_log( const gchar *log_domain,
                 GLogLevelFlags log_level,
                 const gchar *message,
                 gpointer user_data ) {
-  if(opt_debug) {
-    fprintf(stderr, "%s",message);
-  } else {
-    switch(log_level & G_LOG_LEVEL_MASK) {
-      case G_LOG_FLAG_RECURSION:
-      case G_LOG_LEVEL_CRITICAL:
-      case G_LOG_LEVEL_ERROR:
-          fprintf(stderr, "ERROR: %s",message);
-          break;
-      case G_LOG_LEVEL_WARNING:
-          fprintf(stderr, "WARNING: %s",message);
-          break;
-      case G_LOG_LEVEL_INFO:
-      case G_LOG_LEVEL_MESSAGE:
-          fprintf(stderr, "INFO: %s",message);
-          break;
-      default:
-          fprintf(stderr, "UNHANDLED: %s",message);
-    }
+  switch(log_level & G_LOG_LEVEL_MASK) {
+    case G_LOG_FLAG_RECURSION:
+    case G_LOG_LEVEL_CRITICAL:
+    case G_LOG_LEVEL_ERROR:
+        fprintf(stderr, "ERROR: %s",message);
+        break;
+    case G_LOG_LEVEL_WARNING:
+        fprintf(stderr, "WARNING: %s",message);
+        break;
+    case G_LOG_LEVEL_INFO:
+    case G_LOG_LEVEL_MESSAGE:
+        fprintf(stderr, "INFO: %s",message);
+        break;
+    case G_LOG_LEVEL_DEBUG:
+        if(opt_debug) {
+          fprintf(stderr, "DEBUG: %s",message);
+        }
+        break;
+    default:
+        fprintf(stderr, "UNHANDLED: %s",message);
+        break;
   }
   return;
 }
