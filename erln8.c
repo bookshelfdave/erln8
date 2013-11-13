@@ -88,7 +88,6 @@ static GOptionEntry entries[] =
   //{ "config-rm", 0, 0, G_OPTION_ARG_NONE, &opt_configrm, "Remove a compile config", NULL },
 
   { "debug", 0, 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
-
   //{ "no-color", 'N', 0, G_OPTION_ARG_NONE, &opt_color, "Don't use color output", NULL },
   //{ "buildable-otps", 'o', 0, G_OPTION_ARG_NONE, &opt_buildable, "List tags to build from configured source repos", NULL },
   { NULL }
@@ -100,6 +99,23 @@ void erln8_log( const gchar *log_domain,
                 gpointer user_data ) {
   if(opt_debug) {
     fprintf(stderr, "%s",message);
+  } else {
+    switch(log_level & G_LOG_LEVEL_MASK) {
+      case G_LOG_FLAG_RECURSION:
+      case G_LOG_LEVEL_CRITICAL:
+      case G_LOG_LEVEL_ERROR:
+          fprintf(stderr, "ERROR: %s",message);
+          break;
+      case G_LOG_LEVEL_WARNING:
+          fprintf(stderr, "WARNING: %s",message);
+          break;
+      case G_LOG_LEVEL_INFO:
+      case G_LOG_LEVEL_MESSAGE:
+          fprintf(stderr, "INFO: %s",message);
+          break;
+      default:
+          fprintf(stderr, "UNHANDLED: %s",message);
+    }
   }
   return;
 }
@@ -139,7 +155,7 @@ gboolean check_home() {
   gchar *configdir = g_strconcat(homedir, "/.erln8.d", (char*)0);
   g_debug("Checking config dir %s\n", configdir);
   gboolean result = g_file_test(configdir, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR);
-  free(configdir);
+  g_free(configdir);
   return result;
 }
 
@@ -166,7 +182,6 @@ void init_main_config() {
                         "basho",
                         "https://github.com/basho/otp.git");
 
-
   g_key_file_set_string(kf,
                         "Configs",
                         "osx_llvm",
@@ -184,13 +199,15 @@ void init_main_config() {
 
   GError *error = NULL;
   gchar* d = g_key_file_to_data (kf, NULL, &error);
+
   gchar* fn = get_configdir_file_name("config");
-  printf("Writing to %s\n", fn);  
+  printf("Creating erln8 config file: %s\n", fn);  
   GError *error2 = NULL;
   if(!g_file_set_contents(fn, d, -1, &error2)) {
     printf("Error writing config file :-(\n");
   }
-  free(fn);
+  g_free(fn);
+  g_free(d);
   g_key_file_free(kf);
 }
 
@@ -205,7 +222,7 @@ void init_here(char* erlang) {
   GError *error = NULL;
   gchar* d = g_key_file_to_data (kf, NULL, &error);
   gchar* fn = "./erln8.config";
-  printf("Writing to %s\n", fn);  
+  fprintf(stdout, "Writing to %s\n", fn);
 
   GError *error2 = NULL;
   if(!g_file_set_contents(fn, d, -1, &error2)) {
@@ -236,7 +253,7 @@ void list_erlangs() {
     //g_strfreev(keys);
   }
   // TODO: free error
-  free(fn);
+  g_free(fn);
   g_key_file_free(kf);
 }
 
@@ -294,7 +311,7 @@ char* configcheck(char *d) {
 char* configcheckfromcwd() {
   char *d = getcwd(NULL, MAXPATHLEN);
   char *retval = configcheck(d);
-  free(d);
+  g_free(d);
   return retval;
 }
 
@@ -364,7 +381,7 @@ char *get_config_kv(char *group, char *key) {
     }
   }
 
-  free(cfgfile);
+  g_free(cfgfile);
   return val;
 }
 
@@ -393,7 +410,7 @@ char **get_config_keys(char *group) {
     val = g_key_file_get_keys(kf, group, NULL, &kferr);
   }
 
-  free(cfgfile);
+  g_free(cfgfile);
   return val;
 }
 
@@ -425,18 +442,14 @@ char *set_config_kv(char *group, char *key, char *val) {
     if(!g_file_set_contents(fn, d, -1, &error2)) {
       printf("Error writing config file :-(\n");
     }
-    free(fn);
+    g_free(fn);
     g_key_file_free(kf);
   }
 
-  free(cfgfile);
+  g_free(cfgfile);
   return val;
 }
 
-
-
-
-// TODO: free strings!
 void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   // TODO:
   // make "tee" optional? -q: quiet build
@@ -451,35 +464,35 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   gchar* source_path = get_config_subdir_file_name("repos", repo);
   gchar* ld = g_strconcat("logs/build_", id, NULL);
   gchar* log_path    = get_configdir_file_name(ld);
-  gchar* bc = "";
+
+  gchar* bc = NULL;
   if(build_config != NULL) {
     bc = get_config_kv("Configs", build_config);
   }
 
-  free(ld);
+  g_free(ld);
 
-  printf("Output path = %s\n", output_path);
-  printf("Source path = %s\n", source_path);
-  printf("Log path = %s\n", log_path);
+  g_debug("Output path = %s\n", output_path);
+  g_debug("Source path = %s\n", source_path);
+  g_debug("Log path = %s\n", log_path);
 
   printf("Copying source...\n");
   char *copycmd = g_strconcat("cd ", source_path, " && git archive ", tag, " | (cd ", tmp, "; tar x)", NULL);
+  g_debug("%s",copycmd);
   system(copycmd);
-  free(copycmd);
-  printf("Building source...\n");
+  g_free(copycmd);
+  printf("Building source [%s]...\n", log_path);
   char *buildcmd = g_strconcat("(cd ", tmp,
       " && ./otp_build autoconf && ./configure --prefix=",
-      output_path," ", bc, " && make && make install) | tee ",log_path, NULL);
-  printf("%s\n",buildcmd);
+      output_path," ", bc == NULL ? "" : bc, " && make && make install) | tee ", log_path, NULL);
+  g_debug("%s\n",buildcmd);
   system(buildcmd);
-
   set_config_kv("Erlangs", id, output_path);
-  free(buildcmd);
-  free(log_path);
-  free(source_path);
-  free(output_path);
-  // TODO:
-  //free(bc);
+  g_free(buildcmd);
+  g_free(log_path);
+  g_free(source_path);
+  g_free(output_path);
+  g_free(bc);
  }
 
 int erln8(int argc, char* argv[]) {
@@ -493,7 +506,6 @@ int erln8(int argc, char* argv[]) {
     g_error("option parsing failed: %s\n", error->message);
   }
 
-  g_log_set_handler(G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG,  erln8_log, NULL);
 
   g_debug("argv[0] = [%s]\n",argv[0]);
 
@@ -521,7 +533,7 @@ int erln8(int argc, char* argv[]) {
     } else {
       gchar* cmd = g_strconcat("git clone ", repo, " ", path, NULL);
       system(cmd);
-      free(cmd);
+      g_free(cmd);
     }
   }
 
@@ -578,7 +590,7 @@ int erln8(int argc, char* argv[]) {
   if(opt_show) {
     char* erl = which_erlang();
     printf("%s\n", erl);
-    free(erl);
+    g_free(erl);
   }
   return 0;
 }
@@ -590,7 +602,8 @@ int main(int argc, char* argv[]) {
   // blows things up
   // used for GIO
   g_type_init();
-
+  g_log_set_always_fatal(G_LOG_LEVEL_ERROR);
+  g_log_set_handler(G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_ERROR | G_LOG_FLAG_RECURSION | G_LOG_FLAG_FATAL,  erln8_log, NULL);
   homedir = g_get_home_dir();
   g_debug("home directory = %s\n", homedir);
 

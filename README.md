@@ -11,7 +11,7 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 Watch my ~1 minute, low-tech demo of how it works [here](https://vimeo.com/78917182): 
 
 ## Status
-- looking to cleanup mem mgmt, error handling etc weekend of 11/9+
+- looking to cleanup mem mgmt, error handling etc
 - only supports erl, erlc, escript commands from Erlang dist
 	- if there are any other binaries you need from an Erlang distro, just symlink the binary to erln8 (see the Makefile for an example of how this works)
 - Pretty buggy/crashy at the moment, simple fixes. Definitely not ready for prime time yet.
