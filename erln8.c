@@ -23,6 +23,13 @@
  *   don't hardcode my paths in the default config :-)
  */
 
+
+/* memory management note:
+   Since this program either exits or calls exec, there may be some
+   pointers that aren't freed before calling g_error. I don't really
+   care about these.
+*/
+
 #define G_LOG_DOMAIN    ((gchar*) 0)
 
 #define BRIGHT 1
@@ -301,7 +308,7 @@ void initialize() {
     gchar* dirname = g_strconcat(homedir, "/.erln8.d",(char*)0);
     g_debug("Creating %s\n", dirname);
     if(g_mkdir(dirname, S_IRWXU)) {
-      g_error("Can't create directory\n");
+      g_error("Can't create directory %s\n", dirname);
       g_free(dirname);
       return;
     } else {
@@ -322,7 +329,6 @@ char* configcheck(char *d) {
 
   if(g_file_query_exists(gf, NULL)) {
       char *cf = g_file_get_path(gf);
-      //g_free(cf);
       retval = cf;
   } else {
       if(g_file_has_parent(gd, NULL)) {
@@ -347,28 +353,37 @@ char* configcheckfromcwd() {
   return retval;
 }
 
-
-// TODO: this function leaks badly!
 char* which_erlang() {
   char* cfgfile = configcheckfromcwd();
-  // TODO: free
-  if(g_file_test(cfgfile, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)) {
+  if(g_file_test(cfgfile, G_FILE_TEST_EXISTS |
+                          G_FILE_TEST_IS_REGULAR)) {
     GKeyFile* kf = g_key_file_new();
     GError* err = NULL;
-    // TODO: free kf
-    // TODO: free err
-    /*gboolean b =*/ g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err);
-    if(!g_key_file_has_group(kf, "Config")) {
-      g_error("erln8 Config group not defined in erln8.config\n");
-      return NULL;
-    } else {
-      if(g_key_file_has_key(kf, "Config", "Erlang", &err)) {
-        gchar* erlversion = g_key_file_get_string(kf, "Config", "Erlang", &err);
-        // THIS VALUE MUST BE FREED
-        return erlversion;
+    if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
+      if(err != NULL) {
+        g_error("Cannot load %s: %s\n", cfgfile, err->message);
       } else {
-        g_error("Missing Erlang | version\n");
+        g_error("Cannot load %s\n", cfgfile);
+      }
+    } else {
+      if(!g_key_file_has_group(kf, "Config")) {
+        g_error("Config group not defined in %s\n", cfgfile);
         return NULL;
+      } else {
+        err = NULL;
+        if(g_key_file_has_key(kf, "Config", "Erlang", &err)) {
+          gchar* erlversion = g_key_file_get_string(kf, "Config", "Erlang", &err);
+          g_free(cfgfile);
+          // THIS VALUE MUST BE FREED
+          return erlversion;
+        } else {
+          if(err != NULL) {
+            g_error("Missing Erlang | version: %s\n", err->message);
+          } else {
+            g_error("Missing Erlang | version\n");
+          }
+          return NULL;
+        }
       }
     }
   } else {
