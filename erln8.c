@@ -17,7 +17,6 @@
 #include <errno.h>
 /*
  * TODO:
- *   free all GErrors (and... everything else)
  *   error checking for all calls
  *   g_strfreev(keys);
  *   don't hardcode my paths in the default config :-)
@@ -26,8 +25,9 @@
 
 /* memory management note:
    Since this program either exits or calls exec, there may be some
-   pointers that aren't freed before calling g_error. I don't really
-   care about these.
+   pointers that aren't freed before calling g_error. I guess I don't
+   really care about these. If you feel strongly about this,
+   please fix and submit a pull request on Github.
 */
 
 #define G_LOG_DOMAIN    ((gchar*) 0)
@@ -59,46 +59,61 @@ static gchar*    opt_link      = NULL;
 static gchar*    opt_unlink    = NULL;
 static gboolean  opt_force     = FALSE;
 
-//static gchar*    opt_repoadd   = NULL;
-//static gchar*    opt_reporm    = NULL;
-//static gchar*    opt_configadd = NULL;
-//static gchar*    opt_configrm  = NULL;
+static gchar*    opt_repoadd   = NULL;
+static gchar*    opt_reporm    = NULL;
+static gchar*    opt_configadd = NULL;
+static gchar*    opt_configrm  = NULL;
 
 
 static const gchar* homedir;
 
 static GOptionEntry entries[] =
 {
-  { "init", 0, 0, G_OPTION_ARG_NONE, &opt_init_erln8, "Initialize Erln8", NULL },
-  { "use", 0, 0, G_OPTION_ARG_STRING, &opt_use, "Setup Erlang version in cwd", NULL },
-  { "list", 0, 0, G_OPTION_ARG_NONE, &opt_list, "List available Erlang installations", NULL },
-  { "clone", 0, 0, G_OPTION_ARG_STRING, &opt_clone, "Clone source repos", NULL },
-  { "fetch", 0, 0, G_OPTION_ARG_NONE, &opt_fetch, "Update source repos", NULL },
+  { "init", 0, 0, G_OPTION_ARG_NONE, &opt_init_erln8,
+    "Initializes erln8", NULL },
+  { "use", 0, 0, G_OPTION_ARG_STRING, &opt_use,
+    "Setup the current directory to use a specific verion of Erlang", "id"},
+  { "list", 0, 0, G_OPTION_ARG_NONE, &opt_list,
+    "List available Erlang installations", NULL },
+  { "clone", 0, 0, G_OPTION_ARG_STRING, &opt_clone,
+    "Clone an Erlang source repository", "repo"},
+  { "fetch", 0, 0, G_OPTION_ARG_NONE, &opt_fetch,
+    "Update source repos", "repo"},
+  { "build", 0, 0, G_OPTION_ARG_NONE, &opt_build,
+    "Build a specific version of OTP from source", NULL },
+  { "repo", 0, 0, G_OPTION_ARG_STRING, &opt_repo,
+    "Specifies repo name to build from", "repo"},
+  { "tag", 0, 0, G_OPTION_ARG_STRING, &opt_tag,
+    "Specifies repo branch/tag to build from", "git_tag"},
+  { "id", 0, 0, G_OPTION_ARG_STRING, &opt_id,
+    "A user assigned name for a version of Erlang", "id"},
+  { "config", 0, 0, G_OPTION_ARG_STRING, &opt_config,
+    "Build configuration", "config"},
+  { "show", 0, 0, G_OPTION_ARG_NONE, &opt_show,
+    "Show the configured version of Erlang in the current working directory", NULL },
+  { "configs", 0, 0, G_OPTION_ARG_NONE, &opt_configs,
+    "List build configs", NULL },
+  { "repos", 0, 0, G_OPTION_ARG_NONE, &opt_repos,
+    "List build repos", NULL },
+  { "link", 0, 0, G_OPTION_ARG_STRING, &opt_link,
+    "Link a non-erln8 build of Erlang to erln8", NULL },
+  { "unlink", 0, 0, G_OPTION_ARG_STRING, &opt_unlink,
+    "Unlink a non-erln8 build of Erlang from erln8", NULL },
+  { "force", 0, 0, G_OPTION_ARG_NONE, &opt_force,
+    "Use the force", NULL },
+  { "repo-add-url", 0, 0, G_OPTION_ARG_STRING, &opt_repoadd,
+    "Add a repo", "repo-id"},
+  { "repo-rm-url", 0, 0, G_OPTION_ARG_STRING, &opt_reporm,
+    "Remote a repo", "repo-id"},
+  { "config-add", 0, 0, G_OPTION_ARG_STRING, &opt_configadd,
+    "Add an Erlang build config", "config-id"},
+  { "config-rm", 0, 0, G_OPTION_ARG_STRING, &opt_configrm,
+    "Remove an Erlang build config", "config-id"},
 
-  { "build", 0, 0, G_OPTION_ARG_NONE, &opt_build, "Build a specific version of OTP from source", NULL },
-      { "repo", 0, 0, G_OPTION_ARG_STRING, &opt_repo, "Specifies repo name to build from", NULL },
-      { "tag", 0, 0, G_OPTION_ARG_STRING, &opt_tag, "Specifies repo branch/tag to build from", NULL },
-      { "id", 0, 0, G_OPTION_ARG_STRING, &opt_id, "A user assigned name for a version of Erlang", NULL },
-      { "config", 0, 0, G_OPTION_ARG_STRING, &opt_config, "Build configuration", NULL },
-
-  { "show", 0, 0, G_OPTION_ARG_NONE, &opt_show, "Show the configured version of Erlang", NULL },
-  { "configs", 0, 0, G_OPTION_ARG_NONE, &opt_configs, "", NULL },
-  { "repos", 0, 0, G_OPTION_ARG_NONE, &opt_repos, "", NULL },
-
-  { "link", 0, 0, G_OPTION_ARG_STRING, &opt_link, "", NULL },
-  { "unlink", 0, 0, G_OPTION_ARG_STRING, &opt_unlink, "", NULL },
-
-  { "force", 0, 0, G_OPTION_ARG_NONE, &opt_force, "Use the force", NULL },
-
-  //{ "repo-add", 0, 0, G_OPTION_ARG_NONE, &opt_repoadd, "Add a repo", NULL },
-  //{ "repo-rm", 0, 0, G_OPTION_ARG_NONE, &opt_reporm, "Remote a repo", NULL },
-
-  //{ "config-add", 0, 0, G_OPTION_ARG_NONE, &opt_configadd, "Add a compile config", NULL },
-  //{ "config-rm", 0, 0, G_OPTION_ARG_NONE, &opt_configrm, "Remove a compile config", NULL },
-
-  { "debug", 0, 0, G_OPTION_ARG_NONE, &opt_debug, "Debug Erln8", NULL },
   //{ "no-color", 'N', 0, G_OPTION_ARG_NONE, &opt_color, "Don't use color output", NULL },
-  //{ "buildable-otps", 'o', 0, G_OPTION_ARG_NONE, &opt_buildable, "List tags to build from configured source repos", NULL },
+  //{ "buildable", 'o', 0, G_OPTION_ARG_NONE, &opt_buildable, "List tags to build from configured source repos", NULL },
+  { "debug", 0, 0, G_OPTION_ARG_NONE, &opt_debug,
+    "Debug Erln8", NULL },
   { NULL }
 };
 
@@ -191,6 +206,14 @@ void mk_config_subdir(char *subdir) {
   } else {
     g_free(dirname);
   }
+}
+
+
+void git_init_config() {
+  system("echo \"logs/\notps/\nrepos/\n\" > ~/.erln8.d/.gitignore ");
+  system("git init ~/.erln8.d/");
+  system("git add ~/.erln8.d/cofig");
+  system("git commit -am \"erln8 init\"");
 }
 
 
@@ -675,6 +698,35 @@ int erln8(int argc, char* argv[]) {
     return 0;
   }
 
+  if(opt_repoadd) {
+    if(opt_repoadd == NULL || opt_repo != NULL) {
+      g_message("Please use --repo-add-url along with --repo.\n");
+      g_message("Example: erln8 --repo-add-url=https://github.com/foobar/otp.git --repo=foobar\n");
+      g_error("Incomplete repo specification\n");
+    } else {
+      printf("RepoURL %s\n", opt_repoadd);
+      printf("RepoID  %s\n", opt_repo);
+      g_error("Not implemented\n");
+      return 0;
+    }
+  }
+
+  if(opt_reporm) {
+    printf("Removing %s\n", opt_reporm);
+    g_error("Not implemented\n");
+    return 0;
+  }
+
+  if(opt_configadd) {
+    g_error("Not implemented\n");
+    return 0;
+  }
+
+  if(opt_configrm) {
+    printf("Removing %s\n", opt_configrm);
+    g_error("Not implemented\n");
+    return 0;
+  }
 
   if(opt_buildable) {
     printf("Not implemented\n");
@@ -688,16 +740,20 @@ int erln8(int argc, char* argv[]) {
     return 0;
   }
 
-  printf("erln8: the sneaky Erlang version manager\n");
+  printf("\nerln8: the sneaky Erlang version manager\n");
   printf("(c) 2013 Dave Parfitt\n");
-  printf("Licensed under the Apache License, Version 2.0\n\n");
-  printf("For more information, try erln8 --help\n");
+  printf("Licensed under the Apache License, Version 2.0\n");
+  printf("For more information, try erln8 --help\n\n");
   return 0;
 }
 
 
 
 int main(int argc, char* argv[]) {
+
+
+  git_init_config();
+   exit(0);
   // compiler will whine about it being deprecated, but taking it out
   // blows things up
   // used for GIO
@@ -706,6 +762,7 @@ int main(int argc, char* argv[]) {
   g_log_set_handler(G_LOG_DOMAIN, G_LOG_LEVEL_DEBUG |
                                   G_LOG_LEVEL_ERROR |
                                   G_LOG_LEVEL_WARNING |
+                                  G_LOG_LEVEL_MESSAGE |
                                   G_LOG_FLAG_RECURSION |
                                   G_LOG_FLAG_FATAL,  erln8_log, NULL);
   homedir = g_get_home_dir();
