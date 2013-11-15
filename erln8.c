@@ -102,6 +102,7 @@ static GOptionEntry entries[] =
   { NULL }
 };
 
+
 void erln8_log( const gchar *log_domain,
                 GLogLevelFlags log_level,
                 const gchar *message,
@@ -132,6 +133,8 @@ void erln8_log( const gchar *log_domain,
   return;
 }
 
+// see if erlang i son the users path already
+// if so, erln8 won't work correctly
 gboolean erl_on_path() {
   int status = system("which erl > /dev/null");
   if(status == 0) {
@@ -141,6 +144,7 @@ gboolean erl_on_path() {
   }
 }
 
+// get a filename in the main config directory
 gchar* get_configdir_file_name(char* filename) {
   gchar *configfilename = g_strconcat(homedir,
                                       "/.erln8.d/",
@@ -149,6 +153,8 @@ gchar* get_configdir_file_name(char* filename) {
   return configfilename;
 }
 
+
+// get a filename in a subdir of the config directory
 gchar* get_config_subdir_file_name(char *subdir, char* filename) {
   gchar *configfilename = g_strconcat(homedir,
                                       "/.erln8.d/",
@@ -159,6 +165,9 @@ gchar* get_config_subdir_file_name(char *subdir, char* filename) {
   return configfilename;
 }
 
+
+// check and see if the erln8 config directory exists
+// probably poorly named
 gboolean check_home() {
   gchar *configdir = g_strconcat(homedir, "/.erln8.d", (char*)0);
   g_debug("Checking config dir %s\n", configdir);
@@ -169,6 +178,7 @@ gboolean check_home() {
   return result;
 }
 
+// make a subdirectory in the ~/.erln8.d directory
 void mk_config_subdir(char *subdir) {
   gchar* dirname = g_strconcat(homedir,
                                "/.erln8.d/",
@@ -183,6 +193,10 @@ void mk_config_subdir(char *subdir) {
   }
 }
 
+
+// generate the initial ~/.erln8.d/config file with some
+// default settings
+// TODO: more settings, Linux, FreeBSD etc
 void init_main_config() {
   GKeyFile *kf = g_key_file_new();
   g_key_file_set_string(kf,
@@ -235,6 +249,9 @@ void init_main_config() {
 }
 
 
+// write an ./erln8.config file into the cwd
+// won't override an existing file
+// unless the user specifies --force
 void init_here(char* erlang) {
   GKeyFile *kf = g_key_file_new();
   g_key_file_set_string(kf,
@@ -267,6 +284,7 @@ void init_here(char* erlang) {
   g_key_file_free(kf);
 }
 
+// list installed version of Erlang
 void list_erlangs() {
   GKeyFile *kf = g_key_file_new();
   GError *error = NULL;
@@ -297,6 +315,9 @@ void list_erlangs() {
 }
 
 
+// create ~/.erln8.d, ~/.erln8.d/config + related subdirs
+// not atomic, if something blows up in here, the user will get
+// a partial ~/.erln8.d tree
 void initialize() {
   if(check_home()) {
     g_error("Configuration directory ~/.erln8.d already exists\n");
@@ -321,6 +342,7 @@ void initialize() {
   }
 }
 
+// search up the directory tree for a erln8.config to use
 char* configcheck(char *d) {
   char *retval = NULL;
   char *f = g_strconcat(d, "/erln8.config", NULL);
@@ -346,6 +368,8 @@ char* configcheck(char *d) {
   return retval;
 }
 
+// search up the directory tree for an erln8.config to use,
+// starting from cwd
 char* configcheckfromcwd() {
   char *d = getcwd(NULL, MAXPATHLEN);
   char *retval = configcheck(d);
@@ -353,6 +377,9 @@ char* configcheckfromcwd() {
   return retval;
 }
 
+
+// which version of erlang is configured for this particular
+// branch of the dir tree
 char* which_erlang() {
   char* cfgfile = configcheckfromcwd();
   if(g_file_test(cfgfile, G_FILE_TEST_EXISTS |
@@ -392,83 +419,84 @@ char* which_erlang() {
   }
 }
 
+// get a group/key value from ~/.erln8.d/config
 char *get_config_kv(char *group, char *key) {
   gchar* cfgfile = get_configdir_file_name("config");
   GKeyFile* kf = g_key_file_new();
   GError* err = NULL;
   gchar* val = NULL;
 
-  // TODO: free kf
-  // TODO: free err
   if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
       if(err != NULL) {
-        fprintf (stderr,
-            "Unable to load keyfile ~/.erln8.d/config: %s\n",
-            err->message);
-        g_error_free(err);
+            g_error("Unable to load %s:%s from keyfile ~/.erln8.d/config: %s\n",
+            group, key, err->message);
+        //g_error_free(err);
       } else {
-         fprintf(stderr, "Unable to load keyfile ~/.erln8.d/config\n");
-         // TODO: exit etc
+         g_error("Unable to load keyfile ~/.erln8.d/config\n");
       }
   } else {
     GError *kferr = NULL;
     if(g_key_file_has_key(kf, group, key, &kferr)) {
        val = g_key_file_get_string(kf, group, key, &err);
+       if(err != NULL) {
+            g_error("Unable to load %s:%s from keyfile ~/.erln8.d/config: %s\n",
+            group, key,
+            err->message);
+          //g_error_free(err);
+       }
     } else {
       if(kferr != NULL) {
-        fprintf (stderr,
-            "Unable to read group %s, key %s from ~/.erln8.d/config: %s\n",
+        g_error("Unable to read group %s, key %s from ~/.erln8.d/config: %s\n",
             group,
             key,
             kferr->message);
-        g_error_free(kferr);
+        //g_error_free(kferr);
       } else {
-        fprintf(stderr, "Unable to read group %s, key %s in ~/.erln8.d/config\n", group, key);
+        g_error("Unable to read group %s, key %s in ~/.erln8.d/config\n", group, key);
       }
     }
   }
-
   g_free(cfgfile);
+  g_key_file_free(kf);
   return val;
 }
 
-
-// TODO: free list of strings returned somewhere else
+// list all keys for a ~/.erln8.d/config group
 char **get_config_keys(char *group) {
   gchar* cfgfile = get_configdir_file_name("config");
   GKeyFile* kf = g_key_file_new();
   GError* err = NULL;
   gchar** val = NULL;
 
-  // TODO: free kf
-  // TODO: free err
   if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
       if(err != NULL) {
-        fprintf (stderr,
-            "Unable to load keyfile ~/.erln8.d/config: %s\n",
+        g_error("Unable to load keyfile ~/.erln8.d/config: %s\n",
             err->message);
-        g_error_free(err);
+        //g_error_free(err);
       } else {
-         fprintf(stderr, "Unable to load keyfile ~/.erln8.d/config\n");
-         // TODO: exit etc
+         g_error("Unable to load keyfile ~/.erln8.d/config\n");
       }
   } else {
     GError *kferr = NULL;
     val = g_key_file_get_keys(kf, group, NULL, &kferr);
+    if(kferr != NULL) {
+       g_error("Unable to get key list for %s:%s\n", group, kferr->message);
+        //g_error_free(kferr);
+    }
   }
 
   g_free(cfgfile);
+  g_key_file_free(kf);
   return val;
 }
 
-
+// set a ~/.erln8.d/config group/key value
+// overwrites existing k/v's
 char *set_config_kv(char *group, char *key, char *val) {
   gchar* cfgfile = get_configdir_file_name("config");
   GKeyFile* kf = g_key_file_new();
   GError* err = NULL;
 
-  // TODO: free kf
-  // TODO: free err
   if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
       if(err != NULL) {
         fprintf (stderr,
@@ -484,10 +512,16 @@ char *set_config_kv(char *group, char *key, char *val) {
     GError *error = NULL;
     gchar* d = g_key_file_to_data (kf, NULL, &error);
     gchar* fn = get_configdir_file_name("config");
-    printf("Writing to %s\n", fn);
+    g_debug("Writing to %s\n", fn);
     GError *error2 = NULL;
     if(!g_file_set_contents(fn, d, -1, &error2)) {
-      printf("Error writing config file :-(\n");
+      if(error2 != NULL) {
+        g_error("Error writing [%s] %s:%s to config file: %s\n",
+                group, key, val, error2->message);
+      } else {
+        g_error("Error writing [%s] %s:%s to config file\n",
+                group, key, val);
+      }
     }
     g_free(fn);
     g_key_file_free(kf);
@@ -542,22 +576,23 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   g_free(bc);
  }
 
+// if not executing one of the erlang commands
+// then process erln8 options etc
 int erln8(int argc, char* argv[]) {
-  //printf("erln8 v0.1\n");
   GError *error = NULL;
   GOptionContext *context;
 
-  context = g_option_context_new ("");
+  context = g_option_context_new("");
   g_option_context_add_main_entries (context, entries, NULL);
   if (!g_option_context_parse (context, &argc, &argv, &error)) {
     g_error("option parsing failed: %s\n", error->message);
   }
 
-
   g_debug("argv[0] = [%s]\n",argv[0]);
 
   if(opt_init_erln8) {
     initialize();
+    return 0;
   } else {
     if(!check_home()) {
       g_error("Please initialize erln8 with --init");
@@ -566,40 +601,50 @@ int erln8(int argc, char* argv[]) {
 
   if(opt_use) {
     init_here(opt_use);
+    return 0;
   }
 
   if(opt_list) {
    list_erlangs();
+    return 0;
   }
 
   if(opt_clone) {
     gchar* repo = get_config_kv("Repos", opt_clone);
     gchar* path = get_config_subdir_file_name("repos",opt_clone);
     if(repo == NULL || path == NULL) {
-      g_error("Repository not configured\n");
+      g_error("Unknown repository %s\n", repo);
     } else {
       gchar* cmd = g_strconcat("git clone ", repo, " ", path, NULL);
       system(cmd);
       g_free(cmd);
     }
+    return 0;
   }
 
   if(opt_repos) {
     gchar **repos = get_config_keys("Repos");
-    while(*repos) {
-      printf("%s\n", *repos++);
+    gchar **it = repos;
+    while(*it) {
+      printf("%s\n", *it++);
     }
+    g_strfreev(repos);
+    return 0 ;
   }
 
   if(opt_configs) {
     gchar **configs = get_config_keys("Configs");
-    while(*configs) {
-      printf("%s\n", *configs++);
+    gchar **it = configs;
+    while(*it) {
+      printf("%s\n", *it++);
     }
+    g_strfreev(configs);
+    return 0;
   }
 
   if(opt_fetch) {
     printf("Not implemented\n");
+    return 0;
   }
 
   if(opt_build) {
@@ -627,18 +672,26 @@ int erln8(int argc, char* argv[]) {
     g_debug("cfg :%s\n", opt_config);
 
     build_erlang(repo, opt_tag, opt_id, opt_config);
+    return 0;
   }
 
 
   if(opt_buildable) {
     printf("Not implemented\n");
+    return 0;
   }
 
   if(opt_show) {
     char* erl = which_erlang();
     printf("%s\n", erl);
     g_free(erl);
+    return 0;
   }
+
+  printf("erln8: the sneaky Erlang version manager\n");
+  printf("(c) 2013 Dave Parfitt\n");
+  printf("Licensed under the Apache License, Version 2.0\n\n");
+  printf("For more information, try erln8 --help\n");
   return 0;
 }
 
