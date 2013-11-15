@@ -565,6 +565,14 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   char* tmp = g_mkdtemp(pattern);
   g_debug("building in %s\n", tmp);
   gchar* output_path = get_config_subdir_file_name("otps",id);
+
+
+  gboolean result = g_file_test(output_path,
+                                G_FILE_TEST_EXISTS |
+                                G_FILE_TEST_IS_REGULAR);
+  if(result) {
+    g_error("Erlang build %s already exists\n", id);
+  }
   gchar* source_path = get_config_subdir_file_name("repos", repo);
   gchar* ld = g_strconcat("logs/build_", id, NULL);
   gchar* log_path    = get_configdir_file_name(ld);
@@ -580,12 +588,12 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   g_debug("Source path = %s\n", source_path);
   g_debug("Log path = %s\n", log_path);
 
-  printf("Copying source...\n");
+  fprintf(stdout, "Copying source...\n");
   char *copycmd = g_strconcat("cd ", source_path, " && git archive ", tag, " | (cd ", tmp, "; tar x)", NULL);
   g_debug("%s",copycmd);
   system(copycmd);
   g_free(copycmd);
-  printf("Building source [%s]...\n", log_path);
+  fprintf(stdout, "Building source [%s]...\n", log_path);
   char *buildcmd = g_strconcat("(cd ", tmp,
       " && ./otp_build autoconf && ./configure --prefix=",
       output_path," ", bc == NULL ? "" : bc, " && make && make install) | tee ", log_path, NULL);
