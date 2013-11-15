@@ -212,7 +212,7 @@ void mk_config_subdir(char *subdir) {
 void git_init_config() {
   system("echo \"logs/\notps/\nrepos/\n\" > ~/.erln8.d/.gitignore ");
   system("git init ~/.erln8.d/");
-  system("git add ~/.erln8.d/cofig");
+  system("git add ~/.erln8.d/config");
   system("git commit -am \"erln8 init\"");
 }
 
