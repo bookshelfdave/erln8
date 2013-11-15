@@ -209,12 +209,12 @@ void mk_config_subdir(char *subdir) {
 }
 
 
-void git_init_config() {
+/*void git_init_config() {
   system("echo \"logs/\notps/\nrepos/\n\" > ~/.erln8.d/.gitignore ");
   system("git init ~/.erln8.d/");
   system("git add ~/.erln8.d/config");
-  system("git commit -am \"erln8 init\"");
-}
+  system("cd ~/.erln8.d/ && git commit -am \"erln8 init\"");
+}*/
 
 
 // generate the initial ~/.erln8.d/config file with some
@@ -750,10 +750,6 @@ int erln8(int argc, char* argv[]) {
 
 
 int main(int argc, char* argv[]) {
-
-
-  git_init_config();
-   exit(0);
   // compiler will whine about it being deprecated, but taking it out
   // blows things up
   // used for GIO
