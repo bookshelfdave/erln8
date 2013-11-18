@@ -486,11 +486,11 @@ char *get_config_kv(char *group, char *key) {
 
 
 // see if a group/key value from ~/.erln8.d/config exists
-char *config_kv_exists(char *group, char *key) {
+gboolean config_kv_exists(char *group, char *key) {
   gchar* cfgfile = get_configdir_file_name("config");
   GKeyFile* kf = g_key_file_new();
   GError* err = NULL;
-  gchar* val = NULL;
+  gboolean result = FALSE;
 
   if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
       if(err != NULL) {
@@ -502,32 +502,17 @@ char *config_kv_exists(char *group, char *key) {
       }
   } else {
     GError *kferr = NULL;
-    if(g_key_file_has_key(kf, group, key, &kferr)) {
-       val = g_key_file_get_string(kf, group, key, &err);
-       if(err != NULL) {
-            g_error("Unable to load %s:%s from keyfile ~/.erln8.d/config: %s\n",
-            group, key,
-            err->message);
-          //g_error_free(err);
-       }
-    } else {
-      if(kferr != NULL) {
-        g_error("Unable to read group %s, key %s from ~/.erln8.d/config: %s\n",
-            group,
-            key,
-            kferr->message);
-        //g_error_free(kferr);
-      } else {
-        g_error("Unable to read group %s, key %s in ~/.erln8.d/config\n", group, key);
-      }
+    result = g_key_file_has_key(kf, group, key, &kferr);
+    // don't care about the kferr
+    if(kferr != NULL) {
+      g_debug("Error testing for a key: %s", kferr->message);
+      g_error_free(kferr);
     }
   }
   g_free(cfgfile);
   g_key_file_free(kf);
-  return val;
+  return result;
 }
-
-
 
 // list all keys for a ~/.erln8.d/config group
 char **get_config_keys(char *group) {
@@ -597,6 +582,23 @@ char *set_config_kv(char *group, char *key, char *val) {
 
   g_free(cfgfile);
   return val;
+}
+
+
+void git_fetch(char *repo) {
+  if(!config_kv_exists("Repos", repo)) {
+    g_error("Unknown repo %s\n", repo);
+  }
+  gchar* source_path = get_config_subdir_file_name("repos", repo);
+  if(!g_file_test(source_path, G_FILE_TEST_EXISTS |
+                               G_FILE_TEST_IS_REGULAR)) {
+    g_error("Missing repo for %s, which should be in %s\n", repo, source_path);
+  }
+
+  char *fetchcmd = g_strconcat("cd ", source_path, " && git fetch", NULL);
+  system(fetchcmd);
+  g_free(source_path);
+  g_free(fetchcmd);
 }
 
 void build_erlang(char *repo, char *tag, char *id, char *build_config) {
@@ -711,7 +713,11 @@ int erln8(int argc, char* argv[]) {
   }
 
   if(opt_fetch) {
-    printf("Not implemented\n");
+    if(opt_repo == NULL) {
+      git_fetch("default");
+    } else {
+      git_fetch(opt_repo);
+    }
     return 0;
   }
 
@@ -789,6 +795,12 @@ int erln8(int argc, char* argv[]) {
   printf("(c) 2013 Dave Parfitt\n");
   printf("Licensed under the Apache License, Version 2.0\n");
   printf("For more information, try erln8 --help\n\n");
+
+
+  char* erl = which_erlang();
+  printf("%s\n", erl);
+  g_free(erl);
+
   return 0;
 }
 
