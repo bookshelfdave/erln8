@@ -15,14 +15,6 @@
 #include <sys/param.h>
 
 #include <errno.h>
-/*
- * TODO:
- *   error checking for all calls
- *   g_strfreev(keys);
- *   don't hardcode my paths in the default config :-)
- */
-
-
 /* memory management note:
    Since this program either exits or calls exec, there may be some
    pointers that aren't freed before calling g_error. I guess I don't
@@ -111,7 +103,7 @@ static GOptionEntry entries[] =
     "Remove an Erlang build config", "config-id"},
 
   //{ "no-color", 'N', 0, G_OPTION_ARG_NONE, &opt_color, "Don't use color output", NULL },
-  //{ "buildable", 'o', 0, G_OPTION_ARG_NONE, &opt_buildable, "List tags to build from configured source repos", NULL },
+  { "buildable", 0, 0, G_OPTION_ARG_NONE, &opt_buildable, "List tags to build from configured source repos", NULL },
   { "debug", 0, 0, G_OPTION_ARG_NONE, &opt_debug,
     "Debug Erln8", NULL },
   { NULL }
@@ -592,7 +584,7 @@ void git_fetch(char *repo) {
   gchar* source_path = get_config_subdir_file_name("repos", repo);
   if(!g_file_test(source_path, G_FILE_TEST_EXISTS |
                                G_FILE_TEST_IS_REGULAR)) {
-    g_error("Missing repo for %s, which should be in %s\n", repo, source_path);
+    g_error("Missing repo for %s, which should be in %s. Maybe you forgot to erln8 --clone repo_name\n", repo, source_path);
   }
 
   char *fetchcmd = g_strconcat("cd ", source_path, " && git fetch", NULL);
@@ -600,6 +592,24 @@ void git_fetch(char *repo) {
   g_free(source_path);
   g_free(fetchcmd);
 }
+
+
+void git_buildable(char *repo) {
+  if(!config_kv_exists("Repos", repo)) {
+    g_error("Unknown repo %s\n", repo);
+  }
+  gchar* source_path = get_config_subdir_file_name("repos", repo);
+  if(!g_file_test(source_path, G_FILE_TEST_EXISTS |
+                               G_FILE_TEST_IS_REGULAR)) {
+    g_error("Missing repo for %s, which should be in %s\n", repo, source_path);
+  }
+
+  char *fetchcmd = g_strconcat("cd ", source_path, " && git tag | sort", NULL);
+  system(fetchcmd);
+  g_free(source_path);
+  g_free(fetchcmd);
+}
+
 
 void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   // TODO:
@@ -780,7 +790,11 @@ int erln8(int argc, char* argv[]) {
   }
 
   if(opt_buildable) {
-    printf("Not implemented\n");
+    if(opt_repo == NULL) {
+      git_buildable("default");
+    } else {
+      git_buildable(opt_repo);
+    }
     return 0;
   }
 
@@ -795,11 +809,6 @@ int erln8(int argc, char* argv[]) {
   printf("(c) 2013 Dave Parfitt\n");
   printf("Licensed under the Apache License, Version 2.0\n");
   printf("For more information, try erln8 --help\n\n");
-
-
-  char* erl = which_erlang();
-  printf("%s\n", erl);
-  g_free(erl);
 
   return 0;
 }
