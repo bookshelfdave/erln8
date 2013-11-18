@@ -484,6 +484,51 @@ char *get_config_kv(char *group, char *key) {
   return val;
 }
 
+
+// see if a group/key value from ~/.erln8.d/config exists
+char *config_kv_exists(char *group, char *key) {
+  gchar* cfgfile = get_configdir_file_name("config");
+  GKeyFile* kf = g_key_file_new();
+  GError* err = NULL;
+  gchar* val = NULL;
+
+  if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
+      if(err != NULL) {
+            g_error("Unable to load %s:%s from keyfile ~/.erln8.d/config: %s\n",
+            group, key, err->message);
+        //g_error_free(err);
+      } else {
+         g_error("Unable to load keyfile ~/.erln8.d/config\n");
+      }
+  } else {
+    GError *kferr = NULL;
+    if(g_key_file_has_key(kf, group, key, &kferr)) {
+       val = g_key_file_get_string(kf, group, key, &err);
+       if(err != NULL) {
+            g_error("Unable to load %s:%s from keyfile ~/.erln8.d/config: %s\n",
+            group, key,
+            err->message);
+          //g_error_free(err);
+       }
+    } else {
+      if(kferr != NULL) {
+        g_error("Unable to read group %s, key %s from ~/.erln8.d/config: %s\n",
+            group,
+            key,
+            kferr->message);
+        //g_error_free(kferr);
+      } else {
+        g_error("Unable to read group %s, key %s in ~/.erln8.d/config\n", group, key);
+      }
+    }
+  }
+  g_free(cfgfile);
+  g_key_file_free(kf);
+  return val;
+}
+
+
+
 // list all keys for a ~/.erln8.d/config group
 char **get_config_keys(char *group) {
   gchar* cfgfile = get_configdir_file_name("config");
@@ -565,14 +610,6 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   char* tmp = g_mkdtemp(pattern);
   g_debug("building in %s\n", tmp);
   gchar* output_path = get_config_subdir_file_name("otps",id);
-
-
-  gboolean result = g_file_test(output_path,
-                                G_FILE_TEST_EXISTS |
-                                G_FILE_TEST_IS_REGULAR);
-  if(result) {
-    g_error("Erlang build %s already exists\n", id);
-  }
   gchar* source_path = get_config_subdir_file_name("repos", repo);
   gchar* ld = g_strconcat("logs/build_", id, NULL);
   gchar* log_path    = get_configdir_file_name(ld);
