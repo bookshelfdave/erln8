@@ -491,9 +491,9 @@ char* which_erlang() {
       }
     }
   } else {
-    g_error("erln8 not configured in this directory\n");
     return NULL;
   }
+  return NULL;
 }
 
 // get a group/key value from ~/.erln8.d/config
@@ -872,9 +872,11 @@ int erln8(int argc, char* argv[]) {
 
   if(opt_show) {
     char* erl = which_erlang();
-    printf("%s\n", erl);
-    g_free(erl);
-    return 0;
+    if(erl != NULL) {
+      printf("%s\n", erl);
+      g_free(erl);
+      return 0;
+    }
   }
 
   printf("\nerln8: the sneaky Erlang version manager\n");
@@ -886,7 +888,112 @@ int erln8(int argc, char* argv[]) {
 
 
 
+
+/*
+[0]:prime:~/.erln8.d/otps/r16b02$ ls -la ./lib/erlang/erts-5.10.3/bin
+beam
+beam.smp
+child_setup
+ct_run
+dialyzer
+dyn_erl
+epmd
+erl
+erl.src
+erlc
+erlexec
+escript
+heart
+inet_gethost
+run_erl
+start
+start.src
+start_erl.src
+to_erl
+typer
+
+[0]:prime:~/.erln8.d/otps/r16b02$ ls ./lib/erlang/lib/diameter-1.4.3/bin
+diameterc
+
+[0]:prime:~/.erln8.d/otps/r16b02$ ls ./lib/erlang/lib/erl_docgen-0.3.4.1/priv/bin
+codeline_preprocessing.escript xml_from_edoc.escript
+
+[0]:prime:~/.erln8.d/otps/r16b02$ ls ./lib/erlang/lib/erl_interface-3.7.14/bin
+erl_call
+
+[0]:prime:~/.erln8.d/otps/r16b02$ ls ./lib/erlang/lib/inets-5.9.6/priv/bin
+runcgi.sh
+
+[0]:prime:~/.erln8.d/otps/r16b02$ ls ./lib/erlang/lib/observer-1.3.1.1/priv/bin
+cdv   etop  getop
+
+[0]:prime:~/.erln8.d/otps/r16b02$ ls ./lib/erlang/lib/odbc-2.10.17/priv/bin
+odbcserver
+
+[0]:prime:~/.erln8.d/otps/r16b02$ ls ./lib/erlang/lib/os_mon-2.2.13/priv/bin
+memsup
+
+[0]:prime:~/.erln8.d/otps/r16b02$ ls ./lib/erlang/lib/snmp-4.24.2/bin
+snmpc
+
+[0]:prime:~/.erln8.d/otps/r16b02$ ls ./lib/erlang/lib/tools-2.6.12/bin
+emem
+
+[0]:prime:~/.erln8.d/otps/r16b02$ ls ./lib/erlang/lib/webtool-0.8.9.2/priv/bin
+start_webtool
+
+*/
+
+
+static gchar* erts[] = {
+  "beam",
+  "beam.smp",
+  "child_setup",
+  "ct_run",
+  "dialyzer",
+  "dyn_erl",
+  "epmd",
+  "erl",
+  "erl.src",
+  "erlc",
+  "erlexec",
+  "escript",
+  "heart",
+  "inet_gethost",
+  "run_erl",
+  "start",
+  "start.src",
+  "start_erl.src",
+  "to_erl",
+  "typer",
+  0
+};
+
+static gchar* diameter[] = {
+  "diameterc",
+  0
+};
+
+static gchar* erl_docgen[] = {
+  "codeline_preprocessing.escript",
+  "xml_from_edoc.escript",
+  0
+};
+
+void setup_binaries() {
+  GHashTable *bins = g_hash_table_new(g_str_hash, g_str_equal);
+  gchar** p = erts;
+  while(*p != NULL) {
+    // gotta think about this for a bit...
+    g_hash_table_insert(bins, *p++, "./lib/erlang/erts-*/bin");
+  }
+  gpointer* x = g_hash_table_lookup(bins, "erlc");
+  printf("%s\n", (gchar*)x);
+}
+
+
 int main(int argc, char* argv[]) {
+
   // compiler will whine about it being deprecated, but taking it out
   // blows things up
   // used for GIO
@@ -910,7 +1017,9 @@ int main(int argc, char* argv[]) {
     g_free(basename);
     char *erl = which_erlang();
     if(erl == NULL) {
-     g_error("Can't find an erln8.config file to use\n");
+       g_message("Can't find an erln8.config file to use\n");
+       list_erlangs();
+       g_error("No erln8.config file\n");
     }
     char *path = get_config_kv("Erlangs", erl);
     // TODO: probably a problem if you aren't using colors
