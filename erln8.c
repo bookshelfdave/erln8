@@ -56,9 +56,14 @@
 
 #define G_LOG_DOMAIN    ((gchar*) 0)
 
-#define BRIGHT 1
-#define RED 31
-#define BG_BLACK 40
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+
 
 
 static gboolean opt_init_erln8 = FALSE;
@@ -70,7 +75,7 @@ static gboolean opt_fetch      = FALSE;
 static gboolean opt_build      = FALSE;
 static gboolean opt_show       = FALSE;
 static gchar*   opt_clone      = NULL;
-//static gboolean opt_color      = TRUE;
+static gboolean opt_color      = TRUE;
 
 static gchar*   opt_repo       = NULL;
 static gchar*   opt_tag        = NULL;
@@ -133,13 +138,28 @@ static GOptionEntry entries[] =
     "Add an Erlang build config", "config-id"},
   { "config-rm", 0, 0, G_OPTION_ARG_STRING, &opt_configrm,
     "Remove an Erlang build config", "config-id"},
-
-  //{ "no-color", 'N', 0, G_OPTION_ARG_NONE, &opt_color, "Don't use color output", NULL },
+  { "no-color", 0, 0, G_OPTION_ARG_NONE, &opt_color, "Don't use color output", NULL },
   { "buildable", 0, 0, G_OPTION_ARG_NONE, &opt_buildable, "List tags to build from configured source repos", NULL },
   { "debug", 0, 0, G_OPTION_ARG_NONE, &opt_debug,
     "Debug Erln8", NULL },
   { NULL }
 };
+
+char* red() {
+  return opt_color == TRUE ? ANSI_COLOR_RED : "";
+}
+
+char* yellow() {
+  return opt_color == TRUE ? ANSI_COLOR_YELLOW : "";
+}
+
+char* blue() {
+  return opt_color == TRUE ? ANSI_COLOR_BLUE : "";
+}
+
+char* color_reset() {
+  return opt_color == TRUE ? ANSI_COLOR_RESET : "";
+}
 
 
 void erln8_log( const gchar *log_domain,
@@ -150,11 +170,15 @@ void erln8_log( const gchar *log_domain,
     case G_LOG_FLAG_RECURSION:
     case G_LOG_LEVEL_CRITICAL:
     case G_LOG_LEVEL_ERROR:
+        fprintf(stderr, "%s", red());
         fprintf(stderr, "ERROR: %s",message);
+        fprintf(stderr, "%s", color_reset());
         exit(-1);
         break;
     case G_LOG_LEVEL_WARNING:
+        fprintf(stderr, "%s", yellow());
         fprintf(stderr, "WARNING: %s",message);
+        fprintf(stderr, "%s", color_reset());
         break;
     case G_LOG_LEVEL_INFO:
     case G_LOG_LEVEL_MESSAGE:
@@ -166,7 +190,9 @@ void erln8_log( const gchar *log_domain,
         }
         break;
     default:
+        fprintf(stderr, "%s", red());
         fprintf(stderr, "UNHANDLED: %s",message);
+        fprintf(stderr, "%s", color_reset());
         break;
   }
   return;
@@ -697,7 +723,7 @@ int erln8(int argc, char* argv[]) {
   context = g_option_context_new("");
   g_option_context_add_main_entries (context, entries, NULL);
   if (!g_option_context_parse (context, &argc, &argv, &error)) {
-    g_error("option parsing failed: %s\n", error->message);
+    g_error("erln8 option parsing failed: %s\n", error->message);
   }
 
   g_debug("argv[0] = [%s]\n",argv[0]);
@@ -851,7 +877,6 @@ int erln8(int argc, char* argv[]) {
   printf("(c) 2013 Dave Parfitt\n");
   printf("Licensed under the Apache License, Version 2.0\n");
   printf("For more information, try erln8 --help\n\n");
-
   return 0;
 }
 
@@ -880,8 +905,12 @@ int main(int argc, char* argv[]) {
      g_error("Can't find an erln8.config file to use\n");
     }
     char *path = get_config_kv("Erlangs", erl);
-    g_debug("Using erlang %s\n", erl);
-    //g_debug("  ->%s\n", path);
+    // TODO: probably a problem if you aren't using colors
+    // but I'd like to be able to see what erln8 has selected
+    printf("%s", red());
+    printf("erln8: %s", blue());
+    printf("using Erlang %s", path);
+    printf("%s\n", color_reset());
 
     char *s = g_strconcat(path, "/bin/", argv[0], (char*)0);
     g_debug("%s\n",s);
