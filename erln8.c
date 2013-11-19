@@ -321,11 +321,15 @@ void init_main_config() {
   g_key_file_free(kf);
 }
 
-
+gboolean config_kv_exists(char *group, char *key);
 // write an ./erln8.config file into the cwd
 // won't override an existing file
 // unless the user specifies --force
 void init_here(char* erlang) {
+  if(!config_kv_exists("Erlangs", erlang)) {
+    g_error("%s is not a configured version of Erlang\n", erlang);
+  }
+
   GKeyFile *kf = g_key_file_new();
   g_key_file_set_string(kf,
                         "Config",
@@ -487,7 +491,7 @@ char* which_erlang() {
       }
     }
   } else {
-    g_error("Config file does not exist\n");
+    g_error("erln8 not configured in this directory\n");
     return NULL;
   }
 }
@@ -896,10 +900,14 @@ int main(int argc, char* argv[]) {
                                   G_LOG_FLAG_FATAL,  erln8_log, NULL);
   homedir = g_get_home_dir();
   g_debug("home directory = %s\n", homedir);
+  gchar* basename = g_path_get_basename(argv[0]);
+  g_debug("basename = %s\n", basename);
 
-  if((!strcmp(argv[0], "erln8")) || (!strcmp(argv[0], "./erln8"))) {
+  if((!strcmp(basename, "erln8")) || (!strcmp(basename, "./erln8"))) {
     erln8(argc, argv);
+    g_free(basename);
   } else {
+    g_free(basename);
     char *erl = which_erlang();
     if(erl == NULL) {
      g_error("Can't find an erln8.config file to use\n");
