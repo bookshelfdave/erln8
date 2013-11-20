@@ -380,7 +380,10 @@ void list_erlangs() {
     } else {
       gchar** it = keys;
       while(*it) {
-        printf("  %s\n",*it++);
+        GError *valerror = NULL;
+        gchar *v = g_key_file_get_string(kf, "Erlangs", *it, &valerror);
+        printf("%s -> %s\n",*it++, v);
+        g_free(v);
       }
     }
     g_strfreev(keys);
