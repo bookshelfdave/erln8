@@ -11,14 +11,13 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 Watch my ~1 minute, low-tech demo of how it works [here](https://vimeo.com/78917182): 
 
 ## Status
-- looking to cleanup mem mgmt, error handling etc
+
 - only supports erl, erlc, escript commands from Erlang dist
 	- if there are any other binaries you need from an Erlang distro, just symlink the binary to erln8 (see the Makefile for an example of how this works)
-- Pretty buggy/crashy at the moment, simple fixes. Definitely not ready for prime time yet.
-- multi-repo cloning/building probably doesn't work atm
-- going to add repo-add, repo-rm, config-add, config-rm commands, list tags from repos
-- lots of TODO's in the source
+- going to add repo-add, repo-rm, config-add, config-rm commands
+- some TODO's in the source
 - planning on adding a command to output something you can use in your prompt
+- working on a ncurses based *gui* to allow you to quickly support common tasks
 
 
 ## Installation
@@ -83,8 +82,6 @@ You can specify alternate Git repos to build from. `erln8 --repos` lists availab
 ## Usage
 
 To see which versions of Erlang are available for use from erln8, run:
-
-**TODO**: erln8 --list without any versions of Erlang installed blows up, easy to fix though
 
 ```
   erln8 --list
