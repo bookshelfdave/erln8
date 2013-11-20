@@ -71,6 +71,14 @@ To see a list of versions you can build, run:
 ern8 --buildable
 ```
 
+or
+
+```
+ern8 --buildable --repo default
+```
+replacing `default` with whatever erln8-configured Git repo you want to use.
+
+
 If you already have Erlang installed, skip down to Linking an Existing Erlang below.
 The following command will build Erlang R16B02 using the OTP_R16B02 tag from Git. This build can now be referred to by the --id value (see the erln8 --use example below). Also, see the ~/.erln8.d/config file for specific configs or add your own, or run erln8 --configs.
 
