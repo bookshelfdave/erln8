@@ -3,18 +3,19 @@ erln8 - an Erlang version manager
 
 ## What is it?
 
-erln8 (erl-in-ate) allows you to compile and manage multiple versions of Erlang from source. Instead of downloading individual source packages, it downloads the Github OTP mirror so you are essentially downloading all available versions at once  :-) Additionaly, you'll be able to add your own repos to support custom OTP patches etc.
+erln8 (erl-in-ate) allows you to compile and manage multiple versions of Erlang from source. Instead of downloading individual source packages, it downloads the Github OTP mirror so you are essentially downloading all available versions at once  :-) Additionaly, you can add your own git repos to support custom OTP patches etc.
 
-The cool thing about erln8 is that you only need to add it to your PATH to use it. No funny environment tweaking ;-) It works by reading an `erln8.config` config file out of the current directory, or by searching up the directory tree until it finds one. All the magic happens with the [execv](http://linux.die.net/man/3/execv) call, which has been around since the 70's. The erln8 process is *replaced* with erl, erlc, etc. Yay Unix!
+The cool thing about erln8 is that you only need to add it to your PATH to use it. No funny environment tweaking ;-) It works by reading an `erln8.config` config file out of the current directory, or by searching up the directory tree until it finds one. 
 
-
-Watch my ~1 minute, low-tech demo of how it works [here](https://vimeo.com/78917182): 
+**slightly outdated**
+- Watch my ~1 minute, low-tech demo of how it works [here](https://vimeo.com/78917182): 
 
 ## Status
 
 - only supports erl, erlc, escript commands from Erlang dist
 	- if there are any other binaries you need from an Erlang distro, just symlink the binary to erln8 (see the Makefile for an example of how this works)
-- going to add repo-add, repo-rm, config-add, config-rm commands
+	- I'm currently working on this
+- add repo-add, repo-rm, config-add, config-rm commands
 - some TODO's in the source
 - planning on adding a command to output something you can use in your prompt
 - working on a ncurses based *gui* to allow you to quickly support common tasks
@@ -58,13 +59,19 @@ Run this once, it creates `~/.erln8.d` and `~/.erln8.d/config`
 erln8 --init
 ```
 
-Next, you'll need to clone the OtP source repo from Github if you don't have Erlang installed. This default repo is cloned to to `~/.erln8.d/repos/default`.
+Next, you'll need to clone the OTP source repo from Github if you don't have Erlang installed. This default repo is cloned to to `~/.erln8.d/repos/default`.
 
 ```
 erln8 --clone default
 ```
 
-If you already have erlang installed, skip down to Linking an Existing Erlang below.
+To see a list of versions you can build, run:
+
+```
+ern8 --buildable
+```
+
+If you already have Erlang installed, skip down to Linking an Existing Erlang below.
 The following command will build Erlang R16B02 using the OTP_R16B02 tag from Git. This build can now be referred to by the --id value (see the erln8 --use example below). Also, see the ~/.erln8.d/config file for specific configs or add your own, or run erln8 --configs.
 
 ```
@@ -92,6 +99,19 @@ For any directory that has an Erlang project, you can run erln8 with the `--use 
 ```
  erln8 --use r16b02
  ```
+
+If you need to change the version of Erlang that's already been configured for the current directory:
+```
+ erln8 --use r16b01 --force
+ ```
+
+
+If you want to find out which version of Erlang the cwd is using, 
+
+```
+erln8 --show
+```
+
 
 This command simply creates an `erln8.config` file in the cwd. You can even edit it by hand to specify the configured version of Erlang by **id**, or just rerun `erln8 --use some_other_version` to change the value.
 
