@@ -947,7 +947,7 @@ start_webtool
 
 */
 
-
+/*
 static gchar* erts[] = {
   "beam",
   "beam.smp",
@@ -988,12 +988,12 @@ void setup_binaries() {
   gchar** p = erts;
   while(*p != NULL) {
     // gotta think about this for a bit...
-    g_hash_table_insert(bins, *p++, "./lib/erlang/erts-*/bin");
+    //g_hash_table_insert(bins, *p++, "./lib/erlang/erts-star/bin");
   }
   gpointer* x = g_hash_table_lookup(bins, "erlc");
   printf("%s\n", (gchar*)x);
 }
-
+*/
 
 int main(int argc, char* argv[]) {
 
