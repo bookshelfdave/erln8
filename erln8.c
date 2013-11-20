@@ -138,8 +138,10 @@ static GOptionEntry entries[] =
     "Add an Erlang build config", "config-id"},
   { "config-rm", 0, 0, G_OPTION_ARG_STRING, &opt_configrm,
     "Remove an Erlang build config", "config-id"},
-  { "no-color", 0, 0, G_OPTION_ARG_NONE, &opt_color, "Don't use color output", NULL },
-  { "buildable", 0, 0, G_OPTION_ARG_NONE, &opt_buildable, "List tags to build from configured source repos", NULL },
+  { "no-color", 0, 0, G_OPTION_ARG_NONE, &opt_color,
+    "Don't use color output", NULL },
+  { "buildable", 0, 0, G_OPTION_ARG_NONE, &opt_buildable,
+    "List tags to build from configured source repos", NULL },
   { "debug", 0, 0, G_OPTION_ARG_NONE, &opt_debug,
     "Debug Erln8", NULL },
   { NULL }
@@ -258,31 +260,38 @@ void mk_config_subdir(char *subdir) {
   }
 }
 
-
-/*void git_init_config() {
-  system("echo \"logs/\notps/\nrepos/\n\" > ~/.erln8.d/.gitignore ");
-  system("git init ~/.erln8.d/");
-  system("git add ~/.erln8.d/config");
-  system("cd ~/.erln8.d/ && git commit -am \"erln8 init\"");
-}*/
-
-
 // generate the initial ~/.erln8.d/config file with some
 // default settings
 // TODO: more settings, Linux, FreeBSD etc
 void init_main_config() {
   GKeyFile *kf = g_key_file_new();
+
+ g_key_file_set_boolean(kf,
+                        "Erln8",
+                        "color",
+                        TRUE);
+
+  g_key_file_set_comment(kf,
+                        "Erln8",
+                        "color",
+                        "NOT IMPLEMENTED: use color output",
+                        NULL);
+
+   g_key_file_set_boolean(kf,
+                        "Erln8",
+                        "banner",
+                        TRUE);
+
+  g_key_file_set_comment(kf,
+                        "Erln8",
+                        "banner",
+                        "NOT IMPLEMENTED: show the version of Erlang that erln8 is running",
+                        NULL);
+
   g_key_file_set_string(kf,
                         "Repos",
                         "default",
                         "https://github.com/erlang/otp.git");
-
-/*
-  g_key_file_set_string(kf,
-                        "Repos",
-                        "basho",
-                        "https://github.com/basho/otp.git");
-*/
 
   g_key_file_set_string(kf,
                         "Configs",
@@ -298,6 +307,7 @@ void init_main_config() {
                         "Configs",
                         "osx_gcc_env",
                         "CC=gcc-4.2 CPPFLAGS='-DNDEBUG' MAKEFLAGS='-j 3'");
+
 
   GError *error = NULL;
   gchar* d = g_key_file_to_data (kf, NULL, &error);
@@ -526,6 +536,7 @@ char *get_config_kv(char *group, char *key) {
        }
     } else {
       if(kferr != NULL) {
+
         g_error("Unable to read group %s, key %s from ~/.erln8.d/config: %s\n",
             group,
             key,
@@ -551,6 +562,7 @@ gboolean config_kv_exists(char *group, char *key) {
 
   if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
       if(err != NULL) {
+
             g_error("Unable to load %s:%s from keyfile ~/.erln8.d/config: %s\n",
             group, key, err->message);
         //g_error_free(err);
@@ -637,6 +649,7 @@ char *set_config_kv(char *group, char *key, char *val) {
     g_key_file_free(kf);
   }
 
+
   g_free(cfgfile);
   return val;
 }
@@ -679,6 +692,7 @@ void git_buildable(char *repo) {
 void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   // TODO:
   // make "tee" optional? -q: quiet build
+
   // check for compile flags
   // check for env
   // write to config "Erlangs"
@@ -806,6 +820,7 @@ int erln8(int argc, char* argv[]) {
     }
     if(repo == NULL) {
       g_error("build repo not specified");
+
     }
     if(opt_tag == NULL) {
       g_error("build tag not specified");
@@ -840,6 +855,7 @@ int erln8(int argc, char* argv[]) {
   if(opt_reporm) {
     printf("Removing %s\n", opt_reporm);
     g_error("Not implemented\n");
+
     return 0;
   }
 
