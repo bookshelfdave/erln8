@@ -68,13 +68,13 @@ erln8 --clone default
 To see a list of versions you can build, run:
 
 ```
-ern8 --buildable
+ernl8 --buildable
 ```
 
 or
 
 ```
-ern8 --buildable --repo default
+ernl8 --buildable --repo default
 ```
 replacing `default` with whatever erln8-configured Git repo you want to use.
 
@@ -133,7 +133,7 @@ Erlang=r16b02
 
 
 
-##Linking an Existing Erlang
+##Linking an existing version Erlang
 
 I plan on adding `erln8 --link` and `erln8 --unlink` commands, but for now, it's as easy as adding a new entry to the **[Erlangs]** section of `~/.erln8.d/config`. Below, *r16b02*, *r15b01_nosched*, and *r15b03* are ID's that can be referenced by the `erln8 --use` command (also what's shown by `erln8 --list`). 
 
