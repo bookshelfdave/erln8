@@ -23,6 +23,22 @@
 #ifndef ERLN8_H
 #define ERLN8_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/param.h>
+#include <errno.h>
+
+#include <glib.h>
+#include <glib/gstdio.h>
+#include <glib-object.h>
+#include <gio/gio.h>
+
+
 #define G_LOG_DOMAIN    ((gchar*) 0)
 
 #define ANSI_COLOR_RED     "\x1b[31m"
@@ -115,24 +131,36 @@ static GOptionEntry entries[] =
 
 
 
-void erln8_log(const gchar *log_domain,
-               GLogLevelFlags log_level,
-               const gchar *message,
-               gpointer user_data );
+  void erln8_log(const gchar *log_domain,
+                GLogLevelFlags log_level,
+                const gchar *message,
+                gpointer user_data );
 
-gboolean check_home();
-gboolean config_kv_exists(char *group, char *key);
-char* configcheck(char *d);
-char* configcheckfromcwd();
-char* which_erlang();
-char *get_config_kv(char *group, char *key);
-gboolean config_kv_exists(char *group, char *key);
-char **get_config_keys(char *group);
-char *set_config_kv(char *group, char *key, char *val);
-void git_fetch(char *repo);
-void git_buildable(char *repo);
-void build_erlang(char *repo, char *tag, char *id, char *build_config);
-int erln8(int argc, char* argv[]);
+  gboolean check_home();
+
+  gboolean config_kv_exists(char *group, char *key);
+
+  char* configcheck(char *d);
+
+  char* configcheckfromcwd();
+
+  char* which_erlang();
+
+  char *get_config_kv(char *group, char *key);
+
+  gboolean config_kv_exists(char *group, char *key);
+
+  char **get_config_keys(char *group);
+
+  char *set_config_kv(char *group, char *key, char *val);
+
+  void git_fetch(char *repo);
+
+  void git_buildable(char *repo);
+
+  void build_erlang(char *repo, char *tag, char *id, char *build_config);
+
+  int erln8(int argc, char* argv[]);
 
 
 // WORK IN PROGRESS BELOW
