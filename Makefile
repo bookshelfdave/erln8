@@ -9,3 +9,6 @@ all:
 erln8r: erln8r.c
 	gcc -o erln8r erln8r.c -lmenu -lncurses
 
+clean:
+	rm -f erln8
+	rm -f erln8r

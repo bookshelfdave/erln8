@@ -20,27 +20,27 @@
  * ------------------------------------------------------------
  */
 
-
-
-
 #include "erln8.h"
+
 /*
-TODO: build cleanup
-build env
-link/unlink
-add repo/rm repo
-add config/rm config
-impl color=true
-impl banner=true
+  TODO:
+  build cleanup
+  build env
+  link/unlink
+  add repo/rm repo
+  add config/rm config
+  impl color=true
+  impl banner=true
 */
 
 
-/* memory management note:
-   Since this program either exits or calls exec, there may be some
-   pointers that aren't freed before calling g_error. I guess I don't
-   really care about these. If you feel strongly about this,
-   please fix and submit a pull request on Github.
-   */
+/*
+  memory management note:
+  Since this program either exits or calls exec, there may be some
+  pointers that aren't freed before calling g_error. I guess I don't
+  really care about these. If you feel strongly about this,
+  please fix and submit a pull request on Github.
+*/
 
 
 
@@ -792,6 +792,23 @@ int erln8(int argc, char* argv[]) {
       g_free(erl);
       return 0;
     }
+  }
+
+  if(opt_prompt) {
+    char* cfgfile = configcheckfromcwd();
+    if(cfgfile != NULL) {
+      g_free(cfgfile);
+      char* erl = which_erlang();
+      if(erl != NULL) {
+        printf("%s", erl);
+        g_free(erl);
+      } else {
+        printf("erln8 error");
+      }
+    } else {
+      printf("none");
+    }
+    return 0;
   }
 
   printf("\nerln8: the sneaky Erlang version manager\n");

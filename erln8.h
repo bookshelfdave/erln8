@@ -75,6 +75,7 @@ static gchar*    opt_repoadd   = NULL;
 static gchar*    opt_reporm    = NULL;
 static gchar*    opt_configadd = NULL;
 static gchar*    opt_configrm  = NULL;
+static gboolean  opt_prompt    = FALSE;
 
 static const gchar* homedir;
 
@@ -102,6 +103,8 @@ static GOptionEntry entries[] =
     "Build configuration", "config"},
   { "show", 0, 0, G_OPTION_ARG_NONE, &opt_show,
     "Show the configured version of Erlang in the current working directory", NULL },
+  { "prompt", 0, 0, G_OPTION_ARG_NONE, &opt_prompt,
+    "Display the version of Erlang configured for this part of the directory tree", NULL },
   { "configs", 0, 0, G_OPTION_ARG_NONE, &opt_configs,
     "List build configs", NULL },
   { "repos", 0, 0, G_OPTION_ARG_NONE, &opt_repos,
@@ -128,8 +131,6 @@ static GOptionEntry entries[] =
     "Debug Erln8", NULL },
   { NULL }
 };
-
-
 
   void erln8_log(const gchar *log_domain,
                 GLogLevelFlags log_level,
