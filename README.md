@@ -17,7 +17,6 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 	- I'm currently working on this
 - add repo-add, repo-rm, config-add, config-rm commands
 - some TODO's in the source
-- planning on adding a command to output something you can use in your prompt
 - working on a ncurses based *gui* to allow you to quickly support common tasks
 
 
@@ -131,6 +130,7 @@ Erlang=r16b02
 
 ## Setting up a default version to use
 
+Simply run `erln8` from your home directory with a version of Erlang that you'd like to use elsewhere. 
 
 
 ##Linking an existing version Erlang
@@ -156,6 +156,32 @@ Available Erlang installations:
 ```
 
 and you can use it with `erln8 --use r15b03`
+
+
+
+## Customizing your shell prompt
+
+The `--prompt` parameter displays the configured version of Erlang for the current working directory. 
+
+```
+erln8 --prompt
+```
+
+For example, if you are using *bash*, you could add the following snippet to your `.bash_profile`:
+
+```
+function erl_version() {
+  erln8 --prompt
+}
+
+ # note, this also displays git info for the cwd
+PS1='\[$(tput bold)\]\[$(tput setaf 2)\]$(erl_version)\[$(tput sgr0)\]:\[\e[0;36m\]$(__git_ps1 "[%s]")\[\e[m\]\[$(tput setaf 3)\]\h\[$(tput sgr0)\]:\w\$ '; [[ $EUID == 0 ]] &&
+PS1='\[$(tput bold)\]\[$(tput setaf 2)\]$(erl_version)\[$(tput sgr0)\]:\[\e[0;36m\]$(__git_ps1 "[%s]")\[\e[m\]\[$(tput setaf 3)\]\h\[$(tput sgr0)\]:\w\$ '
+
+```
+
+![foo](https://www.evernote.com/shard/s55/sh/937bb22f-ac98-455b-8e6f-8367caf6fdea/0cd1beba8166544470fef351cb614c7e/deep/0/Shell.png)
+
 
 
 #Contributing
