@@ -309,9 +309,9 @@ void initialize() {
   if(check_home()) {
     g_error("Configuration directory ~/.erln8.d already exists\n");
   } else {
-    if(erl_on_path()) {
-      g_warning("Erlang already exists on the current PATH\n");
-    }
+    //if(erl_on_path()) {
+    //  g_warning("Erlang already exists on the current PATH\n");
+    //}
     // create the top level config directory, then create all subdirs
     gchar* dirname = g_strconcat(homedir, "/.erln8.d",(char*)0);
     g_debug("Creating %s\n", dirname);
@@ -650,7 +650,7 @@ int erln8(int argc, char* argv[]) {
     return 0;
   } else {
     if(!check_home()) {
-      g_error("Please initialize erln8 with --init");
+      g_error("Please initialize erln8 with --init\n");
     }
   }
 
