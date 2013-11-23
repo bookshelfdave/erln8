@@ -43,6 +43,18 @@ make
 export PATH=$PATH:/where/you/put/erln8
 ```
 
+### Fedora
+
+(Erlang + *general* erln8 deps)
+
+```
+sudo yum install gcc glibc-devel make ncurses-devel openssl-devel autoconf glib2-devel.x86_64
+```
+git clone https://github.com/metadave/erln8.git
+cd erln8
+make
+ # remove Erlang from your path!!
+export PATH=$PATH:/where/you/put/erln8
 
 ## Dependencies
 * glib-2.0 
