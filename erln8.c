@@ -20,8 +20,6 @@
  * ------------------------------------------------------------
  */
 
-#include "erln8.h"
-
 /*
   TODO:
   build cleanup
@@ -42,6 +40,119 @@
   please fix and submit a pull request on Github.
 */
 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/param.h>
+#include <errno.h>
+
+#include <glib.h>
+#include <glib/gstdio.h>
+#include <glib-object.h>
+#include <gio/gio.h>
+
+
+#define G_LOG_DOMAIN    ((gchar*) 0)
+
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+
+static gboolean opt_init_erln8 = FALSE;
+static gboolean opt_debug      = FALSE;
+static gchar*   opt_use        = NULL;
+static gboolean opt_list       = FALSE;
+static gboolean opt_buildable  = FALSE;
+static gboolean opt_fetch      = FALSE;
+static gboolean opt_build      = FALSE;
+static gboolean opt_show       = FALSE;
+static gchar*   opt_clone      = NULL;
+static gboolean opt_color      = TRUE;
+static gboolean opt_banner     = TRUE;
+
+static gchar*   opt_repo       = NULL;
+static gchar*   opt_tag        = NULL;
+static gchar*   opt_id         = NULL;
+static gchar*   opt_config     = NULL;
+
+static gboolean  opt_configs   = FALSE;
+static gboolean  opt_repos     = FALSE;
+static gchar*    opt_link      = NULL;
+static gchar*    opt_unlink    = NULL;
+static gboolean  opt_force     = FALSE;
+
+static gchar*    opt_repoadd   = NULL;
+static gchar*    opt_reporm    = NULL;
+static gchar*    opt_configadd = NULL;
+static gchar*    opt_configrm  = NULL;
+static gboolean  opt_prompt    = FALSE;
+static gboolean  opt_gui       = FALSE;
+
+static const gchar* homedir;
+
+static GOptionEntry entries[] =
+{
+  { "init", 0, 0, G_OPTION_ARG_NONE, &opt_init_erln8,
+    "Initializes erln8", NULL },
+  { "use", 0, 0, G_OPTION_ARG_STRING, &opt_use,
+    "Setup the current directory to use a specific verion of Erlang", "id"},
+  { "list", 0, 0, G_OPTION_ARG_NONE, &opt_list,
+    "List available Erlang installations", NULL },
+  { "clone", 0, 0, G_OPTION_ARG_STRING, &opt_clone,
+    "Clone an Erlang source repository", "repo"},
+  { "fetch", 0, 0, G_OPTION_ARG_NONE, &opt_fetch,
+    "Update source repos", "repo"},
+  { "build", 0, 0, G_OPTION_ARG_NONE, &opt_build,
+    "Build a specific version of OTP from source", NULL },
+  { "repo", 0, 0, G_OPTION_ARG_STRING, &opt_repo,
+    "Specifies repo name to build from", "repo"},
+  { "tag", 0, 0, G_OPTION_ARG_STRING, &opt_tag,
+    "Specifies repo branch/tag to build from", "git_tag"},
+  { "id", 0, 0, G_OPTION_ARG_STRING, &opt_id,
+    "A user assigned name for a version of Erlang", "id"},
+  { "config", 0, 0, G_OPTION_ARG_STRING, &opt_config,
+    "Build configuration", "config"},
+  { "show", 0, 0, G_OPTION_ARG_NONE, &opt_show,
+    "Show the configured version of Erlang in the current working directory", NULL },
+  { "prompt", 0, 0, G_OPTION_ARG_NONE, &opt_prompt,
+    "Display the version of Erlang configured for this part of the directory tree", NULL },
+  { "configs", 0, 0, G_OPTION_ARG_NONE, &opt_configs,
+    "List build configs", NULL },
+  { "repos", 0, 0, G_OPTION_ARG_NONE, &opt_repos,
+    "List build repos", NULL },
+  { "link", 0, 0, G_OPTION_ARG_STRING, &opt_link,
+    "Link a non-erln8 build of Erlang to erln8", NULL },
+  { "unlink", 0, 0, G_OPTION_ARG_STRING, &opt_unlink,
+    "Unlink a non-erln8 build of Erlang from erln8", NULL },
+  { "force", 0, 0, G_OPTION_ARG_NONE, &opt_force,
+    "Use the force", NULL },
+  { "repo-add-url", 0, 0, G_OPTION_ARG_STRING, &opt_repoadd,
+    "Add a repo", "repo-id"},
+  { "repo-rm-url", 0, 0, G_OPTION_ARG_STRING, &opt_reporm,
+    "Remote a repo", "repo-id"},
+  { "config-add", 0, 0, G_OPTION_ARG_STRING, &opt_configadd,
+    "Add an Erlang build config", "config-id"},
+  { "config-rm", 0, 0, G_OPTION_ARG_STRING, &opt_configrm,
+    "Remove an Erlang build config", "config-id"},
+  { "no-color", 0, 0, G_OPTION_ARG_NONE, &opt_color,
+    "Don't use color output", NULL },
+  { "buildable", 0, 0, G_OPTION_ARG_NONE, &opt_buildable,
+    "List tags to build from configured source repos", NULL },
+  { "gui", 0, 0, G_OPTION_ARG_NONE, &opt_gui,
+    "Show a gui if available", NULL },
+  { "debug", 0, 0, G_OPTION_ARG_NONE, &opt_debug,
+    "Debug Erln8", NULL },
+  { NULL }
+};
 
 
 char* red() {
@@ -130,6 +241,60 @@ gchar* get_config_subdir_file_name(char *subdir, char* filename) {
 }
 
 
+GHashTable* group_hash(char *group) {
+  GHashTable *h = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+
+  GKeyFile *kf = g_key_file_new();
+  GError *error = NULL;
+  gchar* fn = get_configdir_file_name("config");
+  if(g_key_file_load_from_file(kf, fn, G_KEY_FILE_NONE, &error)) {
+    if (error != NULL) {
+      g_error("Unable to read file: %s\n", error->message);
+      //g_error_free(error); program exits, can't free
+    }
+    GError *keyerror = NULL;
+    gchar** keys = g_key_file_get_keys(kf, group, NULL, &keyerror);
+    if (keyerror != NULL) {
+      g_error("Unable to read %s section from ~/.erln8.d/config: %s\n", group, keyerror->message);
+      //g_error_free(error);
+    } else {
+      gchar** it = keys;
+      while(*it) {
+        GError *valerror = NULL;
+        gchar *v = g_key_file_get_string(kf, group, *it, &valerror);
+        g_hash_table_insert(h, strdup(*it++), strdup(v));
+        g_free(v);
+      }
+    }
+    g_strfreev(keys);
+    g_key_file_free(kf);
+  } else {
+    g_error("Cannot read from ~/.erln8.d/config\n");
+  }
+  g_free(fn);
+  return h;
+}
+
+GHashTable* get_erlangs() {
+  return group_hash("Erlangs");
+}
+
+GHashTable* get_repos() {
+  return group_hash("Repos");
+}
+
+GHashTable* get_configs() {
+  return group_hash("Configs");
+}
+
+GHashTable* get_erln8() {
+  return group_hash("Erln8");
+}
+
+void e8_print(gpointer data, gpointer user_data) {
+  printf("%s\n", (gchar*)data);
+}
+
 // check and see if the erln8 config directory exists
 // probably poorly named
 gboolean check_home() {
@@ -171,7 +336,7 @@ void init_main_config() {
   g_key_file_set_comment(kf,
       "Erln8",
       "color",
-      "NOT IMPLEMENTED: use color output",
+      "Either true or false, case sensitive",
       NULL);
 
   g_key_file_set_boolean(kf,
@@ -228,12 +393,14 @@ void init_main_config() {
   g_key_file_free(kf);
 }
 
-gboolean config_kv_exists(char *group, char *key);
 // write an ./erln8.config file into the cwd
 // won't override an existing file
 // unless the user specifies --force
 void init_here(char* erlang) {
-  if(!config_kv_exists("Erlangs", erlang)) {
+  GHashTable *erlangs = get_erlangs();
+  gboolean has_erlang = g_hash_table_contains(erlangs, erlang);
+  g_hash_table_destroy(erlangs);
+  if(!has_erlang) {
     g_error("%s is not a configured version of Erlang\n", erlang);
   }
 
@@ -300,41 +467,6 @@ void list_erlangs() {
   }
   g_free(fn);
 }
-
-GHashTable* group_hash(char *group) {
-  GHashTable *h = g_hash_table_new(g_str_hash, g_str_equal);
-
-  GKeyFile *kf = g_key_file_new();
-  GError *error = NULL;
-  gchar* fn = get_configdir_file_name("config");
-  if(g_key_file_load_from_file(kf, fn, G_KEY_FILE_NONE, &error)) {
-    if (error != NULL) {
-      g_error("Unable to read file: %s\n", error->message);
-      //g_error_free(error); program exits, can't free
-    }
-    GError *keyerror = NULL;
-    gchar** keys = g_key_file_get_keys(kf, group, NULL, &keyerror);
-    if (keyerror != NULL) {
-      g_error("Unable to read %s section from ~/.erln8.d/config: %s\n", group, keyerror->message);
-      //g_error_free(error);
-    } else {
-      gchar** it = keys;
-      while(*it) {
-        GError *valerror = NULL;
-        gchar *v = g_key_file_get_string(kf, group, *it, &valerror);
-        g_hash_table_insert(h, strdup(*it++), strdup(v));
-        g_free(v);
-      }
-    }
-    g_strfreev(keys);
-    g_key_file_free(kf);
-  } else {
-    g_error("Cannot read from ~/.erln8.d/config\n");
-  }
-  g_free(fn);
-  return h;
-}
-
 
 
 // create ~/.erln8.d, ~/.erln8.d/config + related subdirs
@@ -441,108 +573,6 @@ char* which_erlang() {
   return NULL;
 }
 
-// get a group/key value from ~/.erln8.d/config
-char *get_config_kv(char *group, char *key) {
-  gchar* cfgfile = get_configdir_file_name("config");
-  GKeyFile* kf = g_key_file_new();
-  GError* err = NULL;
-  gchar* val = NULL;
-
-  if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
-    if(err != NULL) {
-      g_error("Unable to load %s:%s from keyfile ~/.erln8.d/config: %s\n",
-          group, key, err->message);
-      //g_error_free(err);
-    } else {
-      g_error("Unable to load keyfile ~/.erln8.d/config\n");
-    }
-  } else {
-    GError *kferr = NULL;
-    if(g_key_file_has_key(kf, group, key, &kferr)) {
-      val = g_key_file_get_string(kf, group, key, &err);
-      if(err != NULL) {
-        g_error("Unable to load %s:%s from keyfile ~/.erln8.d/config: %s\n",
-            group, key,
-            err->message);
-        //g_error_free(err);
-      }
-    } else {
-      if(kferr != NULL) {
-
-        g_error("Unable to read group %s, key %s from ~/.erln8.d/config: %s\n",
-            group,
-            key,
-            kferr->message);
-        //g_error_free(kferr);
-      } else {
-        g_error("Unable to read group %s, key %s in ~/.erln8.d/config\n", group, key);
-      }
-    }
-  }
-  g_free(cfgfile);
-  g_key_file_free(kf);
-  return val;
-}
-
-// see if a group/key value from ~/.erln8.d/config exists
-gboolean config_kv_exists(char *group, char *key) {
-  gchar* cfgfile = get_configdir_file_name("config");
-  GKeyFile* kf = g_key_file_new();
-  GError* err = NULL;
-  gboolean result = FALSE;
-
-  if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
-    if(err != NULL) {
-
-      g_error("Unable to load %s:%s from keyfile ~/.erln8.d/config: %s\n",
-          group, key, err->message);
-      //g_error_free(err);
-    } else {
-      g_error("Unable to load keyfile ~/.erln8.d/config\n");
-    }
-  } else {
-    GError *kferr = NULL;
-    result = g_key_file_has_key(kf, group, key, &kferr);
-    // don't care about the kferr
-    if(kferr != NULL) {
-      g_debug("Error testing for a key: %s", kferr->message);
-      g_error_free(kferr);
-    }
-  }
-  g_free(cfgfile);
-  g_key_file_free(kf);
-  return result;
-}
-
-// list all keys for a ~/.erln8.d/config group
-char **get_config_keys(char *group) {
-  gchar* cfgfile = get_configdir_file_name("config");
-  GKeyFile* kf = g_key_file_new();
-  GError* err = NULL;
-  gchar** val = NULL;
-
-  if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
-    if(err != NULL) {
-      g_error("Unable to load keyfile ~/.erln8.d/config: %s\n",
-          err->message);
-      //g_error_free(err);
-    } else {
-      g_error("Unable to load keyfile ~/.erln8.d/config\n");
-    }
-  } else {
-    GError *kferr = NULL;
-    val = g_key_file_get_keys(kf, group, NULL, &kferr);
-    if(kferr != NULL) {
-      g_error("Unable to get key list for %s:%s\n", group, kferr->message);
-      //g_error_free(kferr);
-    }
-  }
-
-  g_free(cfgfile);
-  g_key_file_free(kf);
-  return val;
-}
-
 // set a ~/.erln8.d/config group/key value
 // overwrites existing k/v's
 char *set_config_kv(char *group, char *key, char *val) {
@@ -587,16 +617,23 @@ char *set_config_kv(char *group, char *key, char *val) {
 
 
 void git_fetch(char *repo) {
-  if(!config_kv_exists("Repos", repo)) {
+  GHashTable *repos = get_repos();
+  gboolean has_repo = !g_hash_table_contains(repos, repo);
+  g_hash_table_destroy(repos);
+  if(!has_repo) {
     g_error("Unknown repo %s\n", repo);
   }
   gchar* source_path = get_config_subdir_file_name("repos", repo);
   if(!g_file_test(source_path, G_FILE_TEST_EXISTS |
         G_FILE_TEST_IS_REGULAR)) {
-    g_error("Missing repo for %s, which should be in %s. Maybe you forgot to erln8 --clone repo_name\n", repo, source_path);
+    g_error("Missing repo for %s, which should be in %s. Maybe you forgot to erln8 --clone repo_name\n",
+            repo,
+            source_path);
   }
-
-  char *fetchcmd = g_strconcat("cd ", source_path, " && git fetch", NULL);
+  char *fetchcmd = g_strconcat("cd ",
+                               source_path,
+                               " && git fetch",
+                               NULL);
   system(fetchcmd);
   g_free(source_path);
   g_free(fetchcmd);
@@ -604,7 +641,10 @@ void git_fetch(char *repo) {
 
 
 void git_buildable(char *repo) {
-  if(!config_kv_exists("Repos", repo)) {
+  GHashTable *repos = get_repos();
+  gboolean has_repo = g_hash_table_contains(repos, repo);
+  g_hash_table_destroy(repos);
+  if(!has_repo) {
     g_error("Unknown repo %s\n", repo);
   }
   gchar* source_path = get_config_subdir_file_name("repos", repo);
@@ -635,12 +675,15 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   gchar* source_path = get_config_subdir_file_name("repos", repo);
   gchar* ld = g_strconcat("logs/build_", id, NULL);
   gchar* log_path    = get_configdir_file_name(ld);
-
+  GHashTable *configs = get_configs();
   gchar* bc = NULL;
-  if(build_config != NULL) {
-    bc = get_config_kv("Configs", build_config);
-  }
 
+  if(build_config != NULL) {
+    bc = (gchar*)g_hash_table_lookup(configs, build_config);
+    // don't drop a NULL into the middle of the command string
+    if(bc == NULL)
+      bc = "";
+  }
   g_free(ld);
 
   g_debug("Output path = %s\n", output_path);
@@ -664,24 +707,16 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   g_free(source_path);
   g_free(output_path);
   g_free(bc);
+  // destroy clost to the end so the string isn't freed before it's used
+  g_hash_table_destroy(configs);
 }
-
-
 
 // if not executing one of the erlang commands
 // then process erln8 options etc
 int erln8(int argc, char* argv[]) {
 
-/*  GHashTableIter iter;
-  gpointer key, value;
-
-  GHashTable *ht = group_hash("Erlangs");
-  g_hash_table_iter_init(&iter, ht);
-  while (g_hash_table_iter_next (&iter, &key, &value)) {
-    printf("[%s] -> [%s]\n", (char*)key, (char*)value);
-  }
-  */
-
+  // TODO: think about getting erlangs, configs, repos in one go
+  //       instead of for each option. meh, maybe I don't care.
   GError *error = NULL;
   GOptionContext *context;
 
@@ -713,35 +748,37 @@ int erln8(int argc, char* argv[]) {
   }
 
   if(opt_clone) {
-    gchar* repo = get_config_kv("Repos", opt_clone);
-    gchar* path = get_config_subdir_file_name("repos",opt_clone);
-    if(repo == NULL || path == NULL) {
+    GHashTable *repos = get_repos();
+    gchar *repo = g_hash_table_lookup(repos, opt_clone);
+    if(repo == NULL) {
+      g_hash_table_destroy(repos);
       g_error("Unknown repository %s\n", repo);
     } else {
+      gchar* path = get_config_subdir_file_name("repos",opt_clone);
       gchar* cmd = g_strconcat("git clone ", repo, " ", path, NULL);
       system(cmd);
+      g_hash_table_destroy(repos);
       g_free(cmd);
+      g_free(path);
     }
     return 0;
   }
 
   if(opt_repos) {
-    gchar **repos = get_config_keys("Repos");
-    gchar **it = repos;
-    while(*it) {
-      printf("%s\n", *it++);
-    }
-    g_strfreev(repos);
+    GHashTable *repos = get_repos();
+    GList *keys = g_hash_table_get_keys(repos);
+    g_list_foreach(keys, e8_print, NULL);
+    g_list_free(keys);
+    g_hash_table_destroy(repos);
     return 0 ;
   }
 
   if(opt_configs) {
-    gchar **configs = get_config_keys("Configs");
-    gchar **it = configs;
-    while(*it) {
-      printf("%s\n", *it++);
-    }
-    g_strfreev(configs);
+    GHashTable *configs = get_configs();
+    GList *keys = g_hash_table_get_keys(configs);
+    g_list_foreach(keys, e8_print, NULL);
+    g_list_free(keys);
+    g_hash_table_destroy(configs);
     return 0;
   }
 
@@ -911,16 +948,39 @@ int main(int argc, char* argv[]) {
       list_erlangs();
       g_error("No erln8.config file\n");
     }
-    char *path = get_config_kv("Erlangs", erl);
-    // TODO: probably a problem if you aren't using colors
-    // but I'd like to be able to see what erln8 has selected
-    printf("%s", red());
-    printf("erln8: %s", blue());
-    printf("using Erlang %s", path);
-    printf("%s\n", color_reset());
+    GHashTable *erlangs = get_erlangs();
+    GHashTable *runtime_options = get_erln8();
+    char *path = g_hash_table_lookup(erlangs, erl);
+    if(path == NULL) {
+      g_hash_table_destroy(erlangs);
+      g_hash_table_destroy(runtime_options);
+      g_error("Version of Erlang (%s) isn't configured in erln8\n",
+               erl);
+    }
+    gchar *use_color = (gchar*)g_hash_table_lookup(runtime_options, "color");
+    if(g_strcmp0(use_color, "true") == 0) {
+      opt_color = TRUE;
+    } else {
+      opt_color = FALSE;
+    }
+
+    gchar *use_banner = (gchar*)g_hash_table_lookup(runtime_options, "banner");
+    if(g_strcmp0(use_banner, "true") == 0) {
+      opt_banner = TRUE;
+    } else {
+      opt_banner = FALSE;
+    }
+    if(opt_banner) {
+      printf("%s", red());
+      printf("erln8: %s", blue());
+      printf("using Erlang %s", path);
+      printf("%s\n", color_reset());
+    }
 
     char *s = g_strconcat(path, "/bin/", argv[0], (char*)0);
     g_debug("%s\n",s);
+    g_hash_table_destroy(erlangs);
+    g_hash_table_destroy(runtime_options);
     // can't free s
     execv(s, argv);
   }
