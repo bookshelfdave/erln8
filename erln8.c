@@ -301,6 +301,41 @@ void list_erlangs() {
   g_free(fn);
 }
 
+GHashTable* group_hash(char *group) {
+  GHashTable *h = g_hash_table_new(g_str_hash, g_str_equal);
+
+  GKeyFile *kf = g_key_file_new();
+  GError *error = NULL;
+  gchar* fn = get_configdir_file_name("config");
+  if(g_key_file_load_from_file(kf, fn, G_KEY_FILE_NONE, &error)) {
+    if (error != NULL) {
+      g_error("Unable to read file: %s\n", error->message);
+      //g_error_free(error); program exits, can't free
+    }
+    GError *keyerror = NULL;
+    gchar** keys = g_key_file_get_keys(kf, group, NULL, &keyerror);
+    if (keyerror != NULL) {
+      g_error("Unable to read %s section from ~/.erln8.d/config: %s\n", group, keyerror->message);
+      //g_error_free(error);
+    } else {
+      gchar** it = keys;
+      while(*it) {
+        GError *valerror = NULL;
+        gchar *v = g_key_file_get_string(kf, group, *it, &valerror);
+        g_hash_table_insert(h, strdup(*it++), strdup(v));
+        g_free(v);
+      }
+    }
+    g_strfreev(keys);
+    g_key_file_free(kf);
+  } else {
+    g_error("Cannot read from ~/.erln8.d/config\n");
+  }
+  g_free(fn);
+  return h;
+}
+
+
 
 // create ~/.erln8.d, ~/.erln8.d/config + related subdirs
 // not atomic, if something blows up in here, the user will get
@@ -631,9 +666,22 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   g_free(bc);
 }
 
+
+
 // if not executing one of the erlang commands
 // then process erln8 options etc
 int erln8(int argc, char* argv[]) {
+
+/*  GHashTableIter iter;
+  gpointer key, value;
+
+  GHashTable *ht = group_hash("Erlangs");
+  g_hash_table_iter_init(&iter, ht);
+  while (g_hash_table_iter_next (&iter, &key, &value)) {
+    printf("[%s] -> [%s]\n", (char*)key, (char*)value);
+  }
+  */
+
   GError *error = NULL;
   GOptionContext *context;
 
@@ -832,8 +880,10 @@ printf("%s\n", (gchar*)x);
 }
 */
 
-int main(int argc, char* argv[]) {
 
+
+
+int main(int argc, char* argv[]) {
   // compiler will whine about it being deprecated, but taking it out
   // blows things up
   // used for GIO

@@ -76,6 +76,7 @@ static gchar*    opt_reporm    = NULL;
 static gchar*    opt_configadd = NULL;
 static gchar*    opt_configrm  = NULL;
 static gboolean  opt_prompt    = FALSE;
+static gboolean  opt_gui       = FALSE;
 
 static const gchar* homedir;
 
@@ -127,6 +128,8 @@ static GOptionEntry entries[] =
     "Don't use color output", NULL },
   { "buildable", 0, 0, G_OPTION_ARG_NONE, &opt_buildable,
     "List tags to build from configured source repos", NULL },
+  { "gui", 0, 0, G_OPTION_ARG_NONE, &opt_gui,
+    "Show a gui if available", NULL },
   { "debug", 0, 0, G_OPTION_ARG_NONE, &opt_debug,
     "Debug Erln8", NULL },
   { NULL }
