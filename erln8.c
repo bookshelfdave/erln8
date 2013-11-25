@@ -159,6 +159,10 @@ char* red() {
   return opt_color == TRUE ? ANSI_COLOR_RED : "";
 }
 
+char* green() {
+  return opt_color == TRUE ? ANSI_COLOR_GREEN : "";
+}
+
 char* yellow() {
   return opt_color == TRUE ? ANSI_COLOR_YELLOW : "";
 }
@@ -659,11 +663,25 @@ void git_buildable(char *repo) {
   g_free(fetchcmd);
 }
 
+static gchar *step[] = {
+    "copy source",
+    "otp_build",
+    "configure",
+    "make",
+    "make install",
+    (gchar*)0
+};
+static int step_count = 5;
+
+void show_build_progress(int current_step) {
+
+}
 
 void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   // TODO:
   // make "tee" optional? -q: quiet build
-
+  // check for valid repo
+  // check for valid tag
   // check for compile flags
   // check for env
   // write to config "Erlangs"
@@ -690,19 +708,63 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   g_debug("Source path = %s\n", source_path);
   g_debug("Log path = %s\n", log_path);
 
-  fprintf(stdout, "Copying source...\n");
+
+
+  fprintf(stdout, "%sCopying source...\n", green());
   char *copycmd = g_strconcat("cd ", source_path, " && git archive ", tag, " | (cd ", tmp, "; tar x)", NULL);
-  g_debug("%s",copycmd);
-  system(copycmd);
+  g_debug("%s\n",copycmd);
+  /*int copy_result =*/ system(copycmd);
+  //printf("Copy result = %d\n", copy_result);
   g_free(copycmd);
-  fprintf(stdout, "Building source [%s]...\n", log_path);
-  char *buildcmd = g_strconcat("(cd ", tmp,
-      " && ./otp_build autoconf && ./configure --prefix=",
-      output_path," ", bc == NULL ? "" : bc, " && make && make install) | tee ", log_path, NULL);
-  g_debug("%s\n",buildcmd);
-  system(buildcmd);
+
+
+  fprintf(stdout, "%sBuilding source [%s]\n", green(), log_path);
+
+  char *buildcmd0 = g_strconcat("cd ", tmp,
+      " && ./otp_build autoconf >> ", log_path, " 2>&1", NULL);
+
+  char *buildcmd1 = g_strconcat("cd ", tmp,
+      "&& ./configure --prefix=", output_path," ",
+      bc == NULL ? "" : bc,
+      " >> ", log_path, " 2>&1",
+      NULL);
+
+  char *buildcmd2 = g_strconcat("cd ", tmp,
+      " && make >> ", log_path,  " 2>&1", NULL);
+
+  char *buildcmd3 = g_strconcat("cd ", tmp,
+      " && make install >> ", log_path, " 2>&1", NULL);
+
+  //printf("%s\n", buildcmd0);
+  //printf("%s\n", buildcmd1);
+  //printf("%s\n", buildcmd2);
+  //printf("%s\n", buildcmd3);
+
+/*  printf(".");
+  fflush(stdout);
+  system(buildcmd0);
+  //printf("RESULT 0 = %d\n", result0);
+  printf(".");
+  fflush(stdout);
+  system(buildcmd1);
+  printf(".");
+  fflush(stdout);
+  //printf("RESULT 1 = %d\n", result1);
+  system(buildcmd2);
+  printf(".");
+  fflush(stdout);
+  //printf("RESULT 2 = %d\n", result2);
+  system(buildcmd3);
+  printf(".\n");
+  fflush(stdout);
+  //printf("RESULT 3 = %d\n", result3);
+*/
   set_config_kv("Erlangs", id, output_path);
-  g_free(buildcmd);
+  g_free(buildcmd0);
+  g_free(buildcmd1);
+  g_free(buildcmd2);
+  g_free(buildcmd3);
+
   g_free(log_path);
   g_free(source_path);
   g_free(output_path);
@@ -921,7 +983,7 @@ printf("%s\n", (gchar*)x);
 
 
 int main(int argc, char* argv[]) {
-  // compiler will whine about it being deprecated, but taking it out
+    // compiler will whine about it being deprecated, but taking it out
   // blows things up
   // used for GIO
   g_type_init();
