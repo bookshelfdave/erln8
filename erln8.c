@@ -415,7 +415,7 @@ void init_here(char* erlang) {
         G_FILE_TEST_IS_REGULAR);
   }
   if(result) {
-    g_error("Config already exists in this directory\n");
+    g_error("Config already exists in this directory. Override with --force.\n");
   } else {
     GError *error2 = NULL;
     if(!g_file_set_contents(fn, d, -1, &error2)) {
@@ -425,7 +425,7 @@ void init_here(char* erlang) {
         g_error("Unable to write file %s\n", fn);
       }
     } else {
-      fprintf(stderr, "Wrote to %s\n", fn);
+      fprintf(stderr, "%sSaved erln8 config to %s%s\n", green(), fn, color_reset());
     }
   }
   g_key_file_free(kf);
