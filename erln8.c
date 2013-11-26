@@ -27,8 +27,6 @@
   link/unlink
   add repo/rm repo
   add config/rm config
-  impl color=true
-  impl banner=true
 */
 
 
@@ -664,17 +662,43 @@ void git_buildable(char *repo) {
 }
 
 static gchar *step[] = {
-    "copy source",
-    "otp_build",
-    "configure",
-    "make",
-    "make install",
+    "[0] copy source                    ",
+    "[1] otp_build                      ",
+    "[2] configure                      ",
+    "[3] make                           ",
+    "[4] make install                   ",
     (gchar*)0
 };
 static int step_count = 5;
 
-void show_build_progress(int current_step) {
-
+void show_build_progress(int current_step, int exit_code) {
+  if(exit_code != 0) {
+    int len = strlen(step[current_step-1]);
+    int i;
+    for(i = 0; i < len; i++) {
+      printf("\b");
+    }
+    printf("%s%s\n", yellow(), step[current_step-1]);
+  } else if(current_step == step_count) {
+    int len = strlen(step[current_step-1]);
+    int i;
+    for(i = 0; i < len; i++) {
+      printf("\b");
+    }
+    printf("%s%s%s\n", green(), step[current_step-1], color_reset());
+  } else if(current_step > 0) {
+    int len = strlen(step[current_step-1]);
+    int i;
+    for(i = 0; i < len; i++) {
+      printf("\b");
+    }
+    printf("%s%s\n", green(), step[current_step-1]),
+    printf("%s%s", color_reset(), step[current_step]);
+    fflush(stdout);
+  } else {
+    printf("%s%s", color_reset(), step[current_step]);
+    fflush(stdout);
+  }
 }
 
 void build_erlang(char *repo, char *tag, char *id, char *build_config) {
@@ -708,62 +732,50 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   g_debug("Source path = %s\n", source_path);
   g_debug("Log path = %s\n", log_path);
 
-
-
-  fprintf(stdout, "%sCopying source...\n", green());
-  char *copycmd = g_strconcat("cd ", source_path, " && git archive ", tag, " | (cd ", tmp, "; tar x)", NULL);
-  g_debug("%s\n",copycmd);
-  /*int copy_result =*/ system(copycmd);
-  //printf("Copy result = %d\n", copy_result);
-  g_free(copycmd);
-
-
-  fprintf(stdout, "%sBuilding source [%s]\n", green(), log_path);
-
-  char *buildcmd0 = g_strconcat("cd ", tmp,
-      " && ./otp_build autoconf >> ", log_path, " 2>&1", NULL);
+  printf("Building %s from tag/branch %s of repo %s\n", id, tag, repo);
+  printf("Custom build config: %s\n", bc);
+  printf("Build log: %s\n", log_path);
+  char *buildcmd0= g_strconcat("cd ", source_path, " && git archive ", tag, " | (cd ", tmp, "; tar x)", NULL);
 
   char *buildcmd1 = g_strconcat("cd ", tmp,
+      " && ./otp_build autoconf >> ", log_path, " 2>&1", NULL);
+
+  char *buildcmd2 = g_strconcat("cd ", tmp,
       "&& ./configure --prefix=", output_path," ",
       bc == NULL ? "" : bc,
       " >> ", log_path, " 2>&1",
       NULL);
 
-  char *buildcmd2 = g_strconcat("cd ", tmp,
+  char *buildcmd3 = g_strconcat("cd ", tmp,
       " && make >> ", log_path,  " 2>&1", NULL);
 
-  char *buildcmd3 = g_strconcat("cd ", tmp,
+  char *buildcmd4 = g_strconcat("cd ", tmp,
       " && make install >> ", log_path, " 2>&1", NULL);
 
-  //printf("%s\n", buildcmd0);
-  //printf("%s\n", buildcmd1);
-  //printf("%s\n", buildcmd2);
-  //printf("%s\n", buildcmd3);
+  gchar* build_cmds[] = {
+    buildcmd0,
+    buildcmd1,
+    buildcmd2,
+    buildcmd3,
+    buildcmd4,
+    0
+  };
 
-/*  printf(".");
-  fflush(stdout);
-  system(buildcmd0);
-  //printf("RESULT 0 = %d\n", result0);
-  printf(".");
-  fflush(stdout);
-  system(buildcmd1);
-  printf(".");
-  fflush(stdout);
-  //printf("RESULT 1 = %d\n", result1);
-  system(buildcmd2);
-  printf(".");
-  fflush(stdout);
-  //printf("RESULT 2 = %d\n", result2);
-  system(buildcmd3);
-  printf(".\n");
-  fflush(stdout);
-  //printf("RESULT 3 = %d\n", result3);
-*/
+  int result = 0;
+  for(int i = 0; i <= step_count; i++) {
+    show_build_progress(i, result);
+    if(result != 0) {
+      g_error("Build error, please check the build logs for more details\n");
+    }
+    result = system(build_cmds[i]);
+  }
+
   set_config_kv("Erlangs", id, output_path);
   g_free(buildcmd0);
   g_free(buildcmd1);
   g_free(buildcmd2);
   g_free(buildcmd3);
+  g_free(buildcmd4);
 
   g_free(log_path);
   g_free(source_path);
@@ -856,7 +868,7 @@ int erln8(int argc, char* argv[]) {
   if(opt_build) {
     gchar *repo = NULL;
     if(opt_repo == NULL) {
-      printf("Repo not specified, using default\n");
+      printf("%sRepo not specified, using default%s\n", yellow(), color_reset());
       repo = "default";
     } else {
       repo = opt_repo;
@@ -1032,6 +1044,19 @@ int main(int argc, char* argv[]) {
     } else {
       opt_banner = FALSE;
     }
+
+    char *s = g_strconcat(path, "/bin/", argv[0], (char*)0);
+    g_debug("%s\n",s);
+    gboolean result = g_file_test(s,
+      G_FILE_TEST_EXISTS |
+      G_FILE_TEST_IS_REGULAR);
+    if(!result) {
+      g_hash_table_destroy(erlangs);
+      g_hash_table_destroy(runtime_options);
+      g_free(s);
+      g_error("Can't run %s, check to see if the file exists\n", s);
+    }
+
     if(opt_banner) {
       printf("%s", red());
       printf("erln8: %s", blue());
@@ -1039,8 +1064,6 @@ int main(int argc, char* argv[]) {
       printf("%s\n", color_reset());
     }
 
-    char *s = g_strconcat(path, "/bin/", argv[0], (char*)0);
-    g_debug("%s\n",s);
     g_hash_table_destroy(erlangs);
     g_hash_table_destroy(runtime_options);
     // can't free s
