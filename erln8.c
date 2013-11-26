@@ -22,11 +22,8 @@
 
 /*
   TODO:
-  build cleanup
-  build env
-  link/unlink
-  add repo/rm repo
-  add config/rm config
+  repoadd/reporm
+  add config/rm config? maybe not
 */
 
 
@@ -618,6 +615,51 @@ char *set_config_kv(char *group, char *key, char *val) {
 }
 
 
+// set a ~/.erln8.d/config group/key value
+// overwrites existing k/v's
+void rm_config_kv(char *group, char *key) {
+  gchar* cfgfile = get_configdir_file_name("config");
+  GKeyFile* kf = g_key_file_new();
+  GError* err = NULL;
+
+  if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
+    if(err != NULL) {
+      fprintf (stderr,
+          "Unable to load keyfile ~/.erln8.d/config: %s\n",
+          err->message);
+      g_error_free(err);
+    } else {
+      g_error("Unable to load keyfile ~/.erln8.d/config\n");
+    }
+  } else {
+    GError *error = NULL;
+    g_key_file_remove_key(kf, group, key, &error);
+    if(error != NULL) {
+      g_error("Can't remove %s:%s from ~/.erln8.d/config: %s\n",
+          group, key, err->message);
+    } else {
+      error = NULL;
+    }
+    gchar* d = g_key_file_to_data (kf, NULL, &error);
+    gchar* fn = get_configdir_file_name("config");
+    g_debug("Writing to %s\n", fn);
+    GError *error2 = NULL;
+    if(!g_file_set_contents(fn, d, -1, &error2)) {
+      if(error2 != NULL) {
+        g_error("Error removing [%s] %s from config file: %s\n",
+            group, key, error2->message);
+      } else {
+        g_error("Error removing [%s] %s from config file\n",
+            group, key);
+      }
+    }
+    g_free(fn);
+    g_key_file_free(kf);
+  }
+  g_free(cfgfile);
+}
+
+
 void git_fetch(char *repo) {
   GHashTable *repos = get_repos();
   gboolean has_repo = !g_hash_table_contains(repos, repo);
@@ -640,7 +682,6 @@ void git_fetch(char *repo) {
   g_free(source_path);
   g_free(fetchcmd);
 }
-
 
 void git_buildable(char *repo) {
   GHashTable *repos = get_repos();
@@ -702,13 +743,16 @@ void show_build_progress(int current_step, int exit_code) {
 }
 
 void build_erlang(char *repo, char *tag, char *id, char *build_config) {
-  // TODO:
-  // make "tee" optional? -q: quiet build
-  // check for valid repo
-  // check for valid tag
-  // check for compile flags
-  // check for env
-  // write to config "Erlangs"
+  GHashTable *repos   = get_repos();
+  if(!g_hash_table_contains(repos, repo)) {
+    g_hash_table_destroy(repos);
+    g_error("Unconfigured repo: %s\n", repo);
+  }
+  GHashTable *configs = get_configs();
+  if(!g_hash_table_contains(configs, build_config)) {
+    g_hash_table_destroy(configs);
+    g_error("Unconfigured build config: %s\n", build_config);
+  }
 
   char pattern[] = "/tmp/erln8.buildXXXXXX";
   char* tmp = g_mkdtemp(pattern);
@@ -717,14 +761,22 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   gchar* source_path = get_config_subdir_file_name("repos", repo);
   gchar* ld = g_strconcat("logs/build_", id, NULL);
   gchar* log_path    = get_configdir_file_name(ld);
-  GHashTable *configs = get_configs();
-  gchar* bc = NULL;
 
+  gchar* bc = NULL;
+  gchar* env = NULL;
   if(build_config != NULL) {
     bc = (gchar*)g_hash_table_lookup(configs, build_config);
     // don't drop a NULL into the middle of the command string
-    if(bc == NULL)
+    if(bc == NULL) {
       bc = "";
+    } else {
+        gchar* env_name = g_strconcat(build_config, "_env", NULL);
+        env = (gchar*)g_hash_table_lookup(configs, env_name);
+        if(env == NULL) {
+          env = "";
+        }
+        g_free(env_name);
+    }
   }
   g_free(ld);
 
@@ -734,22 +786,23 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
 
   printf("Building %s from tag/branch %s of repo %s\n", id, tag, repo);
   printf("Custom build config: %s\n", bc);
+  printf("Custom build env: %s\n", env);
   printf("Build log: %s\n", log_path);
   char *buildcmd0= g_strconcat("cd ", source_path, " && git archive ", tag, " | (cd ", tmp, "; tar x)", NULL);
 
-  char *buildcmd1 = g_strconcat("cd ", tmp,
+  char *buildcmd1 = g_strconcat(env, " cd ", tmp,
       " && ./otp_build autoconf >> ", log_path, " 2>&1", NULL);
 
-  char *buildcmd2 = g_strconcat("cd ", tmp,
+  char *buildcmd2 = g_strconcat(env, " cd ", tmp,
       "&& ./configure --prefix=", output_path," ",
       bc == NULL ? "" : bc,
       " >> ", log_path, " 2>&1",
       NULL);
 
-  char *buildcmd3 = g_strconcat("cd ", tmp,
+  char *buildcmd3 = g_strconcat(env, " cd ", tmp,
       " && make >> ", log_path,  " 2>&1", NULL);
 
-  char *buildcmd4 = g_strconcat("cd ", tmp,
+  char *buildcmd4 = g_strconcat(env, " cd ", tmp,
       " && make install >> ", log_path, " 2>&1", NULL);
 
   gchar* build_cmds[] = {
@@ -765,8 +818,13 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   for(int i = 0; i <= step_count; i++) {
     show_build_progress(i, result);
     if(result != 0) {
+      printf("Here are the last 10 lines of the log file:\n");
+      char *tail = g_strconcat("tail -10 ", log_path, NULL);
+      system(tail);
+      g_free(tail);
       g_error("Build error, please check the build logs for more details\n");
     }
+    g_debug("running %s\n", build_cmds[i]);
     result = system(build_cmds[i]);
   }
 
@@ -915,12 +973,36 @@ int erln8(int argc, char* argv[]) {
   }
 
   if(opt_link) {
-    printf("Not implemented\n");
+    if(!opt_id) {
+      g_error("Please specify --id when linking\n");
+    }
+    GHashTable *erlangs = get_erlangs();
+    gboolean result = g_hash_table_contains(erlangs, opt_id);
+    g_hash_table_destroy(erlangs);
+    if(result) {
+      g_error("An installation of Erlang is already referenced by ID %s\n", opt_link);
+    }
+    gchar* erlpath = g_strconcat(opt_link, "/bin/erl", NULL);
+    g_debug("checking for %s\n", erlpath);
+    gboolean exists = g_file_test(erlpath,
+      G_FILE_TEST_EXISTS |
+      G_FILE_TEST_IS_REGULAR);
+    g_free(erlpath);
+    if(!exists) {
+      g_error("Can't link to an empty Erlang installation\n");
+    }
+    set_config_kv("Erlangs", opt_id, opt_link);
     return 0;
   }
 
   if(opt_unlink) {
-    printf("Not implemented\n");
+    GHashTable *erlangs = get_erlangs();
+    gboolean result = g_hash_table_contains(erlangs, opt_unlink);
+    g_hash_table_destroy(erlangs);
+    if(!result) {
+      g_error("Can't remove %s, it doesn't exist\n", opt_unlink);
+    }
+    rm_config_kv("Erlangs", opt_unlink);
     return 0;
   }
 
