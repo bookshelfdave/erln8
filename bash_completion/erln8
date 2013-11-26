@@ -1,0 +1,32 @@
+# bash_completion for erln8
+_erln8()
+{
+    local cur prev
+    _get_comp_words_by_ref cur prev
+
+    case $prev in
+        erln8)
+            COMPREPLY=( $( compgen -W "--init --use --list --show --buildable --clone --build --fetch --repos --config --configs --force --link --unlink --id --repo --tag" -- "$cur" ) )
+            ;;
+        --use)
+            ERLS=`erln8 --list | awk '{print $1}'`
+            COMPREPLY=( $( compgen -W "$ERLS" -- "$cur") )
+            ;;
+        --repo)
+            REPOS=`erln8 --repos`
+            COMPREPLY=( $( compgen -W "$REPOS" -- "$cur") )
+            ;;
+        --config)
+            CONFIGS=`erln8 --configs`
+            COMPREPLY=( $( compgen -W "$CONFIGS" -- "$cur") )
+            ;;
+         --tag)
+            # TODO: this requires both a repo AND a tag... 
+            B=`erln8 --buildable`
+            COMPREPLY=( $( compgen -W "$B" -- "$cur") )
+            ;;
+
+    esac
+}
+complete -F _erln8 erln8
+
