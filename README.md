@@ -7,8 +7,6 @@ erln8 (erl-in-ate) allows you to compile and manage multiple versions of Erlang 
 
 The cool thing about erln8 is that you only need to add it to your PATH to use it. No funny environment tweaking ;-) It works by reading an `erln8.config` config file out of the current directory, or by searching up the directory tree until it finds one. 
 
-**slightly outdated**
-- Watch my ~1 minute, low-tech demo of how it works [here](https://vimeo.com/78917182): 
 
 ## Status
 
@@ -16,8 +14,6 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 	- if there are any other binaries you need from an Erlang distro, just symlink the binary to erln8 (see the Makefile for an example of how this works)
 	- I'm currently working on this
 - add repo-add, repo-rm, config-add, config-rm commands
-- some TODO's in the source
-- working on a ncurses based *gui* to allow you to quickly support common tasks
 
 
 ## Installation

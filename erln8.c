@@ -22,8 +22,10 @@
 
 /*
   TODO:
+  **setup binaries**:
+    find . -perm -111 -type f
+      skip .so/.o, watch EOL
   repoadd/reporm
-  add config/rm config? maybe not
 */
 
 
@@ -90,6 +92,7 @@ static gchar*    opt_reporm    = NULL;
 static gchar*    opt_configadd = NULL;
 static gchar*    opt_configrm  = NULL;
 static gboolean  opt_prompt    = FALSE;
+static gchar*    opt_url       = NULL;
 
 static const gchar* homedir;
 
@@ -109,6 +112,8 @@ static GOptionEntry entries[] =
     "Build a specific version of OTP from source", NULL },
   { "repo", 0, 0, G_OPTION_ARG_STRING, &opt_repo,
     "Specifies repo name to build from", "repo"},
+  { "url", 0, 0, G_OPTION_ARG_STRING, &opt_url,
+    "Used to specify a git url with repo-add and repo-rm", "url"},
   { "tag", 0, 0, G_OPTION_ARG_STRING, &opt_tag,
     "Specifies repo branch/tag to build from", "git_tag"},
   { "id", 0, 0, G_OPTION_ARG_STRING, &opt_id,
@@ -129,9 +134,9 @@ static GOptionEntry entries[] =
     "Unlink a non-erln8 build of Erlang from erln8", NULL },
   { "force", 0, 0, G_OPTION_ARG_NONE, &opt_force,
     "Use the force", NULL },
-  { "repo-add-url", 0, 0, G_OPTION_ARG_STRING, &opt_repoadd,
+  { "repo-add", 0, 0, G_OPTION_ARG_STRING, &opt_repoadd,
     "Add a repo", "repo-id"},
-  { "repo-rm-url", 0, 0, G_OPTION_ARG_STRING, &opt_reporm,
+  { "repo-rm", 0, 0, G_OPTION_ARG_STRING, &opt_reporm,
     "Remote a repo", "repo-id"},
   { "config-add", 0, 0, G_OPTION_ARG_STRING, &opt_configadd,
     "Add an Erlang build config", "config-id"},
@@ -146,6 +151,16 @@ static GOptionEntry entries[] =
   { NULL }
 };
 
+static gchar *step[] = {
+    "[0] copy source                    ",
+    "[1] otp_build                      ",
+    "[2] configure                      ",
+    "[3] make                           ",
+    "[4] make install                   ",
+    (gchar*)0
+};
+
+static int step_count = 5;
 
 char* red() {
   return opt_color == TRUE ? ANSI_COLOR_RED : "";
@@ -287,6 +302,32 @@ GHashTable* get_erln8() {
   return group_hash("Erln8");
 }
 
+void git_allbuildable() {
+  GHashTable *repos = get_repos();
+
+  GHashTableIter iter;
+  gpointer repo, value;
+
+  g_hash_table_iter_init (&iter, repos);
+  while (g_hash_table_iter_next(&iter, &repo, &value)) {
+    gchar* source_path = get_config_subdir_file_name("repos", repo);
+    if(!g_file_test(source_path, G_FILE_TEST_EXISTS |
+                                 G_FILE_TEST_IS_REGULAR)) {
+        g_error("Missing repo for %s, which should be in %s\n", repo, source_path);
+    }
+    printf("%sTags for repo %s:%s\n", blue(), repo, color_reset());
+    char *fetchcmd = g_strconcat("cd ",
+                                 source_path,
+                                 " && git tag | sort",
+                                 NULL);
+    system(fetchcmd);
+    g_free(fetchcmd);
+    g_free(source_path);
+  }
+}
+
+
+
 void e8_print(gpointer data, gpointer user_data) {
   printf("%s\n", (gchar*)data);
 }
@@ -343,8 +384,35 @@ void init_main_config() {
   g_key_file_set_comment(kf,
       "Erln8",
       "banner",
-      "NOT IMPLEMENTED: show the version of Erlang that erln8 is running",
+      "Show the version of Erlang that erln8 is running",
       NULL);
+
+/*
+  // need to think about this
+  g_key_file_set_string(kf,
+      "Erln8",
+      "default_repo",
+      "default");
+
+  g_key_file_set_comment(kf,
+      "Erln8",
+      "default_repo",
+      "The default repo to use if a repo isn't specified on the command line.",
+      NULL);
+*/
+
+ g_key_file_set_string(kf,
+      "Erlangs",
+      "none",
+      "/dev/null");
+
+  g_key_file_set_comment(kf,
+      "Erlangs",
+      "none",
+      "A null Erlang installation, used if you don't want Erlang runnable from a specific directory",
+      NULL);
+
+
 
   g_key_file_set_string(kf,
       "Repos",
@@ -366,7 +434,6 @@ void init_main_config() {
       "osx_gcc_env",
       "CC=gcc-4.2 CPPFLAGS='-DNDEBUG' MAKEFLAGS='-j 3'");
 
-
   GError *error = NULL;
   gchar* d = g_key_file_to_data (kf, NULL, &error);
   if(error != NULL) {
@@ -387,6 +454,8 @@ void init_main_config() {
   g_free(fn);
   g_free(d);
   g_key_file_free(kf);
+  printf("%sIf you only want to use the canonical OTP repo, run `erln8 --clone default` before continuing%s\n", yellow(), color_reset());
+  printf("%sOtherwise, add build repos using `erln8 --repo-add ...` %s\n", yellow(), color_reset());
 }
 
 // write an ./erln8.config file into the cwd
@@ -679,7 +748,7 @@ void git_fetch(char *repo) {
   g_free(fetchcmd);
 }
 
-void git_buildable(char *repo) {
+/*void git_buildable(char *repo) {
   GHashTable *repos = get_repos();
   gboolean has_repo = g_hash_table_contains(repos, repo);
   g_hash_table_destroy(repos);
@@ -696,17 +765,7 @@ void git_buildable(char *repo) {
   system(fetchcmd);
   g_free(source_path);
   g_free(fetchcmd);
-}
-
-static gchar *step[] = {
-    "[0] copy source                    ",
-    "[1] otp_build                      ",
-    "[2] configure                      ",
-    "[3] make                           ",
-    "[4] make install                   ",
-    (gchar*)0
-};
-static int step_count = 5;
+}*/
 
 void show_build_progress(int current_step, int exit_code) {
   if(exit_code != 0) {
@@ -738,16 +797,21 @@ void show_build_progress(int current_step, int exit_code) {
   }
 }
 
-void build_erlang(char *repo, char *tag, char *id, char *build_config) {
+void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
+
   GHashTable *repos   = get_repos();
   if(!g_hash_table_contains(repos, repo)) {
     g_hash_table_destroy(repos);
     g_error("Unconfigured repo: %s\n", repo);
   }
+
+  // check for a valid build config if one is specified
   GHashTable *configs = get_configs();
-  if(!g_hash_table_contains(configs, build_config)) {
-    g_hash_table_destroy(configs);
-    g_error("Unconfigured build config: %s\n", build_config);
+  if(build_config) {
+    if(!g_hash_table_contains(configs, build_config)) {
+      g_hash_table_destroy(configs);
+      g_error("Unconfigured build config: %s\n", build_config);
+    }
   }
 
   char pattern[] = "/tmp/erln8.buildXXXXXX";
@@ -757,6 +821,12 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   gchar* source_path = get_config_subdir_file_name("repos", repo);
   gchar* ld = g_strconcat("logs/build_", id, NULL);
   gchar* log_path    = get_configdir_file_name(ld);
+
+  if(!g_file_test(source_path, G_FILE_TEST_EXISTS |
+                               G_FILE_TEST_IS_REGULAR)) {
+        g_error("Missing repo for %s, which should be in %s.\nDid you forget to `erln8 --clone <repo_name>?`\n", repo, source_path);
+  }
+
 
   gchar* bc = NULL;
   gchar* env = NULL;
@@ -773,6 +843,10 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
         }
         g_free(env_name);
     }
+  } else {
+    if(env == NULL) {
+      env = "";
+    }
   }
   g_free(ld);
 
@@ -784,10 +858,10 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
   printf("Custom build config: %s\n", bc);
   printf("Custom build env: %s\n", env);
   printf("Build log: %s\n", log_path);
-  char *buildcmd0= g_strconcat("cd ", source_path, " && git archive ", tag, " | (cd ", tmp, "; tar x)", NULL);
+  char *buildcmd0 = g_strconcat(env, " cd ", source_path, " && git archive ", tag, " | (cd ", tmp, "; tar x)", NULL);
 
   char *buildcmd1 = g_strconcat(env, " cd ", tmp,
-      " && ./otp_build autoconf >> ", log_path, " 2>&1", NULL);
+      " && ./otp_build autoconf > ", log_path, " 2>&1", NULL);
 
   char *buildcmd2 = g_strconcat(env, " cd ", tmp,
       "&& ./configure --prefix=", output_path," ",
@@ -807,24 +881,26 @@ void build_erlang(char *repo, char *tag, char *id, char *build_config) {
     buildcmd2,
     buildcmd3,
     buildcmd4,
-    0
+    NULL
   };
 
   int result = 0;
   for(int i = 0; i <= step_count; i++) {
     show_build_progress(i, result);
     if(result != 0) {
+      g_debug("STATUS = %d\n", result);
       printf("Here are the last 10 lines of the log file:\n");
       char *tail = g_strconcat("tail -10 ", log_path, NULL);
       system(tail);
       g_free(tail);
+       printf("---------------------------------------------------------\n");
       g_error("Build error, please check the build logs for more details\n");
     }
     g_debug("running %s\n", build_cmds[i]);
     result = system(build_cmds[i]);
   }
 
-  set_config_kv("Erlangs", id, output_path);
+  //set_config_kv("Erlangs", id, output_path);
   g_free(buildcmd0);
   g_free(buildcmd1);
   g_free(buildcmd2);
@@ -927,9 +1003,9 @@ int erln8(int argc, char* argv[]) {
     } else {
       repo = opt_repo;
     }
+
     if(repo == NULL) {
       g_error("build repo not specified");
-
     }
     if(opt_tag == NULL) {
       g_error("build tag not specified");
@@ -950,8 +1026,8 @@ int erln8(int argc, char* argv[]) {
 
   if(opt_repoadd) {
     if(opt_repoadd == NULL || opt_repo != NULL) {
-      g_message("Please use --repo-add-url along with --repo.\n");
-      g_message("Example: erln8 --repo-add-url=https://github.com/foobar/otp.git --repo=foobar\n");
+      g_message("Please use --repo-add along with --url.\n");
+      g_message("Example: erln8 --repo-add foobar --url https://github.com/foobar/otp.git\n");
       g_error("Incomplete repo specification\n");
     } else {
       printf("RepoURL %s\n", opt_repoadd);
@@ -1002,23 +1078,8 @@ int erln8(int argc, char* argv[]) {
     return 0;
   }
 
-  if(opt_configadd) {
-    g_error("Not implemented\n");
-    return 0;
-  }
-
-  if(opt_configrm) {
-    printf("Removing %s\n", opt_configrm);
-    g_error("Not implemented\n");
-    return 0;
-  }
-
   if(opt_buildable) {
-    if(opt_repo == NULL) {
-      git_buildable("default");
-    } else {
-      git_buildable(opt_repo);
-    }
+    git_allbuildable();
     return 0;
   }
 
