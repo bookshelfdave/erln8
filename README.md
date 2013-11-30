@@ -13,7 +13,7 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 - only supports erl, erlc, escript commands from Erlang dist
 	- if there are any other binaries you need from an Erlang distro, just symlink the binary to erln8 (see the Makefile for an example of how this works)
 	- I'm currently working on this
-- add repo-add, repo-rm, config-add, config-rm commands
+- add repo-add, repo-rm
 
 
 ## Installation
@@ -169,6 +169,8 @@ and you can use it with `erln8 --use r15b03`
 
 ## Customizing your shell prompt
 
+* Don't customize your prompt until you have erln8 fully installed.
+
 The `--prompt` parameter displays the configured version of Erlang for the current working directory. 
 
 ```
@@ -190,7 +192,55 @@ PS1='\[$(tput bold)\]\[$(tput setaf 2)\]$(erl_version)\[$(tput sgr0)\]:\[\e[0;36
 
 ![foo](https://www.evernote.com/shard/s55/sh/937bb22f-ac98-455b-8e6f-8367caf6fdea/0cd1beba8166544470fef351cb614c7e/deep/0/Shell.png)
 
+## Specifying a build config
 
+erln8 allows you to pass arbitrary flags to the `configure` script as part of a **config**. To add a config, edit `~/.erln8.d/config` and append a ***name=configstring*** to the `[Configs]` section.
+
+##### *Example:*
+
+```
+[Configs]
+osx_llvm=--disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll --enable-darwin-64bit
+```
+
+To specify environment variables to be used during a build, create a config ***name=configstring*** as show above, as well as an additional ***name_env=vars*** setting. Any config that has an accompanying *
+
+##### *Example:*
+
+```
+[Configs]
+osx_gcc=--disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll --enable-darwin-64bit
+osx_gcc_env=CC=gcc-4.2 CPPFLAGS='-DNDEBUG' MAKEFLAGS='-j 3'
+```
+
+## erln8 config file format
+
+* comments begin with the `#` character and may appear anywhere in the file
+* all keys and values are **case sensitive**
+
+####See also:
+
+0. https://developer.gnome.org/glib/2.38/glib-Key-value-file-parser.html
+1. http://freedesktop.org/wiki/Specifications/desktop-entry-spec/
+
+## Disabling color and/or the erln8 startup banner
+
+To disable the erln8 startup banner, change the appropriate config settings located in the `[Erln8]` section of `~/.erln8.d/config`. Boolean values are either `true` or `false`, and are case sensitive.
+
+* **banner**
+	* Show the version of Erlang that erln8 is running upon startup
+	* `true` or `false`
+	
+* **color**
+	* `true` or `false`
+
+#### Example:
+
+```
+[Erln8]
+banner=false
+color=false
+```
 
 #Contributing
 

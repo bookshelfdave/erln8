@@ -313,9 +313,9 @@ void git_allbuildable() {
     gchar* source_path = get_config_subdir_file_name("repos", repo);
     if(!g_file_test(source_path, G_FILE_TEST_EXISTS |
                                  G_FILE_TEST_IS_REGULAR)) {
-        g_error("Missing repo for %s, which should be in %s\n", repo, source_path);
+        g_error("Missing repo for %s, which should be in %s\n", (gchar*)repo, source_path);
     }
-    printf("%sTags for repo %s:%s\n", blue(), repo, color_reset());
+    printf("%sTags for repo %s:%s\n", blue(), (gchar*)repo, color_reset());
     char *fetchcmd = g_strconcat("cd ",
                                  source_path,
                                  " && git tag | sort",
@@ -885,9 +885,10 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
   };
 
   int result = 0;
-  for(int i = 0; i <= step_count; i++) {
+  int i = 0;
+  for(i = 0; i <= step_count; i++) {
     show_build_progress(i, result);
-    if(result != 0) {
+    if(result != -1) {
       g_debug("STATUS = %d\n", result);
       printf("Here are the last 10 lines of the log file:\n");
       char *tail = g_strconcat("tail -10 ", log_path, NULL);
