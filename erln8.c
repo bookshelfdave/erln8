@@ -807,19 +807,19 @@ void setup_binaries(gchar* otpid) {
   gchar* path = (gchar*)g_hash_table_lookup(erlangs, otpid);
   g_hash_table_destroy(erlangs);
   if(!has_erlang) {
-    g_error("%s is not a configured version of Erlang\n", otpid);
+    g_error("%s doesn't appear to be linked. Did something go wrong with the build?\n", otpid);
   }
 
   gchar *mkfile = g_strconcat("cd ", path, " && echo \"[Binaries]\" >> erln8_bins", NULL);
   gchar *genbins = g_strconcat("cd ", path,
       " && find . -perm -111 -type f | grep -v \"\\.so\" | grep -v \"\\.o\" | grep -v \"lib/erlang/bin\" | awk -F/ '{print $NF \"=\" $0}' >> erln8_bins", NULL);
 
+  // TODO: check return values!
   system(mkfile);
   system(genbins);
 
   g_free(mkfile);
   g_free(genbins);
-
 }
 
 void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
@@ -941,6 +941,43 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
   // destroy clost to the end so the string isn't freed before it's used
   g_hash_table_destroy(configs);
 }
+
+
+gchar* get_bin(gchar *otpid, gchar *cmd) {
+  gchar *cmdpath = "";
+  GHashTable *erlangs = get_erlangs();
+  gboolean has_erlang = g_hash_table_contains(erlangs, otpid);
+  gchar* path = (gchar*)g_hash_table_lookup(erlangs, otpid);
+  g_hash_table_destroy(erlangs);
+  if(!has_erlang) {
+    g_error("%s doesn't appear to be linked. Did something go wrong with the build?\n", otpid);
+  }
+  gchar* binfn = g_strconcat(path, "/erln8_bins/", cmd, NULL);
+  GKeyFile *kf = g_key_file_new();
+  GError *error = NULL;
+
+  if(g_key_file_load_from_file(kf, binfn, G_KEY_FILE_NONE, &error)) {
+    if (error != NULL) {
+      g_free(binfn);
+      g_key_file_free(kf);
+      g_error("Unable to read file: %s\n", error->message);
+      //g_error_free(error); program exits, can't free
+    }
+    GError *keyerror = NULL;
+    if(!g_key_file_has_key(kf, "Binaries", cmd, &keyerror)) {
+      g_free(binfn);
+      g_key_file_free(kf);
+      g_error("erln8 can't find %s\n", cmd);
+    } else {
+      keyerror = NULL;
+      cmdpath = g_key_file_get_value(kf, "Binaries", cmd, &keyerror);
+    }
+    g_free(binfn);
+    g_key_file_free(kf);
+  }
+  return cmdpath;
+}
+
 
 
 // if not executing one of the erlang commands
