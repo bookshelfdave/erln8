@@ -101,6 +101,12 @@ You can specify alternate Git repos to build from. `erln8 --repos` lists availab
 ```
 
 
+### Shell Completion
+
+erln8 provides shell completion for commands, available Erlang installations, and buildable Erlang installation. 
+
+	source ~/path_to_erln8/bash_completion/erln8
+
 ## Usage
 
 To see which versions of Erlang are available for use from erln8, run:

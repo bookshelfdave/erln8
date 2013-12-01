@@ -24,7 +24,13 @@
   TODO:
   **setup binaries**:
     find . -perm -111 -type f
+    find . -perm -111 -type f | grep -v "\.so" | grep -v "\.o" | sort
       skip .so/.o, watch EOL
+
+
+  echo "[Binaries]" >> erln8_bins
+  find . -perm -111 -type f | grep -v "\.so" | grep -v "\.o" | grep -v "lib/erlang/bin" | awk -F/ '{print $NF "=" $0}' >> erln8_bins
+
   repoadd/reporm
 */
 
@@ -412,8 +418,6 @@ void init_main_config() {
       "A null Erlang installation, used if you don't want Erlang runnable from a specific directory",
       NULL);
 
-
-
   g_key_file_set_string(kf,
       "Repos",
       "default",
@@ -797,8 +801,28 @@ void show_build_progress(int current_step, int exit_code) {
   }
 }
 
-void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
+void setup_binaries(gchar* otpid) {
+  GHashTable *erlangs = get_erlangs();
+  gboolean has_erlang = g_hash_table_contains(erlangs, otpid);
+  gchar* path = (gchar*)g_hash_table_lookup(erlangs, otpid);
+  g_hash_table_destroy(erlangs);
+  if(!has_erlang) {
+    g_error("%s is not a configured version of Erlang\n", otpid);
+  }
 
+  gchar *mkfile = g_strconcat("cd ", path, " && echo \"[Binaries]\" >> erln8_bins", NULL);
+  gchar *genbins = g_strconcat("cd ", path,
+      " && find . -perm -111 -type f | grep -v \"\\.so\" | grep -v \"\\.o\" | grep -v \"lib/erlang/bin\" | awk -F/ '{print $NF \"=\" $0}' >> erln8_bins", NULL);
+
+  system(mkfile);
+  system(genbins);
+
+  g_free(mkfile);
+  g_free(genbins);
+
+}
+
+void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
   GHashTable *repos   = get_repos();
   if(!g_hash_table_contains(repos, repo)) {
     g_hash_table_destroy(repos);
@@ -901,7 +925,9 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
     result = system(build_cmds[i]);
   }
 
-  //set_config_kv("Erlangs", id, output_path);
+  set_config_kv("Erlangs", id, output_path);
+  setup_binaries(id);
+
   g_free(buildcmd0);
   g_free(buildcmd1);
   g_free(buildcmd2);
@@ -916,10 +942,10 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
   g_hash_table_destroy(configs);
 }
 
+
 // if not executing one of the erlang commands
 // then process erln8 options etc
 int erln8(int argc, char* argv[]) {
-
   // TODO: think about getting erlangs, configs, repos in one go
   //       instead of for each option. meh, maybe I don't care.
   GError *error = NULL;
@@ -1021,7 +1047,7 @@ int erln8(int argc, char* argv[]) {
     g_debug("id  :%s\n", opt_id);
     g_debug("cfg :%s\n", opt_config);
 
-    build_erlang(repo, opt_tag, opt_id, opt_config);
+    //build_erlang(repo, opt_tag, opt_id, opt_config);
     return 0;
   }
 
