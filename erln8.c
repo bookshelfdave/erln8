@@ -321,7 +321,7 @@ void git_allbuildable() {
                                  G_FILE_TEST_IS_REGULAR)) {
         g_error("Missing repo for %s, which should be in %s\n", (gchar*)repo, source_path);
     }
-    printf("%sTags for repo %s:%s\n", blue(), (gchar*)repo, color_reset());
+    printf("Tags for repo %s:\n", (gchar*)repo);
     char *fetchcmd = g_strconcat("cd ",
                                  source_path,
                                  " && git tag | sort",
@@ -804,7 +804,9 @@ void show_build_progress(int current_step, int exit_code) {
 void setup_binaries(gchar* otpid) {
   GHashTable *erlangs = get_erlangs();
   gboolean has_erlang = g_hash_table_contains(erlangs, otpid);
-  gchar* path = (gchar*)g_hash_table_lookup(erlangs, otpid);
+  gchar* path0 = (gchar*)g_hash_table_lookup(erlangs, otpid);
+  // path0 is freed when the hashtable is freed
+  gchar* path = strdup(path0);
   g_hash_table_destroy(erlangs);
   if(!has_erlang) {
     g_error("%s doesn't appear to be linked. Did something go wrong with the build?\n", otpid);
@@ -813,7 +815,8 @@ void setup_binaries(gchar* otpid) {
   gchar *mkfile = g_strconcat("cd ", path, " && echo \"[Binaries]\" >> erln8_bins", NULL);
   gchar *genbins = g_strconcat("cd ", path,
       " && find . -perm -111 -type f | grep -v \"\\.so\" | grep -v \"\\.o\" | grep -v \"lib/erlang/bin\" | awk -F/ '{print $NF \"=\" $0}' >> erln8_bins", NULL);
-
+  g_debug("%s\n", mkfile);
+  g_debug("%s\n", genbins);
   // TODO: check return values!
   system(mkfile);
   system(genbins);
@@ -912,7 +915,7 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
   int i = 0;
   for(i = 0; i <= step_count; i++) {
     show_build_progress(i, result);
-    if(result != -1) {
+    if(result != 0) {
       g_debug("STATUS = %d\n", result);
       printf("Here are the last 10 lines of the log file:\n");
       char *tail = g_strconcat("tail -10 ", log_path, NULL);
@@ -1084,7 +1087,7 @@ int erln8(int argc, char* argv[]) {
     g_debug("id  :%s\n", opt_id);
     g_debug("cfg :%s\n", opt_config);
 
-    //build_erlang(repo, opt_tag, opt_id, opt_config);
+    build_erlang(repo, opt_tag, opt_id, opt_config);
     return 0;
   }
 
