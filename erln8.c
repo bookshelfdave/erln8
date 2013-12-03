@@ -22,15 +22,6 @@
 
 /*
   TODO:
-  **setup binaries**:
-    find . -perm -111 -type f
-    find . -perm -111 -type f | grep -v "\.so" | grep -v "\.o" | sort
-      skip .so/.o, watch EOL
-
-
-  echo "[Binaries]" >> erln8_bins
-  find . -perm -111 -type f | grep -v "\.so" | grep -v "\.o" | grep -v "lib/erlang/bin" | awk -F/ '{print $NF "=" $0}' >> erln8_bins
-
   repoadd/reporm
 */
 
@@ -947,16 +938,22 @@ gchar* get_bin(gchar *otpid, gchar *cmd) {
   gchar *cmdpath = "";
   GHashTable *erlangs = get_erlangs();
   gboolean has_erlang = g_hash_table_contains(erlangs, otpid);
-  gchar* path = (gchar*)g_hash_table_lookup(erlangs, otpid);
+  gchar* path0 = (gchar*)g_hash_table_lookup(erlangs, otpid);
+  gchar* path = strdup(path0);
   g_hash_table_destroy(erlangs);
   if(!has_erlang) {
     g_error("%s doesn't appear to be linked. Did something go wrong with the build?\n", otpid);
   }
-  gchar* binfn = g_strconcat(path, "/erln8_bins/", cmd, NULL);
+
+  gchar* binfn = g_strconcat(path, "/erln8_bins", NULL);
   GKeyFile *kf = g_key_file_new();
   GError *error = NULL;
 
+  printf("PATH0 %s\n", path);
+//  printf("GETTING [%s] [%s]\n", otpid, cmd);
+
   if(g_key_file_load_from_file(kf, binfn, G_KEY_FILE_NONE, &error)) {
+    printf("PATH1 %s\n", path);
     if (error != NULL) {
       g_free(binfn);
       g_key_file_free(kf);
@@ -970,7 +967,10 @@ gchar* get_bin(gchar *otpid, gchar *cmd) {
       g_error("erln8 can't find %s\n", cmd);
     } else {
       keyerror = NULL;
-      cmdpath = g_key_file_get_value(kf, "Binaries", cmd, &keyerror);
+      gchar* relpath = g_key_file_get_value(kf, "Binaries", cmd, &keyerror);
+      printf("RELPATH %s\n", relpath);
+      printf("PATH %s\n", path);
+      cmdpath = g_strconcat(path, "/", relpath, NULL);
     }
     g_free(binfn);
     g_key_file_free(kf);
@@ -1248,7 +1248,8 @@ int main(int argc, char* argv[]) {
       opt_banner = FALSE;
     }
 
-    char *s = g_strconcat(path, "/bin/", argv[0], (char*)0);
+    //char *s = g_strconcat(path, "/bin/", argv[0], (char*)0);
+    gchar *s = get_bin(erl, argv[0]);
     g_debug("%s\n",s);
     gboolean result = g_file_test(s,
       G_FILE_TEST_EXISTS |

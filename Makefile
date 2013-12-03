@@ -4,6 +4,7 @@ all:
 	ln -s ./erln8 ./erl
 	ln -s ./erln8 ./erlc
 	ln -s ./erln8 ./escript
+	ln -s ./erln8 ./dialyzer
 
 
 erln8r: erln8r.c
