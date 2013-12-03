@@ -952,11 +952,7 @@ gchar* get_bin(gchar *otpid, gchar *cmd) {
   GKeyFile *kf = g_key_file_new();
   GError *error = NULL;
 
-  printf("PATH0 %s\n", path);
-//  printf("GETTING [%s] [%s]\n", otpid, cmd);
-
   if(g_key_file_load_from_file(kf, binfn, G_KEY_FILE_NONE, &error)) {
-    printf("PATH1 %s\n", path);
     if (error != NULL) {
       g_free(binfn);
       g_key_file_free(kf);
@@ -971,8 +967,8 @@ gchar* get_bin(gchar *otpid, gchar *cmd) {
     } else {
       keyerror = NULL;
       gchar* relpath = g_key_file_get_value(kf, "Binaries", cmd, &keyerror);
-      printf("RELPATH %s\n", relpath);
-      printf("PATH %s\n", path);
+      g_debug("RELPATH %s\n", relpath);
+      g_debug("PATH %s\n", path);
       cmdpath = g_strconcat(path, "/", relpath, NULL);
     }
     g_free(binfn);
