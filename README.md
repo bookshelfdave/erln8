@@ -9,7 +9,9 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 
 
 ## Status
-
+- not yet stable, use at your own risk
+- link/unlink broken
+- a build generates an error when it completes
 - only supports erl, erlc, escript commands from Erlang dist
 	- if there are any other binaries you need from an Erlang distro, just symlink the binary to erln8 (see the Makefile for an example of how this works)
 	- I'm currently working on this
