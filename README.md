@@ -48,6 +48,13 @@ export PATH=$PATH:/where/you/put/erln8
 ```
 sudo yum install gcc glibc-devel make ncurses-devel openssl-devel autoconf glib2-devel.x86_64
 ```
+
+this can be helpful as well:
+
+```
+yum groupinstall "Development tools"
+```
+
 git clone https://github.com/metadave/erln8.git
 cd erln8
 make
