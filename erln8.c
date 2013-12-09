@@ -743,24 +743,6 @@ void git_fetch(char *repo) {
   g_free(fetchcmd);
 }
 
-/*void git_buildable(char *repo) {
-  GHashTable *repos = get_repos();
-  gboolean has_repo = g_hash_table_contains(repos, repo);
-  g_hash_table_destroy(repos);
-  if(!has_repo) {
-    g_error("Unknown repo %s\n", repo);
-  }
-  gchar* source_path = get_config_subdir_file_name("repos", repo);
-  if(!g_file_test(source_path, G_FILE_TEST_EXISTS |
-        G_FILE_TEST_IS_REGULAR)) {
-    g_error("Missing repo for %s, which should be in %s\n", repo, source_path);
-  }
-
-  char *fetchcmd = g_strconcat("cd ", source_path, " && git tag | sort", NULL);
-  system(fetchcmd);
-  g_free(source_path);
-  g_free(fetchcmd);
-}*/
 
 void show_build_progress(int current_step, int exit_code) {
   if(exit_code != 0) {
@@ -803,17 +785,14 @@ void setup_binaries(gchar* otpid) {
     g_error("%s doesn't appear to be linked. Did something go wrong with the build?\n", otpid);
   }
 
-  gchar *mkfile = g_strconcat("cd ", path, " && echo \"[Binaries]\" >> erln8_bins", NULL);
   gchar *genbins = g_strconcat("cd ", path,
-      " && find . -perm -111 -type f | grep -v \"\\.so\" | grep -v \"\\.o\" | grep -v \"lib/erlang/bin\" | awk -F/ '{print $NF \"=\" $0}' >> erln8_bins", NULL);
-  g_debug("%s\n", mkfile);
+      			       " && for i in `find . -perm -111 -type f | grep -v \"\\.so\" | grep -v \"\\.o\" | grep -v \"lib/erlang/bin\"`; do  `ln -s -f $i $(basename $i)` ; done", NULL);
   g_debug("%s\n", genbins);
   // TODO: check return values!
-  system(mkfile);
   system(genbins);
 
-  g_free(mkfile);
   g_free(genbins);
+  g_free(path);
 }
 
 void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
@@ -876,7 +855,12 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
   printf("Custom build config: %s\n", bc);
   printf("Custom build env: %s\n", env);
   printf("Build log: %s\n", log_path);
-  char *buildcmd0 = g_strconcat(env, " cd ", source_path, " && git archive ", tag, " | (cd ", tmp, "; tar x)", NULL);
+  char *buildcmd0 = g_strconcat(env, 
+				" cd ",
+				source_path,
+				" && git archive ",
+				tag, 
+				" | (cd ", tmp, "; tar x)", NULL);
 
   char *buildcmd1 = g_strconcat(env, " cd ", tmp,
       " && ./otp_build autoconf > ", log_path, " 2>&1", NULL);
@@ -904,7 +888,7 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
 
   int result = 0;
   int i = 0;
-  for(i = 0; i <= step_count; i++) {
+  for(i = 0; i < step_count; i++) {
     show_build_progress(i, result);
     if(result != 0) {
       g_debug("STATUS = %d\n", result);
