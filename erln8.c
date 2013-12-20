@@ -149,11 +149,11 @@ static GOptionEntry entries[] =
 };
 
 static gchar *step[] = {
-    "[0] copy source                    ",
-    "[1] otp_build                      ",
-    "[2] configure                      ",
-    "[3] make                           ",
-    "[4] make install                   ",
+    "[0] copy source   ",
+    "[1] otp_build     ",
+    "[2] configure     ",
+    "[3] make          ",
+    "[4] make install  ",
     (gchar*)0
 };
 
@@ -376,7 +376,7 @@ void init_main_config() {
   g_key_file_set_boolean(kf,
       "Erln8",
       "banner",
-      TRUE);
+      FALSE);
 
   g_key_file_set_comment(kf,
       "Erln8",
@@ -785,8 +785,10 @@ void setup_binaries(gchar* otpid) {
     g_error("%s doesn't appear to be linked. Did something go wrong with the build?\n", otpid);
   }
 
-  gchar *genbins = g_strconcat("cd ", path,
-      			       " && for i in `find . -perm -111 -type f | grep -v \"\\.so\" | grep -v \"\\.o\" | grep -v \"lib/erlang/bin\"`; do  `ln -s -f $i $(basename $i)` ; done", NULL);
+  // I'm betting that this shell script isn't cross platform compat
+  gchar *genbins = g_strconcat(
+      "cd ", path,
+      " && for i in `find . -perm -111 -type f | grep -v \"\\.so\" | grep -v \"\\.o\" | grep -v \"lib/erlang/bin\"`; do  `ln -s -f $i $(basename $i)` ; done", NULL);
   g_debug("%s\n", genbins);
   // TODO: check return values!
   system(genbins);
@@ -824,7 +826,6 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
         g_error("Missing repo for %s, which should be in %s.\nDid you forget to `erln8 --clone <repo_name>?`\n", repo, source_path);
   }
 
-
   gchar* bc = NULL;
   gchar* env = NULL;
   if(build_config != NULL) {
@@ -855,12 +856,13 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
   printf("Custom build config: %s\n", bc);
   printf("Custom build env: %s\n", env);
   printf("Build log: %s\n", log_path);
-  char *buildcmd0 = g_strconcat(env, 
-				" cd ",
-				source_path,
-				" && git archive ",
-				tag, 
-				" | (cd ", tmp, "; tar x)", NULL);
+  char *buildcmd0 =
+    g_strconcat(env,
+        " cd ",
+        source_path,
+        " && git archive ",
+        tag,
+        " | (cd ", tmp, "; tar x)", NULL);
 
   char *buildcmd1 = g_strconcat(env, " cd ", tmp,
       " && ./otp_build autoconf > ", log_path, " 2>&1", NULL);
@@ -961,6 +963,36 @@ gchar* get_bin(gchar *otpid, gchar *cmd) {
   return cmdpath;
 }
 
+
+void linkerl(gchar* id, gchar *path) {
+    GHashTable *erlangs = get_erlangs();
+    gboolean result = g_hash_table_contains(erlangs, id);
+    g_hash_table_destroy(erlangs);
+    if(result) {
+      g_error("An installation of Erlang is already referenced by ID %s\n", id);
+    }
+    gchar* erlpath = g_strconcat(path, "/bin/erl", NULL);
+    g_debug("checking for %s\n", erlpath);
+    gboolean exists = g_file_test(erlpath,
+      G_FILE_TEST_EXISTS |
+      G_FILE_TEST_IS_REGULAR);
+    g_free(erlpath);
+    if(!exists) {
+      g_error("Can't link to an empty Erlang installation\n");
+    }
+    printf("SYMLINK\n");
+    gchar* symlinksdir = get_config_subdir_file_name("otps",id);
+
+    if(!symlink(symlinksdir, path)) {
+      // TODO: get errno etc
+      g_free(symlinksdir);
+      g_error("Error creating symlink %s to %s", symlinksdir, path);
+    }
+    g_free(symlinksdir);
+
+    set_config_kv("Erlangs", opt_id, opt_link);
+    setup_binaries(id);
+}
 
 
 // if not executing one of the erlang commands
@@ -1095,22 +1127,7 @@ int erln8(int argc, char* argv[]) {
     if(!opt_id) {
       g_error("Please specify --id when linking\n");
     }
-    GHashTable *erlangs = get_erlangs();
-    gboolean result = g_hash_table_contains(erlangs, opt_id);
-    g_hash_table_destroy(erlangs);
-    if(result) {
-      g_error("An installation of Erlang is already referenced by ID %s\n", opt_link);
-    }
-    gchar* erlpath = g_strconcat(opt_link, "/bin/erl", NULL);
-    g_debug("checking for %s\n", erlpath);
-    gboolean exists = g_file_test(erlpath,
-      G_FILE_TEST_EXISTS |
-      G_FILE_TEST_IS_REGULAR);
-    g_free(erlpath);
-    if(!exists) {
-      g_error("Can't link to an empty Erlang installation\n");
-    }
-    set_config_kv("Erlangs", opt_id, opt_link);
+    linkerl(opt_id, opt_link);
     return 0;
   }
 
@@ -1231,7 +1248,6 @@ int main(int argc, char* argv[]) {
       opt_banner = FALSE;
     }
 
-    //char *s = g_strconcat(path, "/bin/", argv[0], (char*)0);
     gchar *s = get_bin(erl, argv[0]);
     g_debug("%s\n",s);
     gboolean result = g_file_test(s,
@@ -1245,9 +1261,8 @@ int main(int argc, char* argv[]) {
     }
 
     if(opt_banner) {
-      printf("%s", red());
-      printf("erln8: %s", blue());
-      printf("using Erlang %s", path);
+      printf("%s", blue());
+      printf("erln8: %s", path);
       printf("%s\n", color_reset());
     }
 
