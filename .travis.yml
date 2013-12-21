@@ -2,5 +2,7 @@ before_script:
  - sudo apt-get install libglib2.0-dev
 script: "make"
 after_script:
+ - git config --global user.email "you@example.com"
+ - git config --global user.name "Your Name"
  - cd ./test && make setup test
 
