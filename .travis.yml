@@ -1,4 +1,7 @@
 before_script:
  - sudo apt-get install libglib2.0-dev
 script: "make"
+after_script:
+ - cd ./test/make setup
+ - cd ./test/make test
 
