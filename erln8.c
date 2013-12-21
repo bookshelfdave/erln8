@@ -87,7 +87,7 @@ static gboolean opt_fetch      = FALSE;
 static gboolean opt_build      = FALSE;
 static gboolean opt_show       = FALSE;
 static gchar*   opt_clone      = NULL;
-static gboolean opt_color      = TRUE;
+static gboolean opt_color      = FALSE;
 static gboolean opt_banner     = TRUE;
 
 static gchar*   opt_repo       = NULL;
@@ -436,15 +436,17 @@ void init_main_config() {
       "osx_llvm",
       "--disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll --enable-darwin-64bit");
 
+
   g_key_file_set_string(kf,
       "Configs",
       "osx_gcc",
       "--disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll --enable-darwin-64bit");
 
+
   g_key_file_set_string(kf,
       "Configs",
       "osx_gcc_env",
-      "CC=gcc-4.2 CPPFLAGS='-DNDEBUG' MAKEFLAGS='-j 3'");
+      "CC=gcc-4.2 CPPFLAGS=\'-DNDEBUG\' MAKEFLAGS=\'-j 3\'");
 
   GError *error = NULL;
   gchar* d = g_key_file_to_data (kf, NULL, &error);
@@ -988,6 +990,7 @@ int erln8(int argc, char* argv[]) {
   GError *error = NULL;
   GOptionContext *context;
 
+
   context = g_option_context_new("");
   g_option_context_add_main_entries (context, entries, NULL);
   if (!g_option_context_parse (context, &argc, &argv, &error)) {
@@ -1005,6 +1008,14 @@ int erln8(int argc, char* argv[]) {
     }
   }
 
+  GHashTable *runtime_options = get_erln8();
+  gchar *use_color = (gchar*)g_hash_table_lookup(runtime_options, "color");
+  if(g_strcmp0(use_color, "true") == 0) {
+    opt_color = TRUE;
+  } else {
+    opt_color = FALSE;
+  }
+
   if(opt_use) {
     init_here(opt_use);
     return 0;
@@ -1020,7 +1031,7 @@ int erln8(int argc, char* argv[]) {
     gchar *repo = g_hash_table_lookup(repos, opt_clone);
     if(repo == NULL) {
       g_hash_table_destroy(repos);
-      g_error("Unknown repository %s\n", repo);
+      g_error("Unknown repository %s\n", opt_clone);
     } else {
       gchar* path = get_config_subdir_file_name("repos",opt_clone);
       gchar* cmd = g_strconcat("git clone ", repo, " ", path, NULL);
@@ -1220,6 +1231,7 @@ int main(int argc, char* argv[]) {
       g_error("Version of Erlang (%s) isn't configured in erln8\n",
                erl);
     }
+
     gchar *use_color = (gchar*)g_hash_table_lookup(runtime_options, "color");
     if(g_strcmp0(use_color, "true") == 0) {
       opt_color = TRUE;
