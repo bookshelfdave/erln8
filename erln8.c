@@ -741,7 +741,7 @@ void rm_config_kv(char *group, char *key) {
 
 void git_fetch(char *repo) {
   GHashTable *repos = get_repos();
-  gboolean has_repo = !g_hash_table_contains(repos, repo);
+  gboolean has_repo = g_hash_table_contains(repos, repo);
   g_hash_table_destroy(repos);
   if(!has_repo) {
     g_error("Unknown repo %s\n", repo);

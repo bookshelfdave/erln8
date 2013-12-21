@@ -111,7 +111,6 @@ class Erln8Test < Test::Unit::TestCase
     #puts ini.to_ini
     ini.save(configfile)
 
-    #@@teardown = false
     result = run_cmd "--clone default"
     assert File.exist?("./testconfig/.erln8.d/repos/default/.git")
     result = run_cmd "--clone test_repo_b"
@@ -122,9 +121,40 @@ class Erln8Test < Test::Unit::TestCase
     assert_equal("ERROR: Unknown repository test_repo_d\n", result)
   end
 
+  def test_fetch
+    TestRepo.new("repo_a", %w[a b c])
+    TestRepo.new("repo_b", %w[d e f])
+    result = run_cmd "--init"
+
+    configfile = "./testconfig/.erln8.d/config"
+    ini = IniParse.parse(File.read(configfile))
+    ini["Erln8"]["color"] = "false"
+    ini["Repos"]["default"] = "./repo_a"
+    ini["Repos"]["test_repo_b"] = "./repo_b"
+    #puts ini.to_ini
+    ini.save(configfile)
+
+    ## default repo
+    result = run_cmd "--clone default"
+    tags = `cd ./testconfig/.erln8.d/repos/default/ && git tag`
+    assert_equal(%w[a b c], tags.split("\n").sort)
+    `cd ./repo_a && git tag zzz`
+    result = run_cmd "--fetch"
+    tags = `cd ./testconfig/.erln8.d/repos/default/ && git tag`
+    assert_equal(%w[a b c zzz], tags.split("\n").sort)
 
 
+    ## repo_b
+    result = run_cmd "--clone test_repo_b"
+    tags = `cd ./testconfig/.erln8.d/repos/test_repo_b/ && git tag`
+    assert_equal(%w[d e f], tags.split("\n").sort)
 
+    `cd ./repo_b && git tag xxx`
+    result = run_cmd "--fetch --repo test_repo_b"
+    tags = `cd ./testconfig/.erln8.d/repos/test_repo_b/ && git tag`
+    assert_equal(%w[d e f xxx], tags.split("\n").sort)
+
+  end
 
   def run_cmd(cmd)
     c = "ERLN8_HOME=./testconfig ../erln8 #{cmd} 2>&1"
