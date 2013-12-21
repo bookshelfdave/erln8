@@ -35,6 +35,23 @@
 */
 
 
+/*
+.erln8.d/
+    config/
+    logs/
+    otps/
+      foo/
+        links/
+        dist/
+      bar/
+        links/
+        dist/
+    repos/
+      x/
+      y/
+*/
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,7 +87,7 @@ static gboolean opt_fetch      = FALSE;
 static gboolean opt_build      = FALSE;
 static gboolean opt_show       = FALSE;
 static gchar*   opt_clone      = NULL;
-static gboolean opt_color      = TRUE;
+static gboolean opt_color      = FALSE;
 static gboolean opt_banner     = TRUE;
 
 static gchar*   opt_repo       = NULL;
@@ -419,15 +436,17 @@ void init_main_config() {
       "osx_llvm",
       "--disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll --enable-darwin-64bit");
 
+
   g_key_file_set_string(kf,
       "Configs",
       "osx_gcc",
       "--disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll --enable-darwin-64bit");
 
+
   g_key_file_set_string(kf,
       "Configs",
       "osx_gcc_env",
-      "CC=gcc-4.2 CPPFLAGS='-DNDEBUG' MAKEFLAGS='-j 3'");
+      "CC=gcc-4.2 CPPFLAGS=\'-DNDEBUG\' MAKEFLAGS=\'-j 3\'");
 
   GError *error = NULL;
   gchar* d = g_key_file_to_data (kf, NULL, &error);
@@ -722,7 +741,7 @@ void rm_config_kv(char *group, char *key) {
 
 void git_fetch(char *repo) {
   GHashTable *repos = get_repos();
-  gboolean has_repo = !g_hash_table_contains(repos, repo);
+  gboolean has_repo = g_hash_table_contains(repos, repo);
   g_hash_table_destroy(repos);
   if(!has_repo) {
     g_error("Unknown repo %s\n", repo);
@@ -795,6 +814,8 @@ void setup_binaries(gchar* otpid) {
   g_free(path);
 }
 
+
+// THIS FUNCTION NEEDS TO BE BROKEN UP INTO SMALLER PIECES!
 void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
   GHashTable *repos   = get_repos();
   if(!g_hash_table_contains(repos, repo)) {
@@ -816,14 +837,17 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
   g_debug("building in %s\n", tmp);
   gchar* output_path = get_config_subdir_file_name("otps",id);
   gchar* source_path = get_config_subdir_file_name("repos", repo);
-  gchar* ld = g_strconcat("logs/build_", id, NULL);
+  GTimeVal t;
+  g_get_current_time(&t);
+  gchar* ts = g_time_val_to_iso8601(&t);
+  gchar* ld = g_strconcat("logs/build_", id, "_", ts, NULL);
   gchar* log_path    = get_configdir_file_name(ld);
+
 
   if(!g_file_test(source_path, G_FILE_TEST_EXISTS |
                                G_FILE_TEST_IS_REGULAR)) {
         g_error("Missing repo for %s, which should be in %s.\nDid you forget to `erln8 --clone <repo_name>?`\n", repo, source_path);
   }
-
 
   gchar* bc = NULL;
   gchar* env = NULL;
@@ -855,18 +879,19 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
   printf("Custom build config: %s\n", bc);
   printf("Custom build env: %s\n", env);
   printf("Build log: %s\n", log_path);
+
   char *buildcmd0 = g_strconcat(env, 
-				" cd ",
-				source_path,
-				" && git archive ",
-				tag, 
-				" | (cd ", tmp, "; tar x)", NULL);
+        " cd ",
+        source_path,
+        " && git archive ",
+        tag,
+        " | (cd ", tmp, "; tar x)", NULL);
 
   char *buildcmd1 = g_strconcat(env, " cd ", tmp,
       " && ./otp_build autoconf > ", log_path, " 2>&1", NULL);
 
   char *buildcmd2 = g_strconcat(env, " cd ", tmp,
-      "&& ./configure --prefix=", output_path," ",
+      " && ./configure --prefix=", output_path," ",
       bc == NULL ? "" : bc,
       " >> ", log_path, " 2>&1",
       NULL);
@@ -971,6 +996,7 @@ int erln8(int argc, char* argv[]) {
   GError *error = NULL;
   GOptionContext *context;
 
+
   context = g_option_context_new("");
   g_option_context_add_main_entries (context, entries, NULL);
   if (!g_option_context_parse (context, &argc, &argv, &error)) {
@@ -988,6 +1014,14 @@ int erln8(int argc, char* argv[]) {
     }
   }
 
+  GHashTable *runtime_options = get_erln8();
+  gchar *use_color = (gchar*)g_hash_table_lookup(runtime_options, "color");
+  if(g_strcmp0(use_color, "true") == 0) {
+    opt_color = TRUE;
+  } else {
+    opt_color = FALSE;
+  }
+
   if(opt_use) {
     init_here(opt_use);
     return 0;
@@ -1003,7 +1037,7 @@ int erln8(int argc, char* argv[]) {
     gchar *repo = g_hash_table_lookup(repos, opt_clone);
     if(repo == NULL) {
       g_hash_table_destroy(repos);
-      g_error("Unknown repository %s\n", repo);
+      g_error("Unknown repository %s\n", opt_clone);
     } else {
       gchar* path = get_config_subdir_file_name("repos",opt_clone);
       gchar* cmd = g_strconcat("git clone ", repo, " ", path, NULL);
@@ -1163,23 +1197,6 @@ int erln8(int argc, char* argv[]) {
   return 0;
 }
 
-
-/*
-   void setup_binaries() {
-   GHashTable *bins = g_hash_table_new(g_str_hash, g_str_equal);
-   gchar** p = erts;
-   while(*p != NULL) {
-// gotta think about this for a bit...
-//g_hash_table_insert(bins, *p++, "./lib/erlang/erts-star/bin");
-}
-gpointer* x = g_hash_table_lookup(bins, "erlc");
-printf("%s\n", (gchar*)x);
-}
-*/
-
-
-
-
 int main(int argc, char* argv[]) {
   // compiler will whine about it being deprecated, but taking it out
   // blows things up
@@ -1192,7 +1209,15 @@ int main(int argc, char* argv[]) {
       G_LOG_LEVEL_MESSAGE |
       G_LOG_FLAG_RECURSION |
       G_LOG_FLAG_FATAL,  erln8_log, NULL);
-  homedir = g_get_home_dir();
+  homedir = g_getenv("ERLN8_HOME");
+  if(homedir == NULL) {
+    homedir = g_get_home_dir();
+  } else {
+    // builds will fail if ERLN8_HOME is not an absolute path
+    if(homedir[0] != '/') {
+      g_error("ERLN8_HOME must be an absolute path\n");
+    }
+  }
   g_debug("home directory = %s\n", homedir);
   gchar* basename = g_path_get_basename(argv[0]);
   g_debug("basename = %s\n", basename);
@@ -1217,6 +1242,7 @@ int main(int argc, char* argv[]) {
       g_error("Version of Erlang (%s) isn't configured in erln8\n",
                erl);
     }
+
     gchar *use_color = (gchar*)g_hash_table_lookup(runtime_options, "color");
     if(g_strcmp0(use_color, "true") == 0) {
       opt_color = TRUE;
