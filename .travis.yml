@@ -1,2 +1,3 @@
-before_script: sudo apt-get install libglib2.0-dev
+before_script:
+ - sudo apt-get install libgit2.0-dev
 script: "make"
