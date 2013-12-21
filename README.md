@@ -9,6 +9,9 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 
 
 ## Status
+
+[![Build Status](https://travis-ci.org/metadave/erln8.png)](https://travis-ci.org/metadave/erln8)
+
 - not yet stable, use at your own risk
 - link/unlink broken
 - fetch broken
