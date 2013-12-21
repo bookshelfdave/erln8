@@ -22,6 +22,10 @@
 
 /*
   TODO:
+  split into multiple .c files
+  build bins
+  -repair to migrate to newer config dir format
+  code cleanup
   repoadd/reporm
 */
 
