@@ -1,4 +1,7 @@
+require 'rubygems'
+require 'bundler/setup'
 require "test/unit"
+
 class TestRepo
   def initialize(root, tags)
     `rm -rf #{root}`
@@ -82,12 +85,10 @@ class Erln8Test < Test::Unit::TestCase
     result = run_cmd "--clone default"
     assert File.exist?("./testconfig/.erln8.d/repos/default/.git")
   end
-  end
 
   def run_cmd(cmd)
     c = "ERLN8_HOME=./testconfig ../erln8 #{cmd} 2>&1"
     #puts c
     `#{c}`
   end
-
 end
