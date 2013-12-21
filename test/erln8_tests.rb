@@ -13,21 +13,38 @@ class TestRepo
                 printf(\"Erln8 Test #{tag}\");
                 return 0;
             }"
+      pwd = `pwd`.strip()
+      testdir = "#{pwd}/testconfig"
       makefile =
       "all:
 \tgcc -o erln8_test erln8_test.c
+\tgcc -o erl erln8_test.c
+\tgcc -o erlc erln8_test.c
+install:
+\techo \"CREATING #{testdir}/.erln8.d/otps/foo/bin\"
+\tmkdir -p #{testdir}/.erln8.d/otps/foo/bin
+\tcp erl #{testdir}/.erln8.d/otps/foo/bin
+\tcp erlc #{testdir}/.erln8.d/otps/foo/bin
   "
 
     configure =
       "#!/bin/sh
 echo \"Fake configure\"
   "
+
+    otpbuild =
+      "#!/bin/sh
+echo \"Fake otp_build\"
+  "
       File.open("./#{root}/erln8_test.c", 'w') { |file| file.write(program) }
       File.open("./#{root}/Makefile", 'w') { |file| file.write(makefile) }
+      File.open("./#{root}/otp_build", 'w') { |file| file.write(otpbuild) }
       File.open("./#{root}/configure", 'w') { |file| file.write(configure) }
+      `chmod 755 ./#{root}/configure`
+      `chmod 755 ./#{root}/otp_build`
+
       `cd ./#{root} && git init && git add . && git commit -m \"commit #{tag}\"`
       `cd ./#{root} && git tag #{tag}`
-      `chmod 755 ./#{root}/configure`
     end
   end
 end
@@ -58,7 +75,8 @@ class Erln8Test < Test::Unit::TestCase
   def test_init
     result = run_cmd "--init"
     lines = result.split("\n")
-    assert_equal("Creating erln8 config file: ./testconfig/.erln8.d/config", lines[0])
+    d = `pwd`.strip()
+    assert_equal("Creating erln8 config file: #{d}/testconfig/.erln8.d/config", lines[0])
     assert File.exist?("./testconfig/.erln8.d/config")
     assert File.exist?("./testconfig/.erln8.d/repos")
     assert File.exist?("./testconfig/.erln8.d/logs")
@@ -143,7 +161,6 @@ class Erln8Test < Test::Unit::TestCase
     tags = `cd ./testconfig/.erln8.d/repos/default/ && git tag`
     assert_equal(%w[a b c zzz], tags.split("\n").sort)
 
-
     ## repo_b
     result = run_cmd "--clone test_repo_b"
     tags = `cd ./testconfig/.erln8.d/repos/test_repo_b/ && git tag`
@@ -154,11 +171,38 @@ class Erln8Test < Test::Unit::TestCase
     tags = `cd ./testconfig/.erln8.d/repos/test_repo_b/ && git tag`
     assert_equal(%w[d e f xxx], tags.split("\n").sort)
 
+    # test for unknown repos
+    result = run_cmd "--fetch --repo x"
+    assert_equal("ERROR: Unknown repo x\n", result)
+  end
+
+
+  def default_setup
+    TestRepo.new("repo_a", %w[a b c])
+    result = run_cmd "--init"
+
+    configfile = "./testconfig/.erln8.d/config"
+    ini = IniParse.parse(File.read(configfile))
+    ini["Erln8"]["color"] = "false"
+    ini["Repos"]["default"] = "./repo_a"
+    #puts ini.to_ini
+    ini.save(configfile)
+
+    run_cmd "--clone default"
+  end
+
+  def test_build
+    default_setup
+    pwd = `pwd`.strip()
+    ## make install doesn't actually do anything in the dummy script
+    ## fake it
+    result = run_cmd "--debug --build --id foo --repo default --tag a"
+    assert File.exist?("./testconfig/.erln8.d/otps/foo/bin/erl")
   end
 
   def run_cmd(cmd)
-    c = "ERLN8_HOME=./testconfig ../erln8 #{cmd} 2>&1"
-    #puts c
+    d = `pwd`.strip()
+    c = "ERLN8_HOME=#{d}/testconfig ../erln8 #{cmd} 2>&1"
     `#{c}`
   end
 end

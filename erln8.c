@@ -814,6 +814,8 @@ void setup_binaries(gchar* otpid) {
   g_free(path);
 }
 
+
+// THIS FUNCTION NEEDS TO BE BROKEN UP INTO SMALLER PIECES!
 void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
   GHashTable *repos   = get_repos();
   if(!g_hash_table_contains(repos, repo)) {
@@ -835,14 +837,17 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
   g_debug("building in %s\n", tmp);
   gchar* output_path = get_config_subdir_file_name("otps",id);
   gchar* source_path = get_config_subdir_file_name("repos", repo);
-  gchar* ld = g_strconcat("logs/build_", id, NULL);
+  GTimeVal t;
+  g_get_current_time(&t);
+  gchar* ts = g_time_val_to_iso8601(&t);
+  gchar* ld = g_strconcat("logs/build_", id, "_", ts, NULL);
   gchar* log_path    = get_configdir_file_name(ld);
+
 
   if(!g_file_test(source_path, G_FILE_TEST_EXISTS |
                                G_FILE_TEST_IS_REGULAR)) {
         g_error("Missing repo for %s, which should be in %s.\nDid you forget to `erln8 --clone <repo_name>?`\n", repo, source_path);
   }
-
 
   gchar* bc = NULL;
   gchar* env = NULL;
@@ -874,18 +879,19 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
   printf("Custom build config: %s\n", bc);
   printf("Custom build env: %s\n", env);
   printf("Build log: %s\n", log_path);
+
   char *buildcmd0 = g_strconcat(env, 
-				" cd ",
-				source_path,
-				" && git archive ",
-				tag, 
-				" | (cd ", tmp, "; tar x)", NULL);
+        " cd ",
+        source_path,
+        " && git archive ",
+        tag,
+        " | (cd ", tmp, "; tar x)", NULL);
 
   char *buildcmd1 = g_strconcat(env, " cd ", tmp,
       " && ./otp_build autoconf > ", log_path, " 2>&1", NULL);
 
   char *buildcmd2 = g_strconcat(env, " cd ", tmp,
-      "&& ./configure --prefix=", output_path," ",
+      " && ./configure --prefix=", output_path," ",
       bc == NULL ? "" : bc,
       " >> ", log_path, " 2>&1",
       NULL);
@@ -1206,6 +1212,11 @@ int main(int argc, char* argv[]) {
   homedir = g_getenv("ERLN8_HOME");
   if(homedir == NULL) {
     homedir = g_get_home_dir();
+  } else {
+    // builds will fail if ERLN8_HOME is not an absolute path
+    if(homedir[0] != '/') {
+      g_error("ERLN8_HOME must be an absolute path\n");
+    }
   }
   g_debug("home directory = %s\n", homedir);
   gchar* basename = g_path_get_basename(argv[0]);
