@@ -35,6 +35,23 @@
 */
 
 
+/*
+.erln8.d/
+    config/
+    logs/
+    otps/
+      foo/
+        links/
+        dist/
+      bar/
+        links/
+        dist/
+    repos/
+      x/
+      y/
+*/
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1163,23 +1180,6 @@ int erln8(int argc, char* argv[]) {
   return 0;
 }
 
-
-/*
-   void setup_binaries() {
-   GHashTable *bins = g_hash_table_new(g_str_hash, g_str_equal);
-   gchar** p = erts;
-   while(*p != NULL) {
-// gotta think about this for a bit...
-//g_hash_table_insert(bins, *p++, "./lib/erlang/erts-star/bin");
-}
-gpointer* x = g_hash_table_lookup(bins, "erlc");
-printf("%s\n", (gchar*)x);
-}
-*/
-
-
-
-
 int main(int argc, char* argv[]) {
   // compiler will whine about it being deprecated, but taking it out
   // blows things up
@@ -1192,7 +1192,10 @@ int main(int argc, char* argv[]) {
       G_LOG_LEVEL_MESSAGE |
       G_LOG_FLAG_RECURSION |
       G_LOG_FLAG_FATAL,  erln8_log, NULL);
-  homedir = g_get_home_dir();
+  homedir = g_getenv("ERLN8_HOME");
+  if(homedir == NULL) {
+    homedir = g_get_home_dir();
+  }
   g_debug("home directory = %s\n", homedir);
   gchar* basename = g_path_get_basename(argv[0]);
   g_debug("basename = %s\n", basename);
