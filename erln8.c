@@ -453,7 +453,9 @@ void init_main_config() {
   g_free(fn);
   g_free(d);
   g_key_file_free(kf);
-  printf("%sIf you only want to use the canonical OTP repo, run `erln8 --clone default` before continuing%s\n", yellow(), color_reset());
+  if(!opt_quickstart) {
+    printf("%sIf you only want to use the canonical OTP repo, run `erln8 --clone default` before continuing%s\n", yellow(), color_reset());
+  }
 }
 
 // write an ./erln8.config file into the cwd
@@ -944,6 +946,8 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
     g_debug("running %s\n", build_cmds[i]);
     result = system(build_cmds[i]);
   }
+  show_build_progress(step_count, result);
+
   set_config_kv("Erlangs", id, output_root);
 
   setup_binaries(id);

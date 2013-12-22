@@ -29,7 +29,7 @@ git clone https://github.com/metadave/erln8.git
 cd erln8
 make
  # remove Erlang from your path!!
-make install
+sudo make install
  # the default location is /usr/local/bin/erln8
  # OR
 make DESTDIR=/some/path install
@@ -43,7 +43,7 @@ git clone https://github.com/metadave/erln8.git
 cd erln8
 make
  # remove Erlang from your path!!
-make install
+sudo make install
  # the default location is /usr/local/bin/erln8
  # OR
 make DESTDIR=/some/path install
@@ -68,7 +68,7 @@ git clone https://github.com/metadave/erln8.git
 cd erln8
 make
  # remove Erlang from your path!!
-make install
+sudo make install
  # the default location is /usr/local/bin/erln8
  # OR
 make DESTDIR=/some/path install

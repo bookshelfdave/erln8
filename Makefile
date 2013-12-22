@@ -7,15 +7,12 @@ PROG=erln8
 
 $(PROG): *.c
 	$(CC) -o erln8 erln8.c `pkg-config --cflags --libs glib-2.0 gio-2.0` -DGLIB_DISABLE_DEPRECATION_WARNINGS $(CFLAGS)
-	#$(foreach b,$(ERLBINS),rm -f $(b);)
-	#$(foreach b,$(ERLBINS),ln -s ./erln8 $(b);)
 
 format:
 	astyle --style=attach --indent=spaces=2 --indent-cases --delete-empty-lines --align-pointer=type --align-reference=type --mode=c ./erln8.c
 
 clean:
 	rm -f erln8
-	$(foreach b,$(ERLBINS),rm -f $(b);)
 
 install:
 	echo "Installing"

@@ -6,7 +6,7 @@ _erln8()
 
     case $prev in
         erln8)
-            COMPREPLY=( $( compgen -W "--init --use --list --show --buildable --clone --build --fetch --repos --config --configs --force --link --unlink --id --repo --url --tag" -- "$cur" ) )
+            COMPREPLY=( $( compgen -W "--quickstart --init --use --list --show --buildable --clone --build --fetch --repos --config --configs --force --link --unlink --id --repo --tag" -- "$cur" ) )
             ;;
         --use)
             ERLS=`erln8 --list | awk '{print $1}'`
