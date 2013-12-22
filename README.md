@@ -29,6 +29,10 @@ git clone https://github.com/metadave/erln8.git
 cd erln8
 make
  # remove Erlang from your path!!
+make install
+ # the default location is /usr/local/bin/erln8
+ # OR
+make DESTDIR=/some/path install
 export PATH=$PATH:/where/you/put/erln8
 ```
 
@@ -39,6 +43,10 @@ git clone https://github.com/metadave/erln8.git
 cd erln8
 make
  # remove Erlang from your path!!
+make install
+ # the default location is /usr/local/bin/erln8
+ # OR
+make DESTDIR=/some/path install
 export PATH=$PATH:/where/you/put/erln8
 ```
 
@@ -51,16 +59,21 @@ sudo yum install gcc glibc-devel make ncurses-devel openssl-devel autoconf glib2
 ```
 
 this can be helpful as well:
-
 ```
 yum groupinstall "Development tools"
 ```
 
+```
 git clone https://github.com/metadave/erln8.git
 cd erln8
 make
  # remove Erlang from your path!!
+make install
+ # the default location is /usr/local/bin/erln8
+ # OR
+make DESTDIR=/some/path install
 export PATH=$PATH:/where/you/put/erln8
+```
 
 ## Dependencies
 * git
