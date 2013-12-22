@@ -191,12 +191,45 @@ class Erln8Test < Test::Unit::TestCase
     run_cmd "--clone default"
   end
 
-  def test_build
+  def test_simple_build
     default_setup
-    pwd = `pwd`.strip()
-    ## make install doesn't actually do anything in the dummy script
-    ## fake it
-    result = run_cmd "--debug --build --id foo --repo default --tag a"
+    result = run_cmd "--build --id foo --repo default --tag a"
+    assert File.exist?("./testconfig/.erln8.d/otps/foo/bin/erl")
+  end
+
+  def test_default_repo
+    default_setup
+    result = run_cmd "--build --id foo --tag a"
+    assert File.exist?("./testconfig/.erln8.d/otps/foo/bin/erl")
+  end
+
+  def test_default_noid
+    default_setup
+    result = run_cmd "--build --tag a"
+    assert_equal("ERROR: build id not specified", result.split("\n")[0])
+  end
+
+  def test_unknown_tag
+    default_setup
+    result = run_cmd "--build --id foo --tag xyz"
+    assert_equal("ERROR: branch or tag xyz does not exist in default Git repo", result.split("\n")[0])
+  end
+
+  def test_alt_repo
+    TestRepo.new("repo_a", %w[a b c])
+    TestRepo.new("repo_b", %w[d e f])
+    result = run_cmd "--init"
+    configfile = "./testconfig/.erln8.d/config"
+    ini = IniParse.parse(File.read(configfile))
+    ini["Erln8"]["color"] = "false"
+    ini["Repos"]["default"] = "./repo_a"
+    ini["Repos"]["repo_b"] = "./repo_b"
+    ini.save(configfile)
+
+    run_cmd "--clone default"
+    run_cmd "--clone repo_b"
+
+    result = run_cmd "--build --id foo --tag d --repo repo_b"
     assert File.exist?("./testconfig/.erln8.d/otps/foo/bin/erl")
   end
 

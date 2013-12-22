@@ -340,8 +340,6 @@ void git_allbuildable() {
   }
 }
 
-
-
 void e8_print(gpointer data, gpointer user_data) {
   printf("%s\n", (gchar*)data);
 }
@@ -815,13 +813,17 @@ void setup_binaries(gchar* otpid) {
 }
 
 
+
+
 // THIS FUNCTION NEEDS TO BE BROKEN UP INTO SMALLER PIECES!
 void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
   GHashTable *repos   = get_repos();
+
   if(!g_hash_table_contains(repos, repo)) {
     g_hash_table_destroy(repos);
     g_error("Unconfigured repo: %s\n", repo);
   }
+
 
   // check for a valid build config if one is specified
   GHashTable *configs = get_configs();
@@ -843,6 +845,14 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
   gchar* ld = g_strconcat("logs/build_", id, "_", ts, NULL);
   gchar* log_path    = get_configdir_file_name(ld);
 
+  gchar* check_obj = g_strconcat("cd ", source_path, "&& git show-ref ", tag, " > /dev/null", NULL);
+  if(system(check_obj) != 0) {
+    g_free(check_obj);
+    g_error("branch or tag %s does not exist in %s Git repo\n",
+            tag,
+            repo);
+  }
+  g_free(check_obj);
 
   if(!g_file_test(source_path, G_FILE_TEST_EXISTS |
                                G_FILE_TEST_IS_REGULAR)) {
@@ -1086,13 +1096,13 @@ int erln8(int argc, char* argv[]) {
     }
 
     if(repo == NULL) {
-      g_error("build repo not specified");
+      g_error("build repo not specified\n");
     }
     if(opt_tag == NULL) {
-      g_error("build tag not specified");
+      g_error("build tag not specified\n");
     }
     if(opt_id == NULL) {
-      g_error("build id not specified");
+      g_error("build id not specified\n");
     }
 
     // opt_config is optional
