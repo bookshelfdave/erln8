@@ -6,9 +6,8 @@ all:
 	ln -s ./erln8 ./escript
 	ln -s ./erln8 ./dialyzer
 
-
-erln8r: erln8r.c
-	gcc -o erln8r erln8r.c -lmenu -lncurses
+format:
+	astyle --style=attach --indent=spaces=2 --indent-cases --delete-empty-lines --align-pointer=type --align-reference=type --mode=c ./erln8.c
 
 clean:
 	rm -f erln8

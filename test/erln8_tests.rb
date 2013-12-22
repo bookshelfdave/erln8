@@ -21,10 +21,9 @@ class TestRepo
 \tgcc -o erl erln8_test.c
 \tgcc -o erlc erln8_test.c
 install:
-\techo \"CREATING #{testdir}/.erln8.d/otps/foo/bin\"
-\tmkdir -p #{testdir}/.erln8.d/otps/foo/bin
-\tcp erl #{testdir}/.erln8.d/otps/foo/bin
-\tcp erlc #{testdir}/.erln8.d/otps/foo/bin
+\tmkdir -p #{testdir}/.erln8.d/otps/foo/dist/bin
+\tcp erl #{testdir}/.erln8.d/otps/foo/dist/bin
+\tcp erlc #{testdir}/.erln8.d/otps/foo/dist/bin
   "
 
     configure =
@@ -194,13 +193,13 @@ class Erln8Test < Test::Unit::TestCase
   def test_simple_build
     default_setup
     result = run_cmd "--build --id foo --repo default --tag a"
-    assert File.exist?("./testconfig/.erln8.d/otps/foo/bin/erl")
+    assert File.exist?("./testconfig/.erln8.d/otps/foo/dist/bin/erl")
   end
 
   def test_default_repo
     default_setup
     result = run_cmd "--build --id foo --tag a"
-    assert File.exist?("./testconfig/.erln8.d/otps/foo/bin/erl")
+    assert File.exist?("./testconfig/.erln8.d/otps/foo/dist/bin/erl")
   end
 
   def test_default_noid
@@ -230,7 +229,7 @@ class Erln8Test < Test::Unit::TestCase
     run_cmd "--clone repo_b"
 
     result = run_cmd "--build --id foo --tag d --repo repo_b"
-    assert File.exist?("./testconfig/.erln8.d/otps/foo/bin/erl")
+    assert File.exist?("./testconfig/.erln8.d/otps/foo/dist/bin/erl")
   end
 
   def run_cmd(cmd)

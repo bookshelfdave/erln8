@@ -21,11 +21,14 @@ _erln8()
             COMPREPLY=( $( compgen -W "$CONFIGS" -- "$cur") )
             ;;
          --tag)
-            # TODO: this requires both a repo AND a tag... 
+            # TODO: this requires both a repo AND a tag
             B=`erln8 --buildable`
             COMPREPLY=( $( compgen -W "$B" -- "$cur") )
             ;;
-
+        --clone)
+            REPOS=`erln8 --repos`
+            COMPREPLY=( $( compgen -W "$REPOS" -- "$cur") )
+            ;;
     esac
 }
 complete -F _erln8 erln8
