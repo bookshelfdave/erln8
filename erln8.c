@@ -829,6 +829,7 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
     GHashTable *e8 = get_erln8();
     if(g_hash_table_contains(e8, "default_config")) {
       build_config = strdup((gchar*)g_hash_table_lookup(e8, "default_config"));
+      printf("%sUsing default config %s%s\n", build_config, yellow(), color_reset());
     }
     g_hash_table_destroy(e8);
   }

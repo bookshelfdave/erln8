@@ -13,6 +13,7 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 [![Build Status](https://travis-ci.org/metadave/erln8.png)](https://travis-ci.org/metadave/erln8)
 
 - not yet stable, use at your own risk
+- default_config broken atm
 - link/unlink broken
 - only supports erl, erlc, escript commands from Erlang dist
 	- if there are any other binaries you need from an Erlang distro, just symlink the binary to erln8 (see the Makefile for an example of how this works)
