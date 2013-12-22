@@ -65,8 +65,20 @@ make
 export PATH=$PATH:/where/you/put/erln8
 
 ## Dependencies
+* git
 * glib-2.0 
 * gio-2.0
+
+## Quickstart
+
+To create erln8 config files, clone the default OTP repo, and build Erlang R16B02, simply run:
+
+```
+erln8 --quickstart
+```
+
+**Note**: there aren't any options passed to the `configure` script during build when  --quickstart is used. On OSX, this defaults to a measly 32-bits install.
+
 
 ## Initial setup
 

@@ -973,7 +973,6 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
 
 
 gchar* get_bin(gchar *otpid, gchar *cmd) {
-  gchar *cmdpath = "";
   GHashTable *erlangs = get_erlangs();
   gboolean has_erlang = g_hash_table_contains(erlangs, otpid);
   gchar* path0 = (gchar*)g_hash_table_lookup(erlangs, otpid);
@@ -983,32 +982,7 @@ gchar* get_bin(gchar *otpid, gchar *cmd) {
     g_error("%s doesn't appear to be linked. Did something go wrong with the build?\n", otpid);
   }
 
-  gchar* binfn = g_strconcat(path, "/erln8_bins", NULL);
-  GKeyFile *kf = g_key_file_new();
-  GError *error = NULL;
-
-  if(g_key_file_load_from_file(kf, binfn, G_KEY_FILE_NONE, &error)) {
-    if (error != NULL) {
-      g_free(binfn);
-      g_key_file_free(kf);
-      g_error("Unable to read file: %s\n", error->message);
-      //g_error_free(error); program exits, can't free
-    }
-    GError *keyerror = NULL;
-    if(!g_key_file_has_key(kf, "Binaries", cmd, &keyerror)) {
-      g_free(binfn);
-      g_key_file_free(kf);
-      g_error("erln8 can't find %s\n", cmd);
-    } else {
-      keyerror = NULL;
-      gchar* relpath = g_key_file_get_value(kf, "Binaries", cmd, &keyerror);
-      g_debug("RELPATH %s\n", relpath);
-      g_debug("PATH %s\n", path);
-      cmdpath = g_strconcat(path, "/", relpath, NULL);
-    }
-    g_free(binfn);
-    g_key_file_free(kf);
-  }
+  gchar* cmdpath = g_strconcat(path, "/",  cmd, NULL);
   return cmdpath;
 }
 
