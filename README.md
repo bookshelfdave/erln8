@@ -13,11 +13,7 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 [![Build Status](https://travis-ci.org/metadave/erln8.png)](https://travis-ci.org/metadave/erln8)
 
 - not yet stable, use at your own risk
-- default_config broken atm
 - link/unlink broken
-- only supports erl, erlc, escript commands from Erlang dist
-	- if there are any other binaries you need from an Erlang distro, just symlink the binary to erln8 (see the Makefile for an example of how this works)
-	- I'm currently working on this
 
 ## Installation
 
@@ -87,6 +83,8 @@ To create erln8 config files, clone the default OTP repo, and build Erlang R16B0
 ```
 erln8 --quickstart
 ```
+
+Depending on your system, it could take quite awhile to download the OTP Git repository and build Erlang. It might be a nice time to get a beer/coffee/tea/Tab. 
 
 **Note**: there aren't any options passed to the `configure` script during build when  --quickstart is used. On OSX, this defaults to a measly 32-bits install.
 
@@ -181,6 +179,14 @@ Erlang=r16b02
 
 Simply run `erln8` from your home directory with a version of Erlang that you'd like to use elsewhere. 
 
+## Keeping your source repos up-to-date
+
+To get the latest OTP tags/branchs, you'll need to issue a fetch:
+
+```
+erln8 --fetch default
+```
+where `default` is the repo name. If you have multiple repositories configured, you'll need to issue fetch once per repo.
 
 ##Linking an existing version Erlang
 
