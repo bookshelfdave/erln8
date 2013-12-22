@@ -14,12 +14,9 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 
 - not yet stable, use at your own risk
 - link/unlink broken
-- a build generates an error when it completes
 - only supports erl, erlc, escript commands from Erlang dist
 	- if there are any other binaries you need from an Erlang distro, just symlink the binary to erln8 (see the Makefile for an example of how this works)
 	- I'm currently working on this
-- add repo-add, repo-rm
-
 
 ## Installation
 
@@ -243,6 +240,24 @@ osx_gcc=--disable-hipe --enable-smp-support --enable-threads --enable-kernel-pol
 osx_gcc_env=CC=gcc-4.2 CPPFLAGS='-DNDEBUG' MAKEFLAGS='-j 3'
 ```
 
+## Specifying a *default* build config
+
+If `--config` isn't specified as a parameter to a `--build`, erln8 will use the `default_config` config variable specified in the `Erln8` section of `~/.erln8.d/config. This is simply the name of a config as configured above.
+
+```
+[Erln8]
+default_config=default
+```
+
+For example, if `--config` isn't specified as a parameter to a `--build`, the config `osx_llvm` will be used:
+
+```
+[Erln8]
+default_config=osx_llvm
+```
+
+
+
 ## erln8 config file format
 
 * comments begin with the `#` character and may appear anywhere in the file
@@ -271,6 +286,7 @@ To disable the erln8 startup banner, change the appropriate config settings loca
 banner=false
 color=false
 ```
+
 
 #Contributing
 

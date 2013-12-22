@@ -24,9 +24,7 @@
   TODO:
   split into multiple .c files
   build bins
-  -repair to migrate to newer config dir format
   code cleanup
-  repoadd
 */
 
 
@@ -81,35 +79,28 @@
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
-static gboolean opt_init_erln8 = FALSE;
-static gboolean opt_debug      = FALSE;
-static gchar*   opt_use        = NULL;
-static gboolean opt_list       = FALSE;
-static gboolean opt_buildable  = FALSE;
-static gboolean opt_fetch      = FALSE;
-static gboolean opt_build      = FALSE;
-static gboolean opt_show       = FALSE;
-static gchar*   opt_clone      = NULL;
-static gboolean opt_color      = FALSE;
-static gboolean opt_banner     = TRUE;
-
-static gchar*   opt_repo       = NULL;
-static gchar*   opt_tag        = NULL;
-static gchar*   opt_id         = NULL;
-static gchar*   opt_config     = NULL;
-
-static gboolean  opt_configs   = FALSE;
-static gboolean  opt_repos     = FALSE;
-static gchar*    opt_link      = NULL;
-static gchar*    opt_unlink    = NULL;
-static gboolean  opt_force     = FALSE;
-
-static gchar*   opt_repoadd    = NULL;
-static gchar*   opt_configadd  = NULL;
-static gchar*   opt_configrm   = NULL;
-static gboolean opt_prompt     = FALSE;
-static gchar*   opt_url        = NULL;
-static gboolean opt_quickstart = FALSE;
+static gboolean  opt_init_erln8 = FALSE;
+static gboolean  opt_debug      = FALSE;
+static gchar*    opt_use        = NULL;
+static gboolean  opt_list       = FALSE;
+static gboolean  opt_buildable  = FALSE;
+static gboolean  opt_fetch      = FALSE;
+static gboolean  opt_build      = FALSE;
+static gboolean  opt_show       = FALSE;
+static gchar*    opt_clone      = NULL;
+static gboolean  opt_color      = FALSE;
+static gboolean  opt_banner     = FALSE;
+static gchar*    opt_repo       = NULL;
+static gchar*    opt_tag        = NULL;
+static gchar*    opt_id         = NULL;
+static gchar*    opt_config     = NULL;
+static gboolean  opt_configs    = FALSE;
+static gboolean  opt_repos      = FALSE;
+static gchar*    opt_link       = NULL;
+static gchar*    opt_unlink     = NULL;
+static gboolean  opt_force      = FALSE;
+static gboolean  opt_prompt     = FALSE;
+static gboolean  opt_quickstart = FALSE;
 
 static const gchar* homedir;
 
@@ -129,8 +120,6 @@ static GOptionEntry entries[] =
     "Build a specific version of OTP from source", NULL },
   { "repo", 0, 0, G_OPTION_ARG_STRING, &opt_repo,
     "Specifies repo name to build from", "repo"},
-  { "url", 0, 0, G_OPTION_ARG_STRING, &opt_url,
-    "Used to specify a git url with repo-add and repo-rm", "url"},
   { "tag", 0, 0, G_OPTION_ARG_STRING, &opt_tag,
     "Specifies repo branch/tag to build from", "git_tag"},
   { "id", 0, 0, G_OPTION_ARG_STRING, &opt_id,
@@ -151,12 +140,6 @@ static GOptionEntry entries[] =
     "Unlink a non-erln8 build of Erlang from erln8", NULL },
   { "force", 0, 0, G_OPTION_ARG_NONE, &opt_force,
     "Use the force", NULL },
-  { "repo-add", 0, 0, G_OPTION_ARG_STRING, &opt_repoadd,
-    "Add a repo", "repo-id"},
-  { "config-add", 0, 0, G_OPTION_ARG_STRING, &opt_configadd,
-    "Add an Erlang build config", "config-id"},
-  { "config-rm", 0, 0, G_OPTION_ARG_STRING, &opt_configrm,
-    "Remove an Erlang build config", "config-id"},
   { "no-color", 0, 0, G_OPTION_ARG_NONE, &opt_color,
     "Don't use color output", NULL },
   { "buildable", 0, 0, G_OPTION_ARG_NONE, &opt_buildable,
@@ -394,7 +377,7 @@ void init_main_config() {
   g_key_file_set_boolean(kf,
       "Erln8",
       "banner",
-      TRUE);
+      FALSE);
 
   g_key_file_set_comment(kf,
       "Erln8",
@@ -410,7 +393,7 @@ void init_main_config() {
   g_key_file_set_comment(kf,
       "Erln8",
       "default_config",
-      "The default config to use for a build (NOT IMPLEMENTED)",
+      "The default config to use for a build",
       NULL);
 
   g_key_file_set_string(kf,
@@ -471,7 +454,6 @@ void init_main_config() {
   g_free(d);
   g_key_file_free(kf);
   printf("%sIf you only want to use the canonical OTP repo, run `erln8 --clone default` before continuing%s\n", yellow(), color_reset());
-  printf("%sOtherwise, add build repos using `erln8 --repo-add ...` %s\n", yellow(), color_reset());
 }
 
 // write an ./erln8.config file into the cwd
@@ -842,6 +824,13 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
       g_hash_table_destroy(configs);
       g_error("Unconfigured build config: %s\n", build_config);
     }
+  } else {
+    // check the default
+    GHashTable *e8 = get_erln8();
+    if(g_hash_table_contains(e8, "default_config")) {
+      build_config = strdup((gchar*)g_hash_table_lookup(e8, "default_config"));
+    }
+    g_hash_table_destroy(e8);
   }
 
   char pattern[] = "/tmp/erln8.buildXXXXXX";
@@ -903,7 +892,7 @@ void build_erlang(gchar *repo, gchar* tag, gchar *id, gchar *build_config) {
   printf("Custom build env: %s\n", env);
   printf("Build log: %s\n", log_path);
 
-  if(g_mkdir_with_parents(output_path, 0755) == -1) {
+  if(g_mkdir_with_parents(output_root, 0755) == -1) {
     g_error("Cannot create OTP installation directory %s", output_path);
   }
 
@@ -1130,19 +1119,6 @@ int erln8(int argc, char* argv[]) {
   if(opt_build) {
     dobuild();
     return 0;
-  }
-
-  if(opt_repoadd) {
-    if(opt_repoadd == NULL || opt_repo != NULL) {
-      g_message("Please use --repo-add along with --url.\n");
-      g_message("Example: erln8 --repo-add foobar --url https://github.com/foobar/otp.git\n");
-      g_error("Incomplete repo specification\n");
-    } else {
-      printf("RepoURL %s\n", opt_repoadd);
-      printf("RepoID  %s\n", opt_repo);
-      g_error("Not implemented\n");
-      return 0;
-    }
   }
 
 
