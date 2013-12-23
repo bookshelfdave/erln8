@@ -4,6 +4,7 @@ PREFIX=$(DESTDIR)/usr/local/bin
 CC=gcc
 CFLAGS=-O2 -Wall
 PROG=erln8
+VERSION=0.6.0
 
 $(PROG): *.c
 	$(CC) -o erln8 erln8.c `pkg-config --cflags --libs glib-2.0 gio-2.0` -DGLIB_DISABLE_DEPRECATION_WARNINGS $(CFLAGS)
@@ -16,6 +17,7 @@ clean:
 
 install:
 	echo "Installing"
+	mkdir -p $(PREFIX)
 	cp ./erln8 $(PREFIX)/erln8
 	$(foreach b,$(ERLBINS),ln -s $(PREFIX)/erln8 $(PREFIX)/$(b);)
 
@@ -23,3 +25,28 @@ uninstall:
 	echo "Uninstalling"
 	rm -f $(PREFIX)/$(PROG)
 	$(foreach b,$(ERLBINS),rm -f $(PREFIX)/$(b);)
+
+rpm:
+	fpm -s dir -t rpm -n erln8 -v $(VERSION) -C /tmp/installdir \
+  -p erln8-VERSION_ARCH.rpm \
+  -d "gcc (> 0)" \
+  -d "glibc-devel (> 0)" \
+  -d "make (> 0)" \
+  -d "ncurses-devel (> 0)" \
+  -d "openssl-devel (> 0)" \
+  -d "autoconf (> 0)" \
+  -d "glib2-devel.x86_64(> 0)" \
+  usr/local/bin
+
+
+deb:
+	fpm -s dir -t deb -n erln8 -v $(VERSION) -C /tmp/installdir \
+  -p ./packages/erln8-VERSION-ARCH.deb \
+  -d "gcc (> 0)" \
+  -d "glibc-devel (> 0)" \
+  -d "make (> 0)" \
+  -d "ncurses-devel (> 0)" \
+  -d "openssl-devel (> 0)" \
+  -d "autoconf (> 0)" \
+  -d "glib2-devel(> 0)" \
+  usr/local/bin
