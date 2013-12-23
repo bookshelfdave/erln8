@@ -98,7 +98,7 @@ static gchar*    opt_config     = NULL;
 static gboolean  opt_configs    = FALSE;
 static gboolean  opt_repos      = FALSE;
 static gchar*    opt_link       = NULL;
-static gchar*    opt_unlink     = NULL;
+static gboolean  opt_unlink     = FALSE;
 static gboolean  opt_force      = FALSE;
 static gboolean  opt_prompt     = FALSE;
 static gboolean  opt_quickstart = FALSE;
@@ -168,7 +168,7 @@ static GOptionEntry entries[] = {
     "Link a non-erln8 build of Erlang to erln8", NULL
   },
   {
-    "unlink", 0, 0, G_OPTION_ARG_STRING, &opt_unlink,
+    "unlink", 0, 0, G_OPTION_ARG_NONE, &opt_unlink,
     "Unlink a non-erln8 build of Erlang from erln8", NULL
   },
   {
@@ -187,10 +187,12 @@ static GOptionEntry entries[] = {
     "quickstart", 0, 0, G_OPTION_ARG_NONE, &opt_quickstart,
     "Initialize erln8 and build the latest version of Erlang", NULL
   },
+  /*
   {
     "dryrun", 0, 0, G_OPTION_ARG_NONE, &opt_dryrun,
     "Show build commands but don't execute them", NULL
   },
+  */
   {
     "debug", 0, 0, G_OPTION_ARG_NONE, &opt_debug,
     "Debug Erln8", NULL
@@ -811,7 +813,7 @@ void setup_binaries(gchar* otpid) {
   if(!has_erlang) {
     g_error("%s doesn't appear to be linked. Did something go wrong with the build?\n", otpid);
   }
-  gchar* genbins = g_strconcat("cd ", path, " && for i in `find . -perm -111 -type f | grep -v \"\\.so\" | grep -v \"\\.o\" | grep -v \"lib/erlang/bin\"`; do  `ln -s -f $i $(basename $i)` ; done", NULL);
+  gchar* genbins = g_strconcat("cd ", path, " && for i in `find -L . -perm -111 -type f | grep -v \"\\.so\" | grep -v \"\\.o\" | grep -v \"lib/erlang/bin\"`; do  `ln -s -f $i $(basename $i)` ; done", NULL);
   g_debug("%s\n", genbins);
   if(!opt_dryrun) {
     int result = system(genbins);
@@ -1052,11 +1054,17 @@ void dolink() {
   if(!opt_id) {
     g_error("Please specify --id when linking\n");
   }
+  if(!opt_link) {
+    g_error("An absolute path must be specified with --link\n");
+  }
+  if(opt_link[0] != '/') {
+    g_error("An absolute path must be specified when linking\n");
+  }
   GHashTable* erlangs = get_erlangs();
   gboolean result = g_hash_table_contains(erlangs, opt_id);
   g_hash_table_destroy(erlangs);
   if(result) {
-    g_error("An installation of Erlang is already referenced by ID %s\n", opt_link);
+    g_error("An installation of Erlang is already referenced by ID %s\n", opt_id);
   }
   gchar* erlpath = g_strconcat(opt_link, "/bin/erl", NULL);
   g_debug("checking for %s\n", erlpath);
@@ -1070,41 +1078,42 @@ void dolink() {
   gchar* output_root = get_config_subdir_file_name("otps", opt_id);
   gchar* output_path = g_strconcat(output_root, "/dist", NULL);
   if(g_mkdir_with_parents(output_root, 0755) == -1) {
-    g_error("Cannot create OTP installation directory %s", output_path);
+    g_error("Cannot create OTP installation directory %s\n", output_path);
   }
   set_config_kv("Erlangs", opt_id, output_root);
   gchar* cmd = g_strconcat("ln -s -f ", opt_link, " ", output_path, NULL);
   result = system(cmd);
   g_free(cmd);
   if(result != 0) {
-    g_error("Error linking to an existing Erlang installation");
+    g_error("Error linking to an existing Erlang installation\n");
   } else {
     setup_binaries(opt_id);
   }
 }
 
 void dounlink() {
+  if(!opt_id) {
+    g_error("Please specify --id when unlinking\n");
+  }
   GHashTable* erlangs = get_erlangs();
-  gboolean result = g_hash_table_contains(erlangs, opt_unlink);
+  gboolean result = g_hash_table_contains(erlangs, opt_id);
   g_hash_table_destroy(erlangs);
   if(!result) {
-    g_error("Can't remove %s, it doesn't exist\n", opt_unlink);
+    g_error("Can't remove %s, it doesn't exist\n", opt_id);
   }
-  rm_config_kv("Erlangs", opt_unlink);
   gchar* output_root = get_config_subdir_file_name("otps", opt_id);
   gchar* output_path = g_strconcat(output_root, "/dist", NULL);
-  if(g_mkdir_with_parents(output_root, 0755) == -1) {
-    g_error("Cannot create OTP installation directory %s", output_path);
+  if(!g_file_test(output_path, G_FILE_TEST_IS_SYMLINK)) {
+      g_error("%s isn't a linked version of Erlang\n", opt_id);
   }
-  set_config_kv("Erlangs", opt_id, output_root);
   gchar* cmd = g_strconcat("rm ", output_path, " && rm -rf ", output_root, NULL);
-  printf("%s\n", cmd);
-  result = 0;
+  g_debug("%s\n", cmd);
+  rm_config_kv("Erlangs", opt_id);
+  result = system(cmd);
   if(result != 0) {
-    g_error("Error linking to an existing Erlang installation");
+    g_error("Error unlinking an existing Erlang installation\n");
   }
 }
-
 
 // if not executing one of the erlang commands
 // then process erln8 options etc
@@ -1119,6 +1128,7 @@ int erln8(int argc, char* argv[]) {
     g_error("erln8 option parsing failed: %s\n", error->message);
   }
   g_debug("argv[0] = [%s]\n",argv[0]);
+  g_debug("opt_id = %s\n", opt_id);
   if(opt_quickstart) {
     initialize();
     opt_clone = "default";

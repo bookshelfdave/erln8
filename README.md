@@ -5,15 +5,14 @@ erln8 - an Erlang version manager
 
 erln8 (erl-in-ate) allows you to compile and manage multiple versions of Erlang from source. Instead of downloading individual source packages, it downloads the Github OTP mirror so you are essentially downloading all available versions at once  :-) Additionaly, you can add your own git repos to support custom OTP patches etc.
 
-The cool thing about erln8 is that you only need to add it to your PATH to use it. No funny environment tweaking ;-) It works by reading an `erln8.config` config file out of the current directory, or by searching up the directory tree until it finds one. 
+The cool thing about erln8 is that you only need to add it to your PATH to use it. No funny environment tweaking ;-) It works by reading an `erln8.config` config file out of the ***current directory***, or by ***searching up the directory tree until it finds one.*** This allows you to "set a version of Erlang to use for a project and forget it"."
 
 
 ## Status
 
 [![Build Status](https://travis-ci.org/metadave/erln8.png)](https://travis-ci.org/metadave/erln8)
 
-- not yet stable, use at your own risk
-- link/unlink broken
+- somewhat stable, I'm sure there are bugs.
 
 ## Installation
 
@@ -21,37 +20,24 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 ### OSX
 ```
 brew install glib git
-git clone https://github.com/metadave/erln8.git
-cd erln8
-make
- # remove Erlang from your path!!
-sudo make install
- # the default location is /usr/local/bin/erln8
- # OR
-make DESTDIR=/some/path install
-export PATH=$PATH:/where/you/put/erln8
 ```
 
+See the [Building][building] section below to continue.
+
 ### Ubuntu
+
 ```
-apt-get install libglib2.0-dev
-git clone https://github.com/metadave/erln8.git
-cd erln8
-make
- # remove Erlang from your path!!
-sudo make install
- # the default location is /usr/local/bin/erln8
- # OR
-make DESTDIR=/some/path install
-export PATH=$PATH:/where/you/put/erln8
+apt-get install libglib2.0-dev git
 ```
+
+See the [Building][building] section below to continue.
 
 ### Fedora
 
 (Erlang + *general* erln8 deps)
 
 ```
-sudo yum install gcc glibc-devel make ncurses-devel openssl-devel autoconf glib2-devel.x86_64
+sudo yum install gcc glibc-devel make ncurses-devel openssl-devel autoconf glib2-devel.x86_64 git
 ```
 
 this can be helpful as well:
@@ -59,16 +45,21 @@ this can be helpful as well:
 yum groupinstall "Development tools"
 ```
 
+See the [Building][building] section below to continue.
+
+### Building
+[building]:
+
 ```
+ # remove Erlang from your path!!
+
 git clone https://github.com/metadave/erln8.git
 cd erln8
 make
- # remove Erlang from your path!!
 sudo make install
  # the default location is /usr/local/bin/erln8
  # OR
 make DESTDIR=/some/path install
-export PATH=$PATH:/where/you/put/erln8
 ```
 
 ## Dependencies
@@ -133,12 +124,41 @@ You can specify alternate Git repos to build from. `erln8 --repos` lists availab
   erln8 --build --repo basho --tag OTP_R15B01 --id r15b01p --config osx_llvm
 ```
 
+##Linking an existing version Erlang
 
-### Shell Completion
+If you already have a version of Erlang build at an alternate location, you can *link* erlang to it.
 
-erln8 provides shell completion for commands, available Erlang installations, and buildable Erlang installation. 
+For example, I have an old copy of Erlang R14B04 located in `/Users/dparfitt/erlang_R14B04`, and I'd like to reference it by the ID `R14B04`:
 
-	source ~/path_to_erln8/bash_completion/erln8
+```
+erln8 --link /Users/dparfitt/erlang_R14B04 --id R14B04
+```
+
+You'll be able to run `erln8 --list` and see the linked version:
+
+```
+R16B02b3:slag:~$ erln8 --list
+R16B02b3 -> /Users/dparfitt/.erln8.d/otps/R16B02b3
+R16B02 -> /Users/dparfitt/.erln8.d/otps/R16B02
+R14B04 -> /Users/dparfitt/.erln8.d/otps/R14B04
+```
+
+
+If I want to *unlink* this version of Erlang:
+version of Erlang:
+
+**NOTE:** This does ***NOTE*** remove the Erlang directory that erln8 has linked to.
+
+```
+erln8 --unlink --id R14B04
+``` 
+
+at which point, R14B04 won't show up as a version of Erlang to use.
+```
+R16B02b3:slag:~$ erln8 --list
+R16B02b3 -> /Users/dparfitt/.erln8.d/otps/R16B02b3
+R16B02 -> /Users/dparfitt/.erln8.d/otps/R16B02
+```
 
 ## Usage
 
@@ -175,9 +195,17 @@ This command simply creates an `erln8.config` file in the cwd. You can even edit
 Erlang=r16b02
 ```
 
+## Shell Completion
+
+erln8 provides shell completion for commands, available Erlang installations, and buildable Erlang installation. 
+
+	source ~/path_to_erln8/bash_completion/erln8
+
 ## Setting up a default version to use
 
 Simply run `erln8` from your home directory with a version of Erlang that you'd like to use elsewhere. 
+
+**NOTE**: if you are building/running Erlang source from outside of your home directory, you'll need to run erln8 at a location higher up the directory tree.
 
 ## Keeping your source repos up-to-date
 
@@ -187,31 +215,6 @@ To get the latest OTP tags/branchs, you'll need to issue a fetch:
 erln8 --fetch default
 ```
 where `default` is the repo name. If you have multiple repositories configured, you'll need to issue fetch once per repo.
-
-##Linking an existing version Erlang
-
-I plan on adding `erln8 --link` and `erln8 --unlink` commands, but for now, it's as easy as adding a new entry to the **[Erlangs]** section of `~/.erln8.d/config`. Below, *r16b02*, *r15b01_nosched*, and *r15b03* are ID's that can be referenced by the `erln8 --use` command (also what's shown by `erln8 --list`). 
-
-For example, Erlang R15B03 is added as the last line:
-
-```
-[Erlangs]
-r16b02=/Users/dparfitt/.erln8.d/otps/r16b02
-r15b01_nosched=/Users/dparfitt/.erln8.d/otps/r15b01_nosched
-r15b03=/Users/dparfitt/erlang-R15B03
-```
-
-R15B03 is now *linked*, you can see it in `erln8 --list`:
-```
-[0]:prime:~/.erln8.d$ erln8 --list
-Available Erlang installations:
-  r16b02
-  r15b01_nosched
-  r15b03
-```
-
-and you can use it with `erln8 --use r15b03`
-
 
 
 ## Customizing your shell prompt
@@ -275,7 +278,6 @@ For example, if `--config` isn't specified as a parameter to a `--build`, the co
 [Erln8]
 default_config=osx_llvm
 ```
-
 
 
 ## erln8 config file format

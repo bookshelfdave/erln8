@@ -29,6 +29,10 @@ _erln8()
             REPOS=`erln8 --repos`
             COMPREPLY=( $( compgen -W "$REPOS" -- "$cur") )
             ;;
+        --unlink)
+            ERLS=`erln8 --list | awk '{print $1}'`
+            COMPREPLY=( $( compgen -W "$ERLS" -- "$cur") )
+            ;;
     esac
 }
 complete -F _erln8 erln8

@@ -15,7 +15,7 @@ format:
 clean:
 	rm -f erln8
 
-install:
+install: $(PROG)  uninstall
 	echo "Installing"
 	mkdir -p $(PREFIX)
 	cp ./erln8 $(PREFIX)/erln8
