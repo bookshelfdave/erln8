@@ -17,6 +17,8 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 ## Installation
 
 
+***NOTE:*** erln8 version 0.9.0 breaks backwards compatibility. You'll need to `rm -rf ~/.erln8.d` and reinitialize erln8.
+
 ### OSX
 ```
 brew install glib git
