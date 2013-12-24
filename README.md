@@ -29,7 +29,7 @@ See the [Building][building] section below to continue.
 ### Ubuntu
 
 ```
-apt-get install libglib2.0-dev git
+apt-get install build-essential libglib2.0-dev git
 ```
 
 See the [Building][building] section below to continue.
