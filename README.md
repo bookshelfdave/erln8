@@ -28,8 +28,10 @@ See the [Building][building] section below to continue.
 
 ### Ubuntu
 
+(Erlang + *general* erln8 deps)
+
 ```
-apt-get install build-essential libglib2.0-dev git
+sudo apt-get install build-essential libncurses5-dev openssl libssl-dev fop xsltproc unixodbc-dev build-essential libglib2.0-dev git
 ```
 
 See the [Building][building] section below to continue.
