@@ -31,7 +31,7 @@ See the [Building][building] section below to continue.
 (Erlang + *general* erln8 deps)
 
 ```
-sudo apt-get install build-essential libncurses5-dev openssl libssl-dev fop xsltproc unixodbc-dev build-essential libglib2.0-dev git
+sudo apt-get install build-essential libncurses5-dev openssl libssl-dev fop xsltproc unixodbc-dev build-essential libglib2.0-dev git autoconf
 ```
 
 See the [Building][building] section below to continue.
