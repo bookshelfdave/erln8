@@ -366,7 +366,10 @@ void git_allbuildable() {
                                  source_path,
                                  " && git tag | sort",
                                  NULL);
-    system(fetchcmd);
+    int result = system(fetchcmd);
+    if(result != 0) {
+      g_error("Cannot get a list of git tags.\n");
+    }
     g_free(fetchcmd);
     g_free(source_path);
   }
@@ -767,7 +770,10 @@ void git_fetch(char* repo) {
                                source_path,
                                " && git fetch",
                                NULL);
-  system(fetchcmd);
+  int result = system(fetchcmd);
+  if(result != 0) {
+    g_error("Error fetching from repo %s\n", repo);
+  }
   g_free(source_path);
   g_free(fetchcmd);
 }
@@ -945,7 +951,10 @@ void build_erlang(gchar* repo, gchar* tag, gchar* id, gchar* build_config) {
       g_debug("STATUS = %d\n", result);
       printf("Here are the last 10 lines of the log file:\n");
       char* tail = g_strconcat("tail -10 ", log_path, NULL);
-      system(tail);
+      int tailresult = system(tail);
+      if(tailresult != 0) {
+        g_error("Cannot run tail -10 on %s\n", log_path);
+      }
       g_free(tail);
       printf("---------------------------------------------------------\n");
       g_error("Build error, please check the build logs for more details\n");
@@ -1002,7 +1011,10 @@ void doclone() {
   } else {
     gchar* path = get_config_subdir_file_name("repos",opt_clone);
     gchar* cmd = g_strconcat("git clone ", repo, " ", path, NULL);
-    system(cmd);
+    int result = system(cmd);
+    if(result != 0) {
+      g_error("Cannot clone %s\n", repo);
+    }
     g_hash_table_destroy(repos);
     g_free(cmd);
     g_free(path);
