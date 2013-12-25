@@ -439,17 +439,6 @@ void init_main_config() {
                          "The default config to use for a build",
                          NULL);
   g_key_file_set_string(kf,
-                        "Erlangs",
-                        "none",
-                        "/dev/null");
-  /*
-  g_key_file_set_comment(kf,
-      "Erlangs",
-      "none",
-      "A null Erlang installation, used if you don't want Erlang runnable from a specific directory",
-      NULL);
-  */
-  g_key_file_set_string(kf,
                         "Repos",
                         "default",
                         "https://github.com/erlang/otp.git");
