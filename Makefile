@@ -1,6 +1,7 @@
 ERLBINS=Install escript run_erl beam dyn_erl etop runcgi.sh beam.smp edoc_generate format_man_pages snmpc bench.sh emem getop start cdv epmd heart start_webtool child_setup erl inet_gethost to_erl codeline_preprocessing.escript erl.src makewhatis typer ct_run erl_call memsup xml_from_edoc.escript dialyzer erlc odbcserver diameterc erlexec printenv.sh
 
-PREFIX=$(DESTDIR)/usr/local/bin
+PREFIX?=$(DESTDIR)/usr/local
+BINDIR=$(PREFIX)/bin
 CC=gcc
 CFLAGS=-O2 -Wall
 PROG=erln8
@@ -17,27 +18,14 @@ clean:
 
 install: $(PROG)  uninstall
 	echo "Installing"
-	mkdir -p $(PREFIX)
-	cp ./erln8 $(PREFIX)/erln8
-	$(foreach b,$(ERLBINS),ln -s $(PREFIX)/erln8 $(PREFIX)/$(b);)
+	mkdir -p $(BINDIR)
+	cp ./erln8 $(BINDIR)/erln8
+	$(foreach b,$(ERLBINS),ln -s $(BINDIR)/erln8 $(BINDIR)/$(b);)
 
 uninstall:
 	echo "Uninstalling"
-	rm -f $(PREFIX)/$(PROG)
-	$(foreach b,$(ERLBINS),rm -f $(PREFIX)/$(b);)
-
-rpm:
-	fpm -s dir -t rpm -n erln8 -v $(VERSION) -C /tmp/installdir \
-  -p erln8-VERSION_ARCH.rpm \
-  -d "gcc (> 0)" \
-  -d "glibc-devel (> 0)" \
-  -d "make (> 0)" \
-  -d "ncurses-devel (> 0)" \
-  -d "openssl-devel (> 0)" \
-  -d "autoconf (> 0)" \
-  -d "glib2-devel.x86_64(> 0)" \
-  usr/local/bin
-
+	rm -f $(BINDIR)/$(PROG)
+	$(foreach b,$(ERLBINS),rm -f $(BINDIR)/$(b);)
 
 deb:
 	fpm -s dir -t deb -n erln8 -v $(VERSION) -C /tmp/installdir \
