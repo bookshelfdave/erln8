@@ -35,7 +35,7 @@
 
 <p>erln8 (erl-in-ate) allows you to compile and manage multiple versions of Erlang from source. Instead of downloading individual source packages, it downloads the Github OTP mirror so you are essentially downloading all available versions at once  :-) Additionaly, you can add your own git repos to support custom OTP patches etc.</p>
 
-<p>The cool thing about erln8 is that you only need to add it to your PATH to use it. No funny environment tweaking ;-) It works by reading an <code>erln8.config</code> config file out of the <strong><em>current directory</em></strong>, or by <strong><em>searching up the directory tree until it finds one.</em></strong> This allows you to "set a version of Erlang to use for a project and forget it"."</p>
+<p>The cool thing about erln8 is that you only need to add it to your PATH to use it. No funny environment tweaking ;-) It works by reading an <code>erln8.config</code> config file out of the <strong><em>current directory</em></strong>, or by <strong><em>searching up the directory tree until it finds one.</em></strong> This allows you to "set a version of Erlang to use for a project and forget it".</p>
 
 <h2>
 <a name="status" class="anchor" href="#status"><span class="octicon octicon-link"></span></a>Status</h2>
@@ -117,6 +117,11 @@ make DESTDIR=/some/path install
 <p>Depending on your system, it could take quite awhile to download the OTP Git repository and build Erlang. It might be a nice time to get a beer/coffee/tea/Tab. </p>
 
 <p><strong>Note</strong>: there aren't any options passed to the <code>configure</code> script during build when  --quickstart is used. On OSX, this defaults to a measly 32-bits install.</p>
+
+<p>The quickstart will fail Erlang build dependencies aren't installed or correct. Once you have the required dependencies installed, you can continue the build with the following:</p>
+
+<pre><code>erln8 --build --tag OTP_R16B02 --id R16B02
+</code></pre>
 
 <h2>
 <a name="initial-setup" class="anchor" href="#initial-setup"><span class="octicon octicon-link"></span></a>Initial setup</h2>
@@ -227,6 +232,8 @@ Erlang=r16b02
 
 <pre><code>source ~/path_to_erln8/bash_completion/erln8
 </code></pre>
+
+<p>If you installed on OSX via Brew (above), bash_completion is installed automatically for you. </p>
 
 <h2>
 <a name="setting-up-a-default-version-to-use" class="anchor" href="#setting-up-a-default-version-to-use"><span class="octicon octicon-link"></span></a>Setting up a default version to use</h2>
