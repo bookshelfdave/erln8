@@ -443,6 +443,10 @@ void init_main_config() {
                         "default",
                         "https://github.com/erlang/otp.git");
   g_key_file_set_string(kf,
+                        "Erlangs",
+                        "none",
+                        "");
+  g_key_file_set_string(kf,
                         "Configs",
                         "default",
                         "");
