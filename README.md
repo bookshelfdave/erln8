@@ -53,7 +53,6 @@ yum groupinstall "Development tools"
 See the Building section below to continue.
 
 ### Building
-[building]:
 
 ```
  # remove Erlang from your path!!
