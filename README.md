@@ -7,6 +7,9 @@ erln8 (erl-in-ate) allows you to compile and manage multiple versions of Erlang 
 
 The cool thing about erln8 is that you only need to add it to your PATH to use it. No funny environment tweaking ;-) It works by reading an `erln8.config` config file out of the ***current directory***, or by ***searching up the directory tree until it finds one.*** This allows you to "set a version of Erlang to use for a project and forget it".
 
+## What erln8 isn't
+
+- erln8 does not build manage Erlang build dependencies. If you are using erln8, I'm assuming you are already capable enough to figure these out on your own. 
 
 ## Status
 
