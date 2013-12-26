@@ -16,6 +16,7 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 [![Build Status](https://travis-ci.org/metadave/erln8.png)](https://travis-ci.org/metadave/erln8)
 
 - somewhat stable, I'm sure there are bugs.
+- I'm still working on the test suite... in Ruby (hi haters!)
 
 ## Installation
 
