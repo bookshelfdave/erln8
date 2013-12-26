@@ -53,17 +53,20 @@
 <a name="osx" class="anchor" href="#osx"><span class="octicon octicon-link"></span></a>OSX</h3>
 
 <pre><code>brew install glib git
+brew install https://raw.github.com/metadave/homebrew/erln8/Library/Formula/erln8.rb
 </code></pre>
 
-<p>See the [Building][building] section below to continue.</p>
+<p>See the Building section below to continue.</p>
 
 <h3>
 <a name="ubuntu" class="anchor" href="#ubuntu"><span class="octicon octicon-link"></span></a>Ubuntu</h3>
 
-<pre><code>apt-get install libglib2.0-dev git
+<p>(Erlang + <em>general</em> erln8 deps)</p>
+
+<pre><code>sudo apt-get install build-essential libncurses5-dev openssl libssl-dev fop xsltproc unixodbc-dev build-essential libglib2.0-dev git autoconf
 </code></pre>
 
-<p>See the [Building][building] section below to continue.</p>
+<p>See the Building section below to continue.</p>
 
 <h3>
 <a name="fedora" class="anchor" href="#fedora"><span class="octicon octicon-link"></span></a>Fedora</h3>
@@ -78,7 +81,7 @@
 <pre><code>yum groupinstall "Development tools"
 </code></pre>
 
-<p>See the [Building][building] section below to continue.</p>
+<p>See the Building section below to continue.</p>
 
 <h3>
 <a name="building" class="anchor" href="#building"><span class="octicon octicon-link"></span></a>Building</h3>
