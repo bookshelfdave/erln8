@@ -87,6 +87,12 @@ Depending on your system, it could take quite awhile to download the OTP Git rep
 
 **Note**: there aren't any options passed to the `configure` script during build when  --quickstart is used. On OSX, this defaults to a measly 32-bits install.
 
+Once the quickstart completes, you'll still need to cd to a directory where you want to use Erlang and run:
+
+```
+erln8 --use R16B02
+```
+
 
 The quickstart will fail Erlang build dependencies aren't installed or correct. Once you have the required dependencies installed, you can continue the build with the following:
 
