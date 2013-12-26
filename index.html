@@ -122,6 +122,11 @@ make DESTDIR=/some/path install
 
 <p><strong>Note</strong>: there aren't any options passed to the <code>configure</code> script during build when  --quickstart is used. On OSX, this defaults to a measly 32-bits install.</p>
 
+<p>Once the quickstart completes, you'll still need to cd to a directory where you want to use Erlang and run:</p>
+
+<pre><code>erln8 --use R16B02
+</code></pre>
+
 <p>The quickstart will fail Erlang build dependencies aren't installed or correct. Once you have the required dependencies installed, you can continue the build with the following:</p>
 
 <pre><code>erln8 --build --tag OTP_R16B02 --id R16B02
