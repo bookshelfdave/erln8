@@ -85,6 +85,12 @@ Depending on your system, it could take quite awhile to download the OTP Git rep
 **Note**: there aren't any options passed to the `configure` script during build when  --quickstart is used. On OSX, this defaults to a measly 32-bits install.
 
 
+The quickstart will fail Erlang build dependencies aren't installed or correct. Once you have the required dependencies installed, you can continue the build with the following:
+
+```
+erln8 --build --tag OTP_R16B02 --id R16B02
+```
+
 ## Initial setup
 
 ***If you haven't added the erln8 directory to your path, do it now. If you already have Erlang in your path, REMOVE IT!**
@@ -205,6 +211,8 @@ Erlang=r16b02
 erln8 provides shell completion for commands, available Erlang installations, and buildable Erlang installation. 
 
 	source ~/path_to_erln8/bash_completion/erln8
+
+If you installed on OSX via Brew (above), bash_completion is installed automatically for you. 
 
 ## Setting up a default version to use
 
