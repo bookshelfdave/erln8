@@ -22,9 +22,10 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 ### OSX
 ```
 brew install glib git
+brew install https://raw.github.com/metadave/homebrew/erln8/Library/Formula/erln8.rb
 ```
 
-See the [Building][building] section below to continue.
+See the Building section below to continue.
 
 ### Ubuntu
 
@@ -34,7 +35,7 @@ See the [Building][building] section below to continue.
 sudo apt-get install build-essential libncurses5-dev openssl libssl-dev fop xsltproc unixodbc-dev build-essential libglib2.0-dev git autoconf
 ```
 
-See the [Building][building] section below to continue.
+See the Building section below to continue.
 
 ### Fedora
 
@@ -49,7 +50,7 @@ this can be helpful as well:
 yum groupinstall "Development tools"
 ```
 
-See the [Building][building] section below to continue.
+See the Building section below to continue.
 
 ### Building
 [building]:
