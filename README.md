@@ -9,7 +9,7 @@ The cool thing about erln8 is that you only need to add it to your PATH to use i
 
 ## What erln8 isn't
 
-- erln8 does not build manage Erlang build dependencies. If you are using erln8, I'm assuming you are already capable enough to figure these out on your own. 
+erln8 does not manage Erlang build dependencies. If you are using erln8, I'm assuming you are already capable enough to figure these out on your own. 
 
 ## Status
 
