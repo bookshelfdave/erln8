@@ -138,7 +138,7 @@ The following command will build Erlang R16B02 using the OTP_R16B02 tag from Git
   erln8 --build --tag OTP_R15B01 --id r15b01 --config osx_llvm
 ```
 
-You can specify alternate Git repos to build from. `erln8 --repos` lists available repos or look in ~/.erln9.d/config
+You can specify alternate Git repos to build from. `erln8 --repos` lists available repos or look in ~/.erln8.d/config
 
 ```
   erln8 --build --repo basho --tag OTP_R15B01 --id r15b01p --config osx_llvm
