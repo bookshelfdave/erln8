@@ -75,7 +75,7 @@ class Erln8Test < Test::Unit::TestCase
     result = run_cmd "--init"
     lines = result.split("\n")
     d = `pwd`.strip()
-    assert_equal("Creating erln8 config file: #{d}/testconfig/.erln8.d/config", lines[0])
+    assert_equal("Creating erln8.config file: #{d}/testconfig/.erln8.d/config", lines[0])
     assert File.exist?("./testconfig/.erln8.d/config")
     assert File.exist?("./testconfig/.erln8.d/repos")
     assert File.exist?("./testconfig/.erln8.d/logs")
@@ -133,7 +133,8 @@ class Erln8Test < Test::Unit::TestCase
     result = run_cmd "--clone test_repo_b"
     assert File.exist?("./testconfig/.erln8.d/repos/test_repo_b/.git")
     result = run_cmd "--clone test_repo_c"
-    assert_equal("fatal: repository './repo_c' does not exist\n",result)
+    l = result.split("\n")[0]
+    assert_equal("fatal: repository './repo_c' does not exist", l)
     result = run_cmd "--clone test_repo_d"
     assert_equal("ERROR: Unknown repository test_repo_d\n", result)
   end
