@@ -25,8 +25,8 @@ erln8 does not manage Erlang build dependencies. If you are using erln8, I'm ass
 
 ### OSX
 ```
-brew install glib git
 brew install https://raw.github.com/metadave/homebrew/erln8/Library/Formula/erln8.rb
+ ## this will install the glib dependency if not already installed
 ```
 
 See the Building section below to continue.
