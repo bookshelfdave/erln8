@@ -67,7 +67,7 @@ make
 sudo make install
  # the default location is /usr/local/bin/erln8
  # OR
-make DESTDIR=/some/path install
+sudo make PREFIX=/opt install
 ```
 
 ## Dependencies
@@ -301,7 +301,6 @@ For example, if `--config` isn't specified as a parameter to a `--build`, the co
 default_config=osx_llvm
 ```
 
-
 ## erln8 config file format
 
 * comments begin with the `#` character and may appear anywhere in the file
@@ -331,6 +330,41 @@ banner=false
 color=false
 ```
 
+## How does it work under the hood/bonnet?
+
+When erln8 is compiled, a single binary named `erln8` is built and installed by default to `/usr/local/bin`. Additionally, symbolic links to all the Erlang commands in a typical distribution are created *but linked to the single `erln8` binary* and are placed in `/usr/local/bin`. Thus, you have something like this:
+
+```
+$ ls -latr
+-rwxr-xr-x    1 root      admin    36256 Dec 27 17:51 erln8
+lrwxr-xr-x    1 root      admin       20 Dec 27 17:51 erlexec -> /usr/local/bin/erln8
+lrwxr-xr-x    1 root      admin       20 Dec 27 17:51 erlc -> /usr/local/bin/erln8
+lrwxr-xr-x    1 root      admin       20 Dec 27 17:51 erl_call -> /usr/local/bin/erln8
+lrwxr-xr-x    1 root      admin       20 Dec 27 17:51 erl.src -> /usr/local/bin/erln8
+lrwxr-xr-x    1 root      admin       20 Dec 27 17:51 erl -> /usr/local/bin/erln8
+lrwxr-xr-x    1 root      admin       20 Dec 27 17:51 epmd -> /usr/local/bin/erln8
+…
+```
+
+In this setup, whenever you call an Erlang command, you are really calling the `erln8` command.
+
+When `erln8` starts, it checks `argv[0]` to see if it was called via a symlink (one of the erl, erlc, dialyzer, etc commands). If it was, it searches the current working directory for an erln8.config file. If one isn't found, it cd's up a directory and looks for an erln8.config file again. This continues until either an erln8.config file is found, or the search reaches `/`. If an erln8.config file hasn't been found and `/` has been reached, the user hasn't configured a version of Erlang to use. Display an error and exit. Otherwise, use the version of Erlang specified in the erln8.config file and execv() that binary. execv() *replaces* the current process with the new process (see the man page for execv). So, a call to `erlc` will start up `erln8` via symlink, but the `erln8` process will be replaced during the execv() by the command located in the specified version of Erlang. 
+
+There is another layer of indirection as located in the ~/.erln8.d/otps/MY_OTP directory (with MY_OTP being a configured Erlang ID). This layer of indirection was added to take the legwork out of finding versioned binaries in the Erlang distribution. For example, the `to_erl` symlink points to `./dist/lib/erlang/erts-5.10.3/bin/to_erl`. erln8 only needs to know the command name to run it, without having to know the version # of erts.
+
+```
+R16B02:slag:~/.erln8.d/otps/R16B02$ ls -latr
+total 296
+drwxr-xr-x   4 dparfitt  staff   136 Dec 23 10:43 dist
+drwx------   3 dparfitt  staff   102 Dec 23 10:43 ..
+lrwxr-xr-x   1 dparfitt  staff    71 Dec 23 10:43 xml_from_edoc.escript -> ./dist/lib/erlang/lib/erl_docgen-0.3.4.1/priv/bin/xml_from_edoc.escript
+lrwxr-xr-x   1 dparfitt  staff    39 Dec 23 10:43 typer -> ./dist/lib/erlang/erts-5.10.3/bin/typer
+lrwxr-xr-x   1 dparfitt  staff    40 Dec 23 10:43 to_erl -> ./dist/lib/erlang/erts-5.10.3/bin/to_erl
+lrwxr-xr-x   1 dparfitt  staff    60 Dec 23 10:43 start_webtool -> ./dist/lib/erlang/lib/webtool-0.8.9.2/priv/bin/start_webtool
+...
+```
+
+The `.dist` directory defined for each version of Erlang installed also allows erln8 to generate this list of symlinks for a *linked* version of Erlang (see above). Symlinks don't need to be placed in the linked directory (which could be anywhere in the filesystem).
 
 #Contributing
 
