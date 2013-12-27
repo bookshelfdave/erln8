@@ -119,13 +119,13 @@ erln8 --clone default
 To see a list of versions you can build, run:
 
 ```
-ernl8 --buildable
+erln8 --buildable
 ```
 
 or
 
 ```
-ernl8 --buildable --repo default
+erln8 --buildable --repo default
 ```
 replacing `default` with whatever erln8-configured Git repo you want to use.
 
