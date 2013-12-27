@@ -21,6 +21,7 @@ install: $(PROG)  uninstall
 	mkdir -p $(BINDIR)
 	cp ./erln8 $(BINDIR)/erln8
 	$(foreach b,$(ERLBINS),ln -s $(BINDIR)/erln8 $(BINDIR)/$(b);)
+	$(foreach b,$(ERLBINS),chmod 755 $(BINDIR)/$(b);)
 
 uninstall:
 	echo "Uninstalling"
