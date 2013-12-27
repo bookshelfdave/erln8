@@ -67,7 +67,7 @@ make
 sudo make install
  # the default location is /usr/local/bin/erln8
  # OR
-make DESTDIR=/some/path install
+make PREFIX=/some/path install
 ```
 
 ## Dependencies
