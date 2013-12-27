@@ -149,12 +149,12 @@ make DESTDIR=/some/path install
 
 <p>To see a list of versions you can build, run:</p>
 
-<pre><code>ernl8 --buildable
+<pre><code>erln8 --buildable
 </code></pre>
 
 <p>or</p>
 
-<pre><code>ernl8 --buildable --repo default
+<pre><code>erln8 --buildable --repo default
 </code></pre>
 
 <p>replacing <code>default</code> with whatever erln8-configured Git repo you want to use.</p>
@@ -166,7 +166,7 @@ The following command will build Erlang R16B02 using the OTP_R16B02 tag from Git
   erln8 --build --tag OTP_R15B01 --id r15b01 --config osx_llvm
 </code></pre>
 
-<p>You can specify alternate Git repos to build from. <code>erln8 --repos</code> lists available repos or look in ~/.erln9.d/config</p>
+<p>You can specify alternate Git repos to build from. <code>erln8 --repos</code> lists available repos or look in ~/.erln8.d/config</p>
 
 <pre><code>  erln8 --build --repo basho --tag OTP_R15B01 --id r15b01p --config osx_llvm
 </code></pre>
