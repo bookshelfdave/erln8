@@ -636,17 +636,13 @@ gchar* configcheck(char* d) {
 gchar* system_root_check(gchar* d) {
   gchar* retval = NULL;
   GFile* gd = g_file_new_for_path(d);
-  printf("Checking %s\n", d);
   GHashTable *roots = get_system_roots();
   if(roots == NULL) {
-    printf("NO ROOTS %s\n", d);
     return NULL;
   } else {
     gchar *p = (gchar*)g_hash_table_lookup(roots, d);
-    printf("CHECKING ROOT%s\n", d);
     if(p != NULL) {
-      retval = p;
-      printf("FOUND ROOT%s\n", d);
+      retval = strdup(p);
     }
   }
 
@@ -687,7 +683,7 @@ gchar* systemrootcheck_from_cwd() {
 gchar* get_system_default() {
   GHashTable *e = get_erln8();
   gchar* d = (gchar*)g_hash_table_lookup(e, "system_default");
-  g_hash_table_destroy(e);
+  //g_hash_table_destroy(e);
   // d can be NULL if the key doesn't exist etc.
   return d;
 }
@@ -696,16 +692,13 @@ gchar* get_system_default() {
 // branch of the dir tree
 gchar* which_erlang() {
   gchar* cfgfile = configcheckfromcwd();
-  printf("CFGFILE = %s\n", cfgfile);
   if(cfgfile == NULL) {
     // check for a system root. 
     // if one doesn't exist, return the system_default
     gchar *sysroot = systemrootcheck_from_cwd();
     if(sysroot != NULL) {
-      printf("Returning sysroot\n");
       return sysroot;
     } else {
-      printf("Returning default\n");
       return get_system_default();
     }
   } else {
@@ -1348,7 +1341,6 @@ int main(int argc, char* argv[]) {
     gchar* erl = which_erlang();
     if(erl == NULL) {
       g_message("Can't find an " ERLN8_CONFIG_FILE " file to use\n");
-      list_erlangs();
       g_error("No " ERLN8_CONFIG_FILE " file\n");
     }
     GHashTable* erlangs = get_erlangs();
