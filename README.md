@@ -223,11 +223,34 @@ erln8 provides shell completion for commands, available Erlang installations, an
 
 If you installed on OSX via Brew (above), bash_completion is installed automatically for you. 
 
+## Using erln8 outside of $HOME
+
+A section titled `SystemRoots` can be created and maintained inside of `~/.erln8.d/config` to specify versions of Erlang to use outside of $HOME. This can be useful if you don't have write access to these directories.
+
+```
+[SystemRoots]
+/opt/foo=R16B01
+/tmp=R15B01p
+```
+
 ## Setting up a default version to use
+
+### a) if you won't be using Erlang outside of $HOME
 
 Simply run `erln8` from your home directory with a version of Erlang that you'd like to use elsewhere. 
 
 **NOTE**: if you are building/running Erlang source from outside of your home directory, you'll need to run erln8 at a location higher up the directory tree.
+
+### b) specifyin a system wide default
+
+you can specify a system default in `~/.erln8.d/config`:
+
+```
+[Erln8]
+system_default=R16B02
+```
+
+Note, the ID that is specified (R16B02 in this example) must have already been built or linked to erln8.
 
 ## Keeping your source repos up-to-date
 
