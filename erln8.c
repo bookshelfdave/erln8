@@ -213,23 +213,23 @@ static gchar* step[] = {
 
 static int step_count = 5;
 
-char* red() {
+gchar* red() {
   return opt_color == TRUE ? ANSI_COLOR_RED : "";
 }
 
-char* green() {
+gchar* green() {
   return opt_color == TRUE ? ANSI_COLOR_GREEN : "";
 }
 
-char* yellow() {
+gchar* yellow() {
   return opt_color == TRUE ? ANSI_COLOR_YELLOW : "";
 }
 
-char* blue() {
+gchar* blue() {
   return opt_color == TRUE ? ANSI_COLOR_BLUE : "";
 }
 
-char* color_reset() {
+gchar* color_reset() {
   return opt_color == TRUE ? ANSI_COLOR_RESET : "";
 }
 
@@ -282,28 +282,27 @@ gboolean erl_on_path() {
 }
 
 // get a filename in the main config directory
-gchar* get_configdir_file_name(char* filename) {
+gchar* get_configdir_file_name(gchar* filename) {
   gchar* configfilename = g_strconcat(homedir,
                                       "/" ERLN8_CONFIG_DIR "/",
                                       filename,
-                                      (char*)0);
+                                      (gchar*)0);
   return configfilename;
 }
 
 
 // get a filename in a subdir of the config directory
-gchar* get_config_subdir_file_name(char* subdir, char* filename) {
+gchar* get_config_subdir_file_name(gchar* subdir, gchar* filename) {
   gchar* configfilename = g_strconcat(homedir,
                                       "/" ERLN8_CONFIG_DIR "/",
                                       subdir,
                                       "/",
                                       filename,
-                                      (char*)0);
+                                      (gchar*)0);
   return configfilename;
 }
 
-
-GHashTable* group_hash(char* group) {
+GHashTable* group_hash(gchar* group, gboolean ignore_error) {
   GHashTable* h = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
   GKeyFile* kf = g_key_file_new();
   GError* error = NULL;
@@ -316,7 +315,15 @@ GHashTable* group_hash(char* group) {
     GError* keyerror = NULL;
     gchar** keys = g_key_file_get_keys(kf, group, NULL, &keyerror);
     if (keyerror != NULL) {
-      g_error("Unable to read %s section from ~/" ERLN8_CONFIG_DIR "/config: %s\n", group, keyerror->message);
+      if(!ignore_error) {
+        g_error("Unable to read %s section from ~/" ERLN8_CONFIG_DIR "/config: %s\n", group, keyerror->message);
+      } else {
+        // just return NULL
+        g_free(fn);
+        g_key_file_free(kf);
+        g_error_free(keyerror);
+        return NULL;
+      }
       //g_error_free(error);
     } else {
       gchar** it = keys;
@@ -337,19 +344,23 @@ GHashTable* group_hash(char* group) {
 }
 
 GHashTable* get_erlangs() {
-  return group_hash("Erlangs");
+  return group_hash("Erlangs", FALSE);
 }
 
 GHashTable* get_repos() {
-  return group_hash("Repos");
+  return group_hash("Repos", FALSE);
 }
 
 GHashTable* get_configs() {
-  return group_hash("Configs");
+  return group_hash("Configs", FALSE);
 }
 
 GHashTable* get_erln8() {
-  return group_hash("Erln8");
+  return group_hash("Erln8", FALSE);
+}
+
+GHashTable* get_system_roots() {
+  return group_hash("SystemRoots", TRUE);
 }
 
 void git_allbuildable() {
@@ -364,7 +375,7 @@ void git_allbuildable() {
       g_error("Missing repo for %s, which should be in %s\n", (gchar*)repo, source_path);
     }
     printf("Tags for repo %s:\n", (gchar*)repo);
-    char* fetchcmd = g_strconcat("cd ",
+    gchar* fetchcmd = g_strconcat("cd ",
                                  source_path,
                                  " && git tag | sort",
                                  NULL);
@@ -384,7 +395,7 @@ void e8_print(gpointer data, gpointer user_data) {
 // check and see if the ERLN8_CONFIG_FILE directory exists
 // probably poorly named
 gboolean check_home() {
-  gchar* configdir = g_strconcat(homedir, "/" ERLN8_CONFIG_DIR "", (char*)0);
+  gchar* configdir = g_strconcat(homedir, "/" ERLN8_CONFIG_DIR "", (gchar*)0);
   g_debug("Checking config dir %s\n", configdir);
   gboolean result = g_file_test(configdir,
                                 G_FILE_TEST_EXISTS |
@@ -394,11 +405,11 @@ gboolean check_home() {
 }
 
 // make a subdirectory in the ~/ERLN8_CONFIG_DIR directory
-void mk_config_subdir(char* subdir) {
+void mk_config_subdir(gchar* subdir) {
   gchar* dirname = g_strconcat(homedir,
                                "/" ERLN8_CONFIG_DIR "/",
                                subdir,
-                               (char*)0);
+                               (gchar*)0);
   g_debug("Creating %s\n", dirname);
   if(g_mkdir(dirname, S_IRWXU)) {
     g_free(dirname);
@@ -439,6 +450,15 @@ void init_main_config() {
                          "Erln8",
                          "default_config",
                          "The default config to use for a build",
+                         NULL);
+  g_key_file_set_string(kf,
+                        "Erln8",
+                        "system_default",
+                        "");
+  g_key_file_set_comment(kf,
+                         "Erln8",
+                         "system_default",
+                         "If an erln8.config file isn't found, use this one.",
                          NULL);
   g_key_file_set_string(kf,
                         "Repos",
@@ -491,7 +511,7 @@ void init_main_config() {
 // write an ERLN8_CONFIG_FILE file into the cwd
 // won't override an existing file
 // unless the user specifies --force
-void init_here(char* erlang) {
+void init_here(gchar* erlang) {
   GHashTable* erlangs = get_erlangs();
   gboolean has_erlang = g_hash_table_contains(erlangs, erlang);
   g_hash_table_destroy(erlangs);
@@ -572,7 +592,7 @@ void initialize() {
     //  g_warning("Erlang already exists on the current PATH\n");
     //}
     // create the top level config directory, then create all subdirs
-    gchar* dirname = g_strconcat(homedir, "/" ERLN8_CONFIG_DIR "",(char*)0);
+    gchar* dirname = g_strconcat(homedir, "/" ERLN8_CONFIG_DIR "",(gchar*)0);
     g_debug("Creating %s\n", dirname);
     if(g_mkdir(dirname, S_IRWXU)) {
       g_error("Can't create directory %s\n", dirname);
@@ -589,18 +609,18 @@ void initialize() {
 }
 
 // search up the directory tree for a ERLN8_CONFIG_FILE to use
-char* configcheck(char* d) {
-  char* retval = NULL;
-  char* f = g_strconcat(d, "/" ERLN8_CONFIG_FILE, NULL);
+gchar* configcheck(char* d) {
+  gchar* retval = NULL;
+  gchar* f = g_strconcat(d, "/" ERLN8_CONFIG_FILE, NULL);
   GFile* gf = g_file_new_for_path(f);
   GFile* gd = g_file_new_for_path(d);
   if(g_file_query_exists(gf, NULL)) {
-    char* cf = g_file_get_path(gf);
+    gchar* cf = g_file_get_path(gf);
     retval = cf;
   } else {
-    if(g_file_has_parent(gd, NULL)) {
+    if(retval == NULL && g_file_has_parent(gd, NULL)) {
       GFile* parent = g_file_get_parent(gd);
-      char* pp = g_file_get_path(parent);
+      gchar* pp = g_file_get_path(parent);
       retval = configcheck(pp);
       g_object_unref(parent);
       g_free(pp);
@@ -612,60 +632,124 @@ char* configcheck(char* d) {
   return retval;
 }
 
+// search up the directory tree for a SystemRoot to use
+gchar* system_root_check(gchar* d) {
+  gchar* retval = NULL;
+  GFile* gd = g_file_new_for_path(d);
+  printf("Checking %s\n", d);
+  GHashTable *roots = get_system_roots();
+  if(roots == NULL) {
+    printf("NO ROOTS %s\n", d);
+    return NULL;
+  } else {
+    gchar *p = (gchar*)g_hash_table_lookup(roots, d);
+    printf("CHECKING ROOT%s\n", d);
+    if(p != NULL) {
+      retval = p;
+      printf("FOUND ROOT%s\n", d);
+    }
+  }
+
+  if(roots != NULL) {
+    g_hash_table_destroy(roots);
+  }
+
+  if(retval == NULL && g_file_has_parent(gd, NULL)) {
+    GFile* parent = g_file_get_parent(gd);
+    gchar* pp = g_file_get_path(parent);
+    retval = system_root_check(pp);
+    g_object_unref(parent);
+    g_free(pp);
+  }
+  g_object_unref(gd);
+  return retval;
+}
+
 // search up the directory tree for an ERLN8_CONFIG_FILE to use,
 // starting from cwd
-char* configcheckfromcwd() {
-  char* d = getcwd(NULL, MAXPATHLEN);
-  char* retval = configcheck(d);
+gchar* configcheckfromcwd() {
+  gchar* d = getcwd(NULL, MAXPATHLEN);
+  gchar* retval = configcheck(d);
+  g_free(d);
+  return retval;
+}
+
+// search up the directory tree for an ERLN8_CONFIG_FILE to use,
+// starting from cwd
+gchar* systemrootcheck_from_cwd() {
+  gchar* d = getcwd(NULL, MAXPATHLEN);
+  gchar* retval = system_root_check(d);
   g_free(d);
   return retval;
 }
 
 
+gchar* get_system_default() {
+  GHashTable *e = get_erln8();
+  gchar* d = (gchar*)g_hash_table_lookup(e, "system_default");
+  g_hash_table_destroy(e);
+  // d can be NULL if the key doesn't exist etc.
+  return d;
+}
+
 // which version of erlang is configured for this particular
 // branch of the dir tree
-char* which_erlang() {
-  char* cfgfile = configcheckfromcwd();
-  if(g_file_test(cfgfile, G_FILE_TEST_EXISTS |
-                 G_FILE_TEST_IS_REGULAR)) {
-    GKeyFile* kf = g_key_file_new();
-    GError* err = NULL;
-    if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
-      if(err != NULL) {
-        g_error("Cannot load %s: %s\n", cfgfile, err->message);
-      } else {
-        g_error("Cannot load %s\n", cfgfile);
-      }
+gchar* which_erlang() {
+  gchar* cfgfile = configcheckfromcwd();
+  printf("CFGFILE = %s\n", cfgfile);
+  if(cfgfile == NULL) {
+    // check for a system root. 
+    // if one doesn't exist, return the system_default
+    gchar *sysroot = systemrootcheck_from_cwd();
+    if(sysroot != NULL) {
+      printf("Returning sysroot\n");
+      return sysroot;
     } else {
-      if(!g_key_file_has_group(kf, "Config")) {
-        g_error("Config group not defined in %s\n", cfgfile);
-        return NULL;
-      } else {
-        err = NULL;
-        if(g_key_file_has_key(kf, "Config", "Erlang", &err)) {
-          gchar* erlversion = g_key_file_get_string(kf, "Config", "Erlang", &err);
-          g_free(cfgfile);
-          // THIS VALUE MUST BE FREED
-          return erlversion;
-        } else {
-          if(err != NULL) {
-            g_error("Missing Erlang | version: %s\n", err->message);
-          } else {
-            g_error("Missing Erlang | version\n");
-          }
-          return NULL;
-        }
-      }
+      printf("Returning default\n");
+      return get_system_default();
     }
   } else {
-    return NULL;
+    if(g_file_test(cfgfile, G_FILE_TEST_EXISTS |
+          G_FILE_TEST_IS_REGULAR)) {
+      GKeyFile* kf = g_key_file_new();
+      GError* err = NULL;
+      if(!g_key_file_load_from_file(kf, cfgfile, G_KEY_FILE_NONE, &err)) {
+        if(err != NULL) {
+          g_error("Cannot load %s: %s\n", cfgfile, err->message);
+        } else {
+          g_error("Cannot load %s\n", cfgfile);
+        }
+      } else {
+        if(!g_key_file_has_group(kf, "Config")) {
+          g_error("Config group not defined in %s\n", cfgfile);
+          return NULL;
+        } else {
+          err = NULL;
+          if(g_key_file_has_key(kf, "Config", "Erlang", &err)) {
+            gchar* erlversion = g_key_file_get_string(kf, "Config", "Erlang", &err);
+            g_free(cfgfile);
+            // THIS VALUE MUST BE FREED
+            return erlversion;
+          } else {
+            if(err != NULL) {
+              g_error("Missing Erlang | version: %s\n", err->message);
+            } else {
+              g_error("Missing Erlang | version\n");
+            }
+            return NULL;
+          }
+        }
+      }
+    } else {
+      return NULL;
+    }
   }
   return NULL;
 }
 
 // set a ~/ERLN8_CONFIG_DIR/config group/key value
 // overwrites existing k/v's
-char* set_config_kv(char* group, char* key, char* val) {
+gchar* set_config_kv(gchar* group, gchar* key, gchar* val) {
   gchar* cfgfile = get_configdir_file_name("config");
   GKeyFile* kf = g_key_file_new();
   GError* err = NULL;
@@ -705,7 +789,7 @@ char* set_config_kv(char* group, char* key, char* val) {
 
 // set a ~/ERLN8_CONFIG_DIR/config group/key value
 // overwrites existing k/v's
-void rm_config_kv(char* group, char* key) {
+void rm_config_kv(gchar* group, gchar* key) {
   gchar* cfgfile = get_configdir_file_name("config");
   GKeyFile* kf = g_key_file_new();
   GError* err = NULL;
@@ -747,7 +831,7 @@ void rm_config_kv(char* group, char* key) {
 }
 
 
-void git_fetch(char* repo) {
+void git_fetch(gchar* repo) {
   GHashTable* repos = get_repos();
   gboolean has_repo = g_hash_table_contains(repos, repo);
   g_hash_table_destroy(repos);
@@ -761,7 +845,7 @@ void git_fetch(char* repo) {
             repo,
             source_path);
   }
-  char* fetchcmd = g_strconcat("cd ",
+  gchar* fetchcmd = g_strconcat("cd ",
                                source_path,
                                " && git fetch",
                                NULL);
@@ -860,8 +944,8 @@ void build_erlang(gchar* repo, gchar* tag, gchar* id, gchar* build_config) {
     }
     g_hash_table_destroy(e8);
   }
-  char pattern[] = "/tmp/erln8.buildXXXXXX";
-  char* tmp = g_mkdtemp(pattern);
+  gchar pattern[] = "/tmp/erln8.buildXXXXXX";
+  gchar* tmp = g_mkdtemp(pattern);
   g_debug("building in %s\n", tmp);
   gchar* output_root = get_config_subdir_file_name("otps",id);
   gchar* output_path = g_strconcat(output_root, "/dist", NULL);
@@ -913,22 +997,22 @@ void build_erlang(gchar* repo, gchar* tag, gchar* id, gchar* build_config) {
   printf("Custom build config: %s\n", bc);
   printf("Custom build env: %s\n", env);
   printf("Build log: %s\n", log_path);
-  char* buildcmd0 = g_strconcat(env,
+  gchar* buildcmd0 = g_strconcat(env,
                                 " cd ",
                                 source_path,
                                 " && git archive ",
                                 tag,
                                 " | (cd ", tmp, "; tar x)", NULL);
-  char* buildcmd1 = g_strconcat(env, " cd ", tmp,
+  gchar* buildcmd1 = g_strconcat(env, " cd ", tmp,
                                 " && ./otp_build autoconf > ", log_path, " 2>&1", NULL);
-  char* buildcmd2 = g_strconcat(env, " cd ", tmp,
+  gchar* buildcmd2 = g_strconcat(env, " cd ", tmp,
                                 " && ./configure --prefix=", output_path," ",
                                 bc == NULL ? "" : bc,
                                 " >> ", log_path, " 2>&1",
                                 NULL);
-  char* buildcmd3 = g_strconcat(env, " cd ", tmp,
+  gchar* buildcmd3 = g_strconcat(env, " cd ", tmp,
                                 " && make >> ", log_path,  " 2>&1", NULL);
-  char* buildcmd4 = g_strconcat(env, " cd ", tmp,
+  gchar* buildcmd4 = g_strconcat(env, " cd ", tmp,
                                 " && make install >> ", log_path, " 2>&1", NULL);
   gchar* build_cmds[] = {
     buildcmd0,
@@ -945,7 +1029,7 @@ void build_erlang(gchar* repo, gchar* tag, gchar* id, gchar* build_config) {
     if(result != 0) {
       g_debug("STATUS = %d\n", result);
       printf("Here are the last 10 lines of the log file:\n");
-      char* tail = g_strconcat("tail -10 ", log_path, NULL);
+      gchar* tail = g_strconcat("tail -10 ", log_path, NULL);
       int tailresult = system(tail);
       if(tailresult != 0) {
         g_error("Cannot run tail -10 on %s\n", log_path);
@@ -1124,7 +1208,7 @@ void dounlink() {
 
 // if not executing one of the erlang commands
 // then process erln8 options etc
-int erln8(int argc, char* argv[]) {
+int erln8(int argc, gchar* argv[]) {
   // TODO: think about getting erlangs, configs, repos in one go
   //       instead of for each option. meh, maybe I don't care.
   GError* error = NULL;
@@ -1208,7 +1292,7 @@ int erln8(int argc, char* argv[]) {
     return 0;
   }
   if(opt_show) {
-    char* erl = which_erlang();
+    gchar* erl = which_erlang();
     if(erl != NULL) {
       printf("%s\n", erl);
       g_free(erl);
@@ -1216,18 +1300,12 @@ int erln8(int argc, char* argv[]) {
     }
   }
   if(opt_prompt) {
-    char* cfgfile = configcheckfromcwd();
-    if(cfgfile != NULL) {
-      g_free(cfgfile);
-      char* erl = which_erlang();
-      if(erl != NULL) {
-        printf("%s", erl);
-        g_free(erl);
-      } else {
-        printf("erln8 error");
-      }
+    gchar* erl = which_erlang();
+    if(erl != NULL) {
+      printf("%s", erl);
+      g_free(erl);
     } else {
-      printf("none");
+      printf("erln8 error");
     }
     return 0;
   }
@@ -1267,7 +1345,7 @@ int main(int argc, char* argv[]) {
     g_free(basename);
   } else {
     g_free(basename);
-    char* erl = which_erlang();
+    gchar* erl = which_erlang();
     if(erl == NULL) {
       g_message("Can't find an " ERLN8_CONFIG_FILE " file to use\n");
       list_erlangs();
@@ -1275,7 +1353,7 @@ int main(int argc, char* argv[]) {
     }
     GHashTable* erlangs = get_erlangs();
     GHashTable* runtime_options = get_erln8();
-    char* path = g_hash_table_lookup(erlangs, erl);
+    gchar* path = g_hash_table_lookup(erlangs, erl);
     if(path == NULL) {
       g_hash_table_destroy(erlangs);
       g_hash_table_destroy(runtime_options);
@@ -1294,7 +1372,6 @@ int main(int argc, char* argv[]) {
     } else {
       opt_banner = FALSE;
     }
-    //char *s = g_strconcat(path, "/bin/", argv[0], (char*)0);
     gchar* s = get_bin(erl, argv[0]);
     g_debug("%s\n",s);
     gboolean result = g_file_test(s,
