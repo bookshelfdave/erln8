@@ -50,6 +50,7 @@ end
 
 class Erln8Test < Test::Unit::TestCase
 
+  @@testhome = `pwd`.strip
   @@teardown = true
   def setup
     `mkdir testconfig`
@@ -93,7 +94,6 @@ class Erln8Test < Test::Unit::TestCase
     result = run_cmd "--clone default"
     assert File.exist?("./testconfig/.erln8.d/repos/default/.git")
   end
-
 
   def test_ini
     TestRepo.new("repo_a", ["a","b","c"])
@@ -233,9 +233,42 @@ class Erln8Test < Test::Unit::TestCase
     assert File.exist?("./testconfig/.erln8.d/otps/foo/dist/bin/erl")
   end
 
+  def test_basic_use
+    begin
+      default_setup
+      result = run_cmd "--build --id builda --repo default --tag a"
+      result = run_cmd "--build --id buildb --repo default --tag b"
+      `mkdir -p ./foobar1/foo`
+      `mkdir -p ./foobar2/foo`
+
+      Dir.chdir "foobar1"
+      run_cmd "--use builda"
+      output_prompt = run_cmd "--prompt"
+      assert_equal("builda", output_prompt)
+
+      output_show = run_cmd "--show"
+      assert_equal("builda", output_show.strip)
+
+      Dir.chdir "foo"
+      output_prompt = run_cmd "--prompt"
+      assert_equal("builda", output_prompt)
+
+      output_show = run_cmd "--show"
+      assert_equal("builda", output_show.strip)
+
+      Dir.chdir @@testhome
+      Dir.chdir "foobar2"
+      run_cmd "--use buildb"
+      output = run_cmd "--prompt"
+      assert_equal("buildb", output)
+    ensure
+      Dir.chdir @@testhome
+    end
+  end
+
   def run_cmd(cmd)
-    d = `pwd`.strip()
-    c = "ERLN8_HOME=#{d}/testconfig ../erln8 #{cmd} 2>&1"
+    c = "ERLN8_HOME=#{@@testhome}/testconfig #{@@testhome}/../erln8 #{cmd} 2>&1"
     `#{c}`
   end
+
 end
