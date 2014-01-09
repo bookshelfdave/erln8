@@ -2,6 +2,8 @@ require 'rubygems'
 require 'bundler/setup'
 require "test/unit"
 require 'iniparse'
+require 'tmpdir'
+
 class TestRepo
   def initialize(root, tags)
     `rm -rf #{root}`
@@ -100,7 +102,7 @@ class Erln8Test < Test::Unit::TestCase
     result = run_cmd "--init"
     configfile = "./testconfig/.erln8.d/config"
     ini = IniParse.parse(File.read(configfile))
-    assert ini["Repos"]["default"] == "https://github.com/erlang/otp.git"
+    assert ini["Reptmpdiros"]["default"] == "https://github.com/erlang/otp.git"
     assert init["Erln8"]["color"] == "false"
     assert init["Erln8"]["banner"] == "false"
   end
@@ -240,6 +242,7 @@ class Erln8Test < Test::Unit::TestCase
       result = run_cmd "--build --id buildb --repo default --tag b"
       `mkdir -p ./foobar1/foo`
       `mkdir -p ./foobar2/foo`
+      `mkdir -p ./foobar3`
 
       Dir.chdir "foobar1"
       run_cmd "--use builda"
@@ -261,9 +264,82 @@ class Erln8Test < Test::Unit::TestCase
       run_cmd "--use buildb"
       output = run_cmd "--prompt"
       assert_equal("buildb", output)
+
+      # This test won't be reliable if
+      # the person running the tests already has an
+      # erln8.config file somewhere in the dir tree
+      # I suppose randomizing the name of erln8.config
+      # during test-only builds could remedy that
+      #Dir.chdir @@testhome
+      #Dir.chdir "foobar3"
+      #puts `ls -la`
+      #output = run_cmd "--show"
+      #puts output
+      #assert_equal("", output)
+
     ensure
       Dir.chdir @@testhome
     end
+  end
+
+  def test_system_root
+    tmpdira = Dir.mktmpdir(["foo", "bar"])
+    tmpdirb = Dir.mktmpdir(["foo", "bar"])
+    tmpdirc = Dir.mktmpdir(["foo", "bar"])
+    puts "Testing system_root in #{tmpdira}"
+    puts "Testing system_root in #{tmpdirb}"
+    puts "Testing system_root in #{tmpdirc}"
+
+    begin
+      TestRepo.new("repo_a", %w[a b c])
+      result = run_cmd "--init"
+
+      configfile = "./testconfig/.erln8.d/config"
+      ini = IniParse.parse(File.read(configfile))
+      ini["Erln8"]["color"] = "false"
+      ini["Erln8"]["system_default"] = "buildc"
+      ini["Repos"]["default"] = "./repo_a"
+      ini.lines << IniParse::Lines::Section.new("SystemRoots")
+      ini["SystemRoots"][tmpdira] = "builda"
+      ini["SystemRoots"][tmpdirb] = "buildb"
+
+      #puts ini.to_ini
+      ini.save(configfile)
+
+      run_cmd "--clone default"
+
+      result = run_cmd "--build --id builda --repo default --tag a"
+      result = run_cmd "--build --id buildb --repo default --tag b"
+      result = run_cmd "--build --id buildc --repo default --tag c"
+
+      # Test system root A
+      Dir.chdir tmpdira
+      result = run_cmd "--prompt"
+      assert_equal("builda", result)
+
+      # Test system root B
+      Dir.chdir tmpdirb
+      result = run_cmd "--prompt"
+      assert_equal("buildb", result)
+
+      # subdirs of SystemRoots should also be valid
+      Dir.chdir tmpdirb
+      `mkdir ./foobar`
+      Dir.chdir "#{tmpdirb}/#{foobar}"
+      result = run_cmd "--prompt"
+      assert_equal("buildb", result)
+
+      # System default should be picked up
+      Dir.chdir tmpdirc
+      result = run_cmd "--prompt"
+      assert_equal("buildc", result)
+    ensure
+      Dir.chdir @@testhome
+      FileUtils.remove_entry tmpdira
+      FileUtils.remove_entry tmpdirb
+      FileUtils.remove_entry tmpdirc
+    end
+
   end
 
   def run_cmd(cmd)

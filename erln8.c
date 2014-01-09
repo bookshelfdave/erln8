@@ -26,6 +26,8 @@
   code cleanup
 */
 
+// enjoy the mix of Java, Erlang, and C styles throughout the 
+// code. Guess it's not good to code when you have the flu.
 
 /*
   memory management note:
@@ -476,6 +478,10 @@ void init_main_config() {
                         "Configs",
                         "osx_llvm",
                         "--disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll --enable-darwin-64bit");
+  g_key_file_set_string(kf,
+                        "Configs",
+                        "osx_llvm_dtrace",
+                        "--disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll --enable-darwin-64bit --enable-vm-probes --with-dynamic-trace=dtrace");
   g_key_file_set_string(kf,
                         "Configs",
                         "osx_gcc",
