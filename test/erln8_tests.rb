@@ -3,6 +3,7 @@ require 'bundler/setup'
 require "test/unit"
 require 'iniparse'
 require 'tmpdir'
+require 'pathname'
 
 class TestRepo
   def initialize(root, tags)
@@ -283,12 +284,12 @@ class Erln8Test < Test::Unit::TestCase
   end
 
   def test_system_root
-    tmpdira = Dir.mktmpdir(["foo", "bar"])
-    tmpdirb = Dir.mktmpdir(["foo", "bar"])
-    tmpdirc = Dir.mktmpdir(["foo", "bar"])
-    puts "Testing system_root in #{tmpdira}"
-    puts "Testing system_root in #{tmpdirb}"
-    puts "Testing system_root in #{tmpdirc}"
+    tmpdira = Pathname.new(Dir.mktmpdir(["foo", "bar"])).realpath
+    tmpdirb = Pathname.new(Dir.mktmpdir(["foo", "bar"])).realpath
+    tmpdirc = Pathname.new(Dir.mktmpdir(["foo", "bar"])).realpath
+    #puts "Testing system_root in #{tmpdira}"
+    #puts "Testing system_root in #{tmpdirb}"
+    #puts "Testing system_root in #{tmpdirc}"
 
     begin
       TestRepo.new("repo_a", %w[a b c])
@@ -325,7 +326,7 @@ class Erln8Test < Test::Unit::TestCase
       # subdirs of SystemRoots should also be valid
       Dir.chdir tmpdirb
       `mkdir ./foobar`
-      Dir.chdir "#{tmpdirb}/#{foobar}"
+      Dir.chdir "#{tmpdirb}/foobar"
       result = run_cmd "--prompt"
       assert_equal("buildb", result)
 

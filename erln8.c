@@ -685,13 +685,17 @@ gchar* systemrootcheck_from_cwd() {
   return retval;
 }
 
-
 gchar* get_system_default() {
   GHashTable *e = get_erln8();
   gchar* d = (gchar*)g_hash_table_lookup(e, "system_default");
-  //g_hash_table_destroy(e);
   // d can be NULL if the key doesn't exist etc.
-  return d;
+  if(d != NULL) {
+    gchar* ret = strdup(d);
+    return ret;
+  } else {
+    g_hash_table_destroy(e);
+    return NULL;
+  }
 }
 
 // which version of erlang is configured for this particular
