@@ -245,11 +245,35 @@ Erlang=r16b02
 <p>If you installed on OSX via Brew (above), bash_completion is installed automatically for you. </p>
 
 <h2>
+<a name="using-erln8-outside-of-home" class="anchor" href="#using-erln8-outside-of-home"><span class="octicon octicon-link"></span></a>Using erln8 outside of $HOME</h2>
+
+<p>A section titled <code>SystemRoots</code> can be created and maintained inside of <code>~/.erln8.d/config</code> to specify versions of Erlang to use outside of $HOME. This can be useful if you don't have write access to these directories.</p>
+
+<pre><code>[SystemRoots]
+/opt/foo=R16B01
+/tmp=R15B01p
+</code></pre>
+
+<h2>
 <a name="setting-up-a-default-version-to-use" class="anchor" href="#setting-up-a-default-version-to-use"><span class="octicon octicon-link"></span></a>Setting up a default version to use</h2>
+
+<h3>
+<a name="a-if-you-wont-be-using-erlang-outside-of-home" class="anchor" href="#a-if-you-wont-be-using-erlang-outside-of-home"><span class="octicon octicon-link"></span></a>a) if you won't be using Erlang outside of $HOME</h3>
 
 <p>Simply run <code>erln8</code> from your home directory with a version of Erlang that you'd like to use elsewhere. </p>
 
 <p><strong>NOTE</strong>: if you are building/running Erlang source from outside of your home directory, you'll need to run erln8 at a location higher up the directory tree.</p>
+
+<h3>
+<a name="b-specifyin-a-system-wide-default" class="anchor" href="#b-specifyin-a-system-wide-default"><span class="octicon octicon-link"></span></a>b) specifyin a system wide default</h3>
+
+<p>you can specify a system default in <code>~/.erln8.d/config</code>:</p>
+
+<pre><code>[Erln8]
+system_default=R16B02
+</code></pre>
+
+<p>Note, the ID that is specified (R16B02 in this example) must have already been built or linked to erln8.</p>
 
 <h2>
 <a name="keeping-your-source-repos-up-to-date" class="anchor" href="#keeping-your-source-repos-up-to-date"><span class="octicon octicon-link"></span></a>Keeping your source repos up-to-date</h2>
@@ -424,7 +448,7 @@ lrwxr-xr-x   1 dparfitt  staff    60 Dec 23 10:43 start_webtool -&gt; ./dist/lib
 
 <p><a href="http://www.apache.org/licenses/LICENSE-2.0.html">http://www.apache.org/licenses/LICENSE-2.0.html</a></p>
 
-<hr><p>© 2013 Dave Parfitt</p>
+<hr><p>© 2014 Dave Parfitt</p>
       </section>
     </div>
     <footer>
