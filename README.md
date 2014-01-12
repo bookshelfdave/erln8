@@ -243,7 +243,7 @@ Simply run `erln8` from your home directory with a version of Erlang that you'd 
 
 **NOTE**: if you are building/running Erlang source from outside of your home directory, you'll need to run erln8 at a location higher up the directory tree.
 
-### b) specifyin a system wide default
+### b) specifying a system wide default
 
 you can specify a system default in `~/.erln8.d/config`:
 
