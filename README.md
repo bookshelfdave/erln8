@@ -233,6 +233,8 @@ A section titled `SystemRoots` can be created and maintained inside of `~/.erln8
 /tmp=R15B01p
 ```
 
+*NOTE*: a SystemRoot setting will NOT follow symlinks.
+
 ## Setting up a default version to use
 
 ### a) if you won't be using Erlang outside of $HOME
