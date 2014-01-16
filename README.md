@@ -70,6 +70,13 @@ sudo make install
 sudo make PREFIX=/opt install
 ```
 
+### Uninstall
+
+```
+cd erln8
+sudo make uninstall
+```
+
 ## Dependencies
 * git
 * glib-2.0 
@@ -131,7 +138,8 @@ replacing `default` with whatever erln8-configured Git repo you want to use.
 
 
 If you already have Erlang installed, skip down to Linking an Existing Erlang below.
-The following command will build Erlang R16B02 using the OTP_R16B02 tag from Git. This build can now be referred to by the --id value (see the erln8 --use example below). Also, see the ~/.erln8.d/config file for specific configs or add your own, or run erln8 --configs.
+
+The following command will build Erlang R16B02 using the `OTP_R16B02` tag from Git. This build can now be referred to by the --id value (see the erln8 --use example below). Also, see the ~/.erln8.d/config file for specific configs or add your own, or run erln8 --configs.
 
 ```
   erln8 --build --tag OTP_R16B02 --id r16b02 --config osx_llvm
@@ -171,9 +179,10 @@ version of Erlang:
 
 ```
 erln8 --unlink --id R14B04
-``` 
+```
 
 at which point, R14B04 won't show up as a version of Erlang to use.
+
 ```
 R16B02b3:slag:~$ erln8 --list
 R16B02b3 -> /Users/dparfitt/.erln8.d/otps/R16B02b3
@@ -192,12 +201,13 @@ For any directory that has an Erlang project, you can run erln8 with the `--use 
 
 ```
  erln8 --use r16b02
- ```
+```
 
 If you need to change the version of Erlang that's already been configured for the current directory:
+
 ```
  erln8 --use r16b01 --force
- ```
+```
 
 
 If you want to find out which version of Erlang the cwd is using, 
@@ -205,7 +215,6 @@ If you want to find out which version of Erlang the cwd is using,
 ```
 erln8 --show
 ```
-
 
 This command simply creates an `erln8.config` file in the cwd. You can even edit it by hand to specify the configured version of Erlang by **id**, or just rerun `erln8 --use some_other_version` to change the value.
 
@@ -215,11 +224,37 @@ This command simply creates an `erln8.config` file in the cwd. You can even edit
 Erlang=r16b02
 ```
 
+### All Commands
+
+Command | Description |
+:-------|:------------|
+`--init` | Initialize erln8 |
+`--use=id` | Set up the current directory to use a specific version of Erlang, where `id` is a version name along the lines of `r15b02` (or whatever you wish to name a distribution) |
+`--list` | List available Erlang installations |
+`--clone=repo` | Clone an Erlang source repository, where `repo` is the URL |
+`--fetch=repo` | Update source repositories, where `repo` is the URL |
+`--build` | Build a specific version of OTP from source (see more information in **Quickstart** above) |
+`--repo=repo` | Specify a repo name to build from |
+`--tag=git_tag` | Specify a repo branch/tag to build from |
+`--id=id` | A user-assigned name for a version of Erlang (used in conjunction with `--build` and other commands) |
+`--config=config` | Specify a build configuration (`default`, `osx_llvm`, `osx_gcc_env`, or `osx_gcc`) |
+`--show` | Show the configured version of Erlang in the current working directory |
+`--prompt` | Display the version of Erlang configured for this part of the directory tree |
+`--configs` | List the currently available build configurations |
+`--repos` | List build repos |
+`--link` | Link a non-erln8 build of Erlang to erln8 |
+`--unlink` | Unlink a non-erln8 build of Erlang from erln8 |
+`--force` | Use the force |
+`--no-color` | Turn of the color output |
+`--buildable` | List tags to build from configured source repos |
+`--quickstart` | Initialize erln8 and build the latest version of Erlang |
+`--debug` | Debug erln8 |
+
 ## Shell Completion
 
 erln8 provides shell completion for commands, available Erlang installations, and buildable Erlang installation. 
 
-	source ~/path_to_erln8/bash_completion/erln8
+    source ~/path_to_erln8/bash_completion/erln8
 
 If you installed on OSX via Brew (above), bash_completion is installed automatically for you. 
 
@@ -312,7 +347,7 @@ osx_gcc_env=CC=gcc-4.2 CPPFLAGS='-DNDEBUG' MAKEFLAGS='-j 3'
 
 ## Specifying a *default* build config
 
-If `--config` isn't specified as a parameter to a `--build`, erln8 will use the `default_config` config variable specified in the `Erln8` section of `~/.erln8.d/config. This is simply the name of a config as configured above.
+If `--config` isn't specified as a parameter to a `--build`, erln8 will use the `default_config` config variable specified in the `Erln8` section of `~/.erln8.d/config`. This is simply the name of a config as configured above.
 
 ```
 [Erln8]
@@ -341,11 +376,11 @@ default_config=osx_llvm
 To disable the erln8 startup banner, change the appropriate config settings located in the `[Erln8]` section of `~/.erln8.d/config`. Boolean values are either `true` or `false`, and are case sensitive.
 
 * **banner**
-	* Show the version of Erlang that erln8 is running upon startup
-	* `true` or `false`
-	
+    * Show the version of Erlang that erln8 is running upon startup
+    * `true` or `false`
+    
 * **color**
-	* `true` or `false`
+    * `true` or `false`
 
 #### Example:
 
@@ -373,7 +408,7 @@ lrwxr-xr-x    1 root      admin       20 Dec 27 17:51 epmd -> /usr/local/bin/erl
 
 In this setup, whenever you call an Erlang command, you are really calling the `erln8` command.
 
-When `erln8` starts, it checks `argv[0]` to see if it was called via a symlink (one of the erl, erlc, dialyzer, etc commands). If it was, it searches the current working directory for an erln8.config file. If one isn't found, it cd's up a directory and looks for an erln8.config file again. This continues until either an erln8.config file is found, or the search reaches `/`. If an erln8.config file hasn't been found and `/` has been reached, the user hasn't configured a version of Erlang to use. Display an error and exit. Otherwise, use the version of Erlang specified in the erln8.config file and execv() that binary. execv() *replaces* the current process with the new process (see the man page for execv). So, a call to `erlc` will start up `erln8` via symlink, but the `erln8` process will be replaced during the execv() by the command located in the specified version of Erlang. 
+When `erln8` starts, it checks `argv[0]` to see if it was called via a symlink (one of the erl, erlc, dialyzer, etc commands). If it was, it searches the current working directory for an `erln8.config` file. If one isn't found, it cd's up a directory and looks for an `erln8.config` file again. This continues until either an `erln8.config` file is found or the search reaches `/`. If an `erln8.config` file hasn't been found and `/` has been reached, the user hasn't configured a version of Erlang to use. Display an error and exit. Otherwise, use the version of Erlang specified in the erln8.config file and execv() that binary. execv() *replaces* the current process with the new process (see the man page for execv). So, a call to `erlc` will start up `erln8` via symlink, but the `erln8` process will be replaced during the execv() by the command located in the specified version of Erlang. 
 
 There is another layer of indirection as located in the ~/.erln8.d/otps/MY_OTP directory (with MY_OTP being a configured Erlang ID). This layer of indirection was added to take the legwork out of finding versioned binaries in the Erlang distribution. For example, the `to_erl` symlink points to `./dist/lib/erlang/erts-5.10.3/bin/to_erl`. erln8 only needs to know the command name to run it, without having to know the version # of erts.
 
@@ -394,9 +429,11 @@ The `.dist` directory defined for each version of Erlang installed also allows e
 #Contributing
 
 Fork this repo, create a feature branch using something like this:
-	
-	git checkout -b branch_name
-	
+    
+```
+git checkout -b branch_name
+```
+
 and submit a pull request. 
 
 Please send me an email (dparfitt at basho dot com) and let me know if you want to work on any features.
