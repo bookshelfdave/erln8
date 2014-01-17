@@ -1314,7 +1314,7 @@ int erln8(int argc, gchar* argv[]) {
   }
   printf("\nerln8: the sneaky Erlang version manager\n");
   printf("(c) 2013 Dave Parfitt\n");
-  printf("Licensed under the Apache License, Version 2.0\n");
+  printf("Licensed under the Apache License, Version 2.0\n\n");
   printf("%s\n", g_option_context_get_help(context, TRUE, NULL));
   return 0;
 }
