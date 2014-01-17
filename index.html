@@ -4,29 +4,40 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <title>erln8 by metadave</title>
-
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <script src="javascripts/scale.fix.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
   </head>
   <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/metadave/erln8">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/metadave/erln8/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/metadave/erln8/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
+
     <div class="wrapper">
-      <header>
-        <h1>erln8</h1>
-        <p>A sneaky Erlang version manager</p>
-        <p class="view"><a href="https://github.com/metadave/erln8">View the Project on GitHub <small>metadave/erln8</small></a></p>
-        <ul>
-          <li><a href="https://github.com/metadave/erln8/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/metadave/erln8/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/metadave/erln8">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
+
       <section>
+        <div id="title">
+          <h1>erln8</h1>
+          <p>A sneaky Erlang version manager</p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/metadave">metadave</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
+        </div>
+
         <h1>
 <a name="erln8---an-erlang-version-manager" class="anchor" href="#erln8---an-erlang-version-manager"><span class="octicon octicon-link"></span></a>erln8 - an Erlang version manager</h1>
 
@@ -103,6 +114,13 @@ sudo make install
 sudo make PREFIX=/opt install
 </code></pre>
 
+<h3>
+<a name="uninstall" class="anchor" href="#uninstall"><span class="octicon octicon-link"></span></a>Uninstall</h3>
+
+<pre><code>cd erln8
+sudo make uninstall
+</code></pre>
+
 <h2>
 <a name="dependencies" class="anchor" href="#dependencies"><span class="octicon octicon-link"></span></a>Dependencies</h2>
 
@@ -159,8 +177,9 @@ sudo make PREFIX=/opt install
 
 <p>replacing <code>default</code> with whatever erln8-configured Git repo you want to use.</p>
 
-<p>If you already have Erlang installed, skip down to Linking an Existing Erlang below.
-The following command will build Erlang R16B02 using the OTP_R16B02 tag from Git. This build can now be referred to by the --id value (see the erln8 --use example below). Also, see the ~/.erln8.d/config file for specific configs or add your own, or run erln8 --configs.</p>
+<p>If you already have Erlang installed, skip down to Linking an Existing Erlang below.</p>
+
+<p>The following command will build Erlang R16B02 using the <code>OTP_R16B02</code> tag from Git. This build can now be referred to by the --id value (see the erln8 --use example below). Also, see the ~/.erln8.d/config file for specific configs or add your own, or run erln8 --configs.</p>
 
 <pre><code>  erln8 --build --tag OTP_R16B02 --id r16b02 --config osx_llvm
   erln8 --build --tag OTP_R15B01 --id r15b01 --config osx_llvm
@@ -234,7 +253,101 @@ R16B02 -&gt; /Users/dparfitt/.erln8.d/otps/R16B02
 Erlang=r16b02
 </code></pre>
 
-<h2>
+<h3>
+<a name="all-commands" class="anchor" href="#all-commands"><span class="octicon octicon-link"></span></a>All Commands</h3>
+
+<table>
+<thead><tr>
+<th align="left">Command</th>
+<th align="left">Description</th>
+</tr></thead>
+<tbody>
+<tr>
+<td align="left"><code>--init</code></td>
+<td align="left">Initialize erln8</td>
+</tr>
+<tr>
+<td align="left"><code>--use=id</code></td>
+<td align="left">Set up the current directory to use a specific version of Erlang, where <code>id</code> is a version name along the lines of <code>r15b02</code> (or whatever you wish to name a distribution)</td>
+</tr>
+<tr>
+<td align="left"><code>--list</code></td>
+<td align="left">List available Erlang installations</td>
+</tr>
+<tr>
+<td align="left"><code>--clone=repo</code></td>
+<td align="left">Clone an Erlang source repository, where <code>repo</code> is the URL</td>
+</tr>
+<tr>
+<td align="left"><code>--fetch=repo</code></td>
+<td align="left">Update source repositories, where <code>repo</code> is the URL</td>
+</tr>
+<tr>
+<td align="left"><code>--build</code></td>
+<td align="left">Build a specific version of OTP from source (see more information in <strong>Quickstart</strong> above)</td>
+</tr>
+<tr>
+<td align="left"><code>--repo=repo</code></td>
+<td align="left">Specify a repo name to build from</td>
+</tr>
+<tr>
+<td align="left"><code>--tag=git_tag</code></td>
+<td align="left">Specify a repo branch/tag to build from</td>
+</tr>
+<tr>
+<td align="left"><code>--id=id</code></td>
+<td align="left">A user-assigned name for a version of Erlang (used in conjunction with <code>--build</code> and other commands)</td>
+</tr>
+<tr>
+<td align="left"><code>--config=config</code></td>
+<td align="left">Specify a build configuration (<code>default</code>, <code>osx_llvm</code>, <code>osx_gcc_env</code>, or <code>osx_gcc</code>)</td>
+</tr>
+<tr>
+<td align="left"><code>--show</code></td>
+<td align="left">Show the configured version of Erlang in the current working directory</td>
+</tr>
+<tr>
+<td align="left"><code>--prompt</code></td>
+<td align="left">Display the version of Erlang configured for this part of the directory tree</td>
+</tr>
+<tr>
+<td align="left"><code>--configs</code></td>
+<td align="left">List the currently available build configurations</td>
+</tr>
+<tr>
+<td align="left"><code>--repos</code></td>
+<td align="left">List build repos</td>
+</tr>
+<tr>
+<td align="left"><code>--link</code></td>
+<td align="left">Link a non-erln8 build of Erlang to erln8</td>
+</tr>
+<tr>
+<td align="left"><code>--unlink</code></td>
+<td align="left">Unlink a non-erln8 build of Erlang from erln8</td>
+</tr>
+<tr>
+<td align="left"><code>--force</code></td>
+<td align="left">Use the force</td>
+</tr>
+<tr>
+<td align="left"><code>--no-color</code></td>
+<td align="left">Turn off color output</td>
+</tr>
+<tr>
+<td align="left"><code>--buildable</code></td>
+<td align="left">List tags to build from configured source repos</td>
+</tr>
+<tr>
+<td align="left"><code>--quickstart</code></td>
+<td align="left">Initialize erln8 and build the latest version of Erlang</td>
+</tr>
+<tr>
+<td align="left"><code>--debug</code></td>
+<td align="left">Debug erln8</td>
+</tr>
+</tbody>
+</table><h2>
 <a name="shell-completion" class="anchor" href="#shell-completion"><span class="octicon octicon-link"></span></a>Shell Completion</h2>
 
 <p>erln8 provides shell completion for commands, available Erlang installations, and buildable Erlang installation. </p>
@@ -338,7 +451,7 @@ osx_gcc_env=CC=gcc-4.2 CPPFLAGS='-DNDEBUG' MAKEFLAGS='-j 3'
 <h2>
 <a name="specifying-a-default-build-config" class="anchor" href="#specifying-a-default-build-config"><span class="octicon octicon-link"></span></a>Specifying a <em>default</em> build config</h2>
 
-<p>If <code>--config</code> isn't specified as a parameter to a <code>--build</code>, erln8 will use the <code>default_config</code> config variable specified in the <code>Erln8</code> section of `~/.erln8.d/config. This is simply the name of a config as configured above.</p>
+<p>If <code>--config</code> isn't specified as a parameter to a <code>--build</code>, erln8 will use the <code>default_config</code> config variable specified in the <code>Erln8</code> section of <code>~/.erln8.d/config</code>. This is simply the name of a config as configured above.</p>
 
 <pre><code>[Erln8]
 default_config=default
@@ -414,7 +527,7 @@ lrwxr-xr-x    1 root      admin       20 Dec 27 17:51 epmd -&gt; /usr/local/bin/
 
 <p>In this setup, whenever you call an Erlang command, you are really calling the <code>erln8</code> command.</p>
 
-<p>When <code>erln8</code> starts, it checks <code>argv[0]</code> to see if it was called via a symlink (one of the erl, erlc, dialyzer, etc commands). If it was, it searches the current working directory for an erln8.config file. If one isn't found, it cd's up a directory and looks for an erln8.config file again. This continues until either an erln8.config file is found, or the search reaches <code>/</code>. If an erln8.config file hasn't been found and <code>/</code> has been reached, the user hasn't configured a version of Erlang to use. Display an error and exit. Otherwise, use the version of Erlang specified in the erln8.config file and execv() that binary. execv() <em>replaces</em> the current process with the new process (see the man page for execv). So, a call to <code>erlc</code> will start up <code>erln8</code> via symlink, but the <code>erln8</code> process will be replaced during the execv() by the command located in the specified version of Erlang. </p>
+<p>When <code>erln8</code> starts, it checks <code>argv[0]</code> to see if it was called via a symlink (one of the erl, erlc, dialyzer, etc commands). If it was, it searches the current working directory for an <code>erln8.config</code> file. If one isn't found, it cd's up a directory and looks for an <code>erln8.config</code> file again. This continues until either an <code>erln8.config</code> file is found or the search reaches <code>/</code>. If an <code>erln8.config</code> file hasn't been found and <code>/</code> has been reached, the user hasn't configured a version of Erlang to use. Display an error and exit. Otherwise, use the version of Erlang specified in the erln8.config file and execv() that binary. execv() <em>replaces</em> the current process with the new process (see the man page for execv). So, a call to <code>erlc</code> will start up <code>erln8</code> via symlink, but the <code>erln8</code> process will be replaced during the execv() by the command located in the specified version of Erlang. </p>
 
 <p>There is another layer of indirection as located in the ~/.erln8.d/otps/MY_OTP directory (with MY_OTP being a configured Erlang ID). This layer of indirection was added to take the legwork out of finding versioned binaries in the Erlang distribution. For example, the <code>to_erl</code> symlink points to <code>./dist/lib/erlang/erts-5.10.3/bin/to_erl</code>. erln8 only needs to know the command name to run it, without having to know the version # of erts.</p>
 
@@ -452,11 +565,8 @@ lrwxr-xr-x   1 dparfitt  staff    60 Dec 23 10:43 start_webtool -&gt; ./dist/lib
 
 <hr><p>© 2014 Dave Parfitt</p>
       </section>
+
     </div>
-    <footer>
-      <p>Project maintained by <a href="https://github.com/metadave">metadave</a></p>
-      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
-    </footer>
     <!--[if !IE]><script>fixScale(document);</script><![endif]-->
     
   </body>
