@@ -245,7 +245,7 @@ Command | Description |
 `--link` | Link a non-erln8 build of Erlang to erln8 |
 `--unlink` | Unlink a non-erln8 build of Erlang from erln8 |
 `--force` | Use the force |
-`--no-color` | Turn of the color output |
+`--no-color` | Turn off color output |
 `--buildable` | List tags to build from configured source repos |
 `--quickstart` | Initialize erln8 and build the latest version of Erlang |
 `--debug` | Debug erln8 |
