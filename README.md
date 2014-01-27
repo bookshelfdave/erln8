@@ -268,7 +268,7 @@ A section titled `SystemRoots` can be created and maintained inside of `~/.erln8
 /tmp=R15B01p
 ```
 
-*NOTE*: a SystemRoot setting will NOT follow symlinks.
+*NOTE*: a SystemRoot setting will NOT follow symlinks. On OSX, /tmp (among other paths) is actually a symlink to /private/tmp. Thanks Apple!
 
 ## Setting up a default version to use
 
