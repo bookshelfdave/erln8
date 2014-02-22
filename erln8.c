@@ -850,7 +850,7 @@ void git_fetch(gchar* repo) {
   }
   gchar* fetchcmd = g_strconcat("cd ",
                                source_path,
-                               " && git fetch",
+                               " && git fetch --all",
                                NULL);
   int result = system(fetchcmd);
   if(result != 0) {
@@ -901,7 +901,7 @@ void setup_binaries(gchar* otpid) {
   if(!has_erlang) {
     g_error("%s doesn't appear to be linked. Did something go wrong with the build?\n", otpid);
   }
-  gchar* genbins = g_strconcat("cd ", path, " && for i in `find -L . -perm -111 -type f | grep -v \"\\.so\" | grep -v \"\\.o\" | grep -v \"lib/erlang/bin\"`; do  `ln -s -f $i $(basename $i)` ; done", NULL);
+  gchar* genbins = g_strconcat("cd ", path, " && for i in `find -L . -perm -111 -type f | grep -v \"\\.so\" | grep -v \"\\.o\" | grep -v \"lib/erlang/bin\" | grep -v Install`; do  `ln -s -f $i $(basename $i)` ; done", NULL);
   g_debug("%s\n", genbins);
   if(!opt_dryrun) {
     int result = system(genbins);
