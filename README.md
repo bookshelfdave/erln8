@@ -36,7 +36,7 @@ See the Building section below to continue.
 (Erlang + *general* erln8 deps)
 
 ```
-sudo apt-get install build-essential libncurses5-dev openssl libssl-dev fop xsltproc unixodbc-dev build-essential libglib2.0-dev git autoconf
+sudo apt-get install build-essential libncurses5-dev openssl libssl-dev fop xsltproc unixodbc-dev libglib2.0-dev git autoconf
 ```
 
 See the Building section below to continue.
@@ -117,7 +117,7 @@ Run this once, it creates `~/.erln8.d` and `~/.erln8.d/config`
 erln8 --init
 ```
 
-Next, you'll need to clone the OTP source repo from Github if you don't have Erlang installed. This default repo is cloned to to `~/.erln8.d/repos/default`.
+Next, you'll need to clone the OTP source repo from Github if you don't have Erlang installed. This default repo is cloned to `~/.erln8.d/repos/default`.
 
 ```
 erln8 --clone default
