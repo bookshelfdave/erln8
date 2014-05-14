@@ -70,6 +70,16 @@ sudo make install
 sudo make PREFIX=/opt install
 ```
 
+### Running the tests (Optional)
+
+Running the tests requires Ruby 1.9.3 + iniparse (which is installed via `bundle install`).
+
+```
+cd test
+bundle install
+make
+```
+
 ### Uninstall
 
 ```
