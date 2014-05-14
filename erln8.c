@@ -1347,7 +1347,6 @@ int main(int argc, char* argv[]) {
     erln8(argc, argv);
     g_free(basename);
   } else {
-    g_free(basename);
     gchar* erl = which_erlang();
     if(erl == NULL) {
       g_message("Can't find an " ERLN8_CONFIG_FILE " file to use\n");
@@ -1374,11 +1373,12 @@ int main(int argc, char* argv[]) {
     } else {
       opt_banner = FALSE;
     }
-    gchar* s = get_bin(erl, argv[0]);
+    gchar* s = get_bin(erl, basename);
     g_debug("%s\n",s);
     gboolean result = g_file_test(s,
                                   G_FILE_TEST_EXISTS |
                                   G_FILE_TEST_IS_REGULAR);
+    g_free(basename);
     if(!result) {
       g_hash_table_destroy(erlangs);
       g_hash_table_destroy(runtime_options);
