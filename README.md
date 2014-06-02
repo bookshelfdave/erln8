@@ -94,7 +94,7 @@ sudo make uninstall
 
 ## Quickstart
 
-To create erln8 config files, clone the default OTP repo, and build Erlang R16B02, simply run:
+To create erln8 config files, clone the default OTP repo, and build the latest version of Erlang (OTP-17.0.1 as of writing), simply run:
 
 ```
 erln8 --quickstart
@@ -107,7 +107,7 @@ Depending on your system, it could take quite awhile to download the OTP Git rep
 Once the quickstart completes, you'll still need to cd to a directory where you want to use Erlang and run:
 
 ```
-erln8 --use R16B02
+erln8 --use quickstart_build
 ```
 
 

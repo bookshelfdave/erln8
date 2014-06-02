@@ -592,7 +592,8 @@ void list_erlangs() {
 // a partial ~/ERLN8_CONFIG_DIR tree
 void initialize() {
   if(check_home()) {
-    g_error("Configuration directory ~/" ERLN8_CONFIG_DIR " already exists\n");
+    g_warning("Configuration directory ~/" ERLN8_CONFIG_DIR " already exists\n");
+    return;
   } else {
     //if(erl_on_path()) {
     //  g_warning("Erlang already exists on the current PATH\n");
@@ -1209,6 +1210,37 @@ void dounlink() {
   }
 }
 
+void display_latest_quickstart() {
+  gchar* repo = "default";
+  GHashTable* repos = get_repos();
+  gboolean has_repo = g_hash_table_contains(repos, repo);
+  g_hash_table_destroy(repos);
+  if(!has_repo) {
+    g_error("Unknown repo %s\n", repo);
+  }
+  gchar* source_path = get_config_subdir_file_name("repos", repo);
+  if(!g_file_test(source_path, G_FILE_TEST_EXISTS |
+                  G_FILE_TEST_IS_REGULAR)) {
+    g_error("Missing repo for %s, which should be in %s. Maybe you forgot to erln8 --clone repo_name\n",
+            repo,
+            source_path);
+  }
+  // too much color? I'd like this message to stand out
+  printf("%sDetected latest Erlang/OTP tag: %s\n", blue(), green());
+  gchar* fetchcmd = g_strconcat("cd ",
+                               source_path,
+                               " && git describe --abbrev=0 --tags",
+                               NULL);
+  int result = system(fetchcmd);
+  if(result != 0) {
+    g_error("Error fetching from repo %s\n", repo);
+  }
+  printf("%s\n", color_reset());
+  g_free(source_path);
+  g_free(fetchcmd);
+}
+
+
 // if not executing one of the erlang commands
 // then process erln8 options etc
 int erln8(int argc, gchar* argv[]) {
@@ -1229,9 +1261,11 @@ int erln8(int argc, gchar* argv[]) {
     doclone();
     opt_repo = "default";
     opt_config = "default";
-    // TODO: detect the latest tag and use that!
-    opt_tag  = "OTP_R16B02";
-    opt_id   = "R16B02";
+    // detect the latest git TAG from the OTP repo
+    // I hope this works... ;-)
+    opt_tag = "`git describe --abbrev=0 --tags`";
+    opt_id = "quickstart_build";
+    display_latest_quickstart();
     dobuild();
     return 0;
   }
