@@ -1,33 +1,33 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
+    <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
     <title>erln8 by metadave</title>
-
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
   </head>
+
   <body>
-    <div class="wrapper">
-      <header>
+
+    <header>
+      <div class="container">
         <h1>erln8</h1>
-        <p>A sneaky Erlang version manager</p>
+        <h2>A sneaky Erlang version manager</h2>
 
-        <p class="view"><a href="https://github.com/metadave/erln8">View the Project on GitHub <small>metadave/erln8</small></a></p>
+        <section id="downloads">
+          <a href="https://github.com/metadave/erln8/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/metadave/erln8/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/metadave/erln8" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
 
-
-        <ul>
-          <li><a href="https://github.com/metadave/erln8/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/metadave/erln8/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/metadave/erln8">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
+    <div class="container">
+      <section id="main_content">
         <h1>
 <a name="erln8---an-erlang-version-manager" class="anchor" href="#erln8---an-erlang-version-manager"><span class="octicon octicon-link"></span></a>erln8 - an Erlang version manager</h1>
 
@@ -70,7 +70,7 @@
 
 <p>(Erlang + <em>general</em> erln8 deps)</p>
 
-<pre><code>sudo apt-get install build-essential libncurses5-dev openssl libssl-dev fop xsltproc unixodbc-dev build-essential libglib2.0-dev git autoconf
+<pre><code>sudo apt-get install build-essential libncurses5-dev openssl libssl-dev fop xsltproc unixodbc-dev libglib2.0-dev git autoconf
 </code></pre>
 
 <p>See the Building section below to continue.</p>
@@ -105,6 +105,16 @@ sudo make PREFIX=/opt install
 </code></pre>
 
 <h3>
+<a name="running-the-tests-optional" class="anchor" href="#running-the-tests-optional"><span class="octicon octicon-link"></span></a>Running the tests (Optional)</h3>
+
+<p>Running the tests requires Ruby 1.9.3 + iniparse (which is installed via <code>bundle install</code>).</p>
+
+<pre><code>cd test
+bundle install
+make
+</code></pre>
+
+<h3>
 <a name="uninstall" class="anchor" href="#uninstall"><span class="octicon octicon-link"></span></a>Uninstall</h3>
 
 <pre><code>cd erln8
@@ -121,7 +131,7 @@ sudo make uninstall
 </ul><h2>
 <a name="quickstart" class="anchor" href="#quickstart"><span class="octicon octicon-link"></span></a>Quickstart</h2>
 
-<p>To create erln8 config files, clone the default OTP repo, and build Erlang R16B02, simply run:</p>
+<p>To create erln8 config files, clone the default OTP repo, and build the latest version of Erlang (OTP-17.0.1 as of writing), simply run:</p>
 
 <pre><code>erln8 --quickstart
 </code></pre>
@@ -132,7 +142,7 @@ sudo make uninstall
 
 <p>Once the quickstart completes, you'll still need to cd to a directory where you want to use Erlang and run:</p>
 
-<pre><code>erln8 --use R16B02
+<pre><code>erln8 --use quickstart_build
 </code></pre>
 
 <p>The quickstart will fail Erlang build dependencies aren't installed or correct. Once you have the required dependencies installed, you can continue the build with the following:</p>
@@ -143,14 +153,14 @@ sudo make uninstall
 <h2>
 <a name="initial-setup" class="anchor" href="#initial-setup"><span class="octicon octicon-link"></span></a>Initial setup</h2>
 
-<p><em>**If you haven't added the erln8 directory to your path, do it now. If you already have Erlang in your path, REMOVE IT!</em>*</p>
+<p><em>**If you haven't added the erln8 directory to your path, do it now. If you already have Erlang in your path, REMOVE IT!*</em></p>
 
 <p>Run this once, it creates <code>~/.erln8.d</code> and <code>~/.erln8.d/config</code></p>
 
 <pre><code>erln8 --init
 </code></pre>
 
-<p>Next, you'll need to clone the OTP source repo from Github if you don't have Erlang installed. This default repo is cloned to to <code>~/.erln8.d/repos/default</code>.</p>
+<p>Next, you'll need to clone the OTP source repo from Github if you don't have Erlang installed. This default repo is cloned to <code>~/.erln8.d/repos/default</code>.</p>
 
 <pre><code>erln8 --clone default
 </code></pre>
@@ -555,12 +565,8 @@ lrwxr-xr-x   1 dparfitt  staff    60 Dec 23 10:43 start_webtool -&gt; ./dist/lib
 
 <hr><p>© 2014 Dave Parfitt</p>
       </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/metadave">metadave</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
     </div>
-    <script src="javascripts/scale.fix.js"></script>
+
     
   </body>
 </html>
