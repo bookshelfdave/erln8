@@ -1006,7 +1006,7 @@ void build_erlang(gchar* repo, gchar* tag, gchar* id, gchar* build_config) {
                                 source_path,
                                 " && git archive ",
                                 tag,
-                                " | (cd ", tmp, "; tar x)", NULL);
+                                " | (cd ", tmp, "; tar -f - -x)", NULL);
   gchar* buildcmd1 = g_strconcat(env, " cd ", tmp,
                                 " && ./otp_build autoconf > ", log_path, " 2>&1", NULL);
   gchar* buildcmd2 = g_strconcat(env, " cd ", tmp,
