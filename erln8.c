@@ -2,7 +2,7 @@
  * ------------------------------------------------------------
  * erln8: a sneaky Erlang version manager
  *
- * Copyright (c) 2013 Dave Parfitt
+ * Copyright (c) 2014 Dave Parfitt
  *
  * This file is provided to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file
