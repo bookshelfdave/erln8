@@ -119,7 +119,7 @@ erln8 --build --tag OTP_R16B02 --id R16B02
 
 ## Initial setup
 
-***If you haven't added the erln8 directory to your path, do it now. If you already have Erlang in your path, REMOVE IT!**
+***If you haven't added the erln8 directory to your path, do it now. If you already have Erlang in your path, REMOVE IT!***
 
 Run this once, it creates `~/.erln8.d` and `~/.erln8.d/config`
 
