@@ -210,10 +210,11 @@ static gchar* step[] = {
   "[2] configure                      ",
   "[3] make                           ",
   "[4] make install                   ",
+  "[5] make install-docs              ",
   (gchar*)0
 };
 
-static int step_count = 5;
+static int step_count = 6;
 
 gchar* red() {
   return opt_color == TRUE ? ANSI_COLOR_RED : "";
@@ -1016,14 +1017,19 @@ void build_erlang(gchar* repo, gchar* tag, gchar* id, gchar* build_config) {
                                 NULL);
   gchar* buildcmd3 = g_strconcat(env, " cd ", tmp,
                                 " && make >> ", log_path,  " 2>&1", NULL);
+
   gchar* buildcmd4 = g_strconcat(env, " cd ", tmp,
-                                " && make install >> ", log_path, " 2>&1", NULL);
+                                " && make install >> ", log_path,  " 2>&1", NULL);
+
+  gchar* buildcmd5 = g_strconcat(env, " cd ", tmp,
+                                " && make install-docs >> ", log_path, " 2>&1", NULL);
   gchar* build_cmds[] = {
     buildcmd0,
     buildcmd1,
     buildcmd2,
     buildcmd3,
     buildcmd4,
+    buildcmd5,
     NULL
   };
   int result = 0;
