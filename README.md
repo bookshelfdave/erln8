@@ -441,7 +441,7 @@ git checkout -b branch_name
 
 and submit a pull request. 
 
-Please send me an email (dparfitt at basho dot com) and let me know if you want to work on any features.
+Please send me an email (dparfitt at getchef dot com) and let me know if you want to work on any features.
 
 Only friendly pull requests accepted.
 
