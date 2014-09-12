@@ -1,42 +1,43 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
+
   <head>
-    <meta charset="utf-8">
+    <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>erln8 by metadave</title>
+    <meta name="description" content="erln8 : A sneaky Erlang version manager">
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <script src="javascripts/scale.fix.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>erln8</title>
   </head>
+
   <body>
-    <div class="wrapper">
-      <header>
-        <h1 class="header">erln8</h1>
-        <p class="header">A sneaky Erlang version manager</p>
 
-        <ul>
-          <li class="download"><a class="buttons" href="https://github.com/metadave/erln8/zipball/master">Download ZIP</a></li>
-          <li class="download"><a class="buttons" href="https://github.com/metadave/erln8/tarball/master">Download TAR</a></li>
-          <li><a class="buttons github" href="https://github.com/metadave/erln8">View On GitHub</a></li>
-        </ul>
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/metadave/erln8">View on GitHub</a>
 
-        <p class="header">This project is maintained by <a class="header name" href="https://github.com/metadave">metadave</a></p>
+          <h1 id="project_title">erln8</h1>
+          <h2 id="project_tagline">A sneaky Erlang version manager</h2>
 
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/metadave/erln8/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/metadave/erln8/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
 
-      </header>
-      <section>
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
         <h1>
 <a name="erln8---an-erlang-version-manager" class="anchor" href="#erln8---an-erlang-version-manager"><span class="octicon octicon-link"></span></a>erln8 - an Erlang version manager</h1>
 
 <h2>
 <a name="what-is-it" class="anchor" href="#what-is-it"><span class="octicon octicon-link"></span></a>What is it?</h2>
 
-<p>erln8 (erl-in-ate) allows you to compile and manage multiple versions of Erlang from source. Instead of downloading individual source packages, it downloads the Github OTP mirror so you are essentially downloading all available versions at once  :-) Additionaly, you can add your own git repos to support custom OTP patches etc.</p>
+<p>erln8 (erl-in-ate) allows you to compile and manage multiple versions of Erlang from source. Instead of downloading individual source packages, it downloads the Github OTP mirror so you are essentially downloading all available versions at once.  Additionaly, you can add your own git repos to support custom OTP patches etc.</p>
 
 <p>The cool thing about erln8 is that you only need to add it to your PATH to use it. No funny environment tweaking ;-) It works by reading an <code>erln8.config</code> config file out of the <strong><em>current directory</em></strong>, or by <strong><em>searching up the directory tree until it finds one.</em></strong> This allows you to "set a version of Erlang to use for a project and forget it".</p>
 
@@ -155,7 +156,7 @@ sudo make uninstall
 <h2>
 <a name="initial-setup" class="anchor" href="#initial-setup"><span class="octicon octicon-link"></span></a>Initial setup</h2>
 
-<p><em>**If you haven't added the erln8 directory to your path, do it now. If you already have Erlang in your path, REMOVE IT!*</em></p>
+<p><strong><em>If you haven't added the erln8 directory to your path, do it now. If you already have Erlang in your path, REMOVE IT!</em></strong></p>
 
 <p>Run this once, it creates <code>~/.erln8.d</code> and <code>~/.erln8.d/config</code></p>
 
@@ -567,11 +568,17 @@ lrwxr-xr-x   1 dparfitt  staff    60 Dec 23 10:43 start_webtool -&gt; ./dist/lib
 
 <hr><p>© 2014 Dave Parfitt</p>
       </section>
-      <footer>
-        <p><small>Hosted on <a href="http://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">erln8 maintained by <a href="https://github.com/metadave">metadave</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
-    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
-		
+
+    
+
   </body>
 </html>
