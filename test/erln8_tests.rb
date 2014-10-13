@@ -51,11 +51,14 @@ echo \"Fake otp_build\"
   end
 end
 
-class Erln8Test < Test::Unit::TestCase
 
-  @@testhome = `pwd`.strip
+
+class Erln8Suite
+
+  #@@testhome = `pwd`.strip
   @@teardown = true
   def setup
+    puts ">>> `pwd`"
     `mkdir testconfig`
   end
 
@@ -348,4 +351,16 @@ class Erln8Test < Test::Unit::TestCase
     `#{c}`
   end
 
+end
+
+
+
+class Erln8Test < Test::Unit::TestCase
+  include Erln8Suite
+  @@testhome = `pwd`.strip
+end
+
+class Erln8TestWithSpaces < Test::Unit::TestCase
+  include Erln8Suite
+  @@testhome = "#{`pwd`.strip}\\foo bar baz"
 end

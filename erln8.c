@@ -55,7 +55,6 @@ ERLN8_CONFIG_DIR/
     logs/
 */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -109,6 +108,7 @@ static gboolean  opt_quickstart = FALSE;
 static gboolean  opt_dryrun     = FALSE;
 
 static const gchar* homedir;
+static GRegex *wsregex;
 
 static GOptionEntry entries[] = {
   {
@@ -273,6 +273,17 @@ void erln8_log( const gchar* log_domain,
   return;
 }
 
+
+gchar* clean_path(const gchar* p) {
+  if(wsregex == NULL) {
+      wsregex = g_regex_new("\\s+", 0, 0, NULL);
+  }
+  gchar* result = g_regex_replace_literal(wsregex, p, strlen(p), 0, "\\ ", 0, NULL);
+  // g_regex_unref(regex);
+  return result;
+}
+
+
 // see if erlang i son the users path already
 // if so, erln8 won't work correctly
 gboolean erl_on_path() {
@@ -304,6 +315,21 @@ gchar* get_config_subdir_file_name(gchar* subdir, gchar* filename) {
                                       (gchar*)0);
   return configfilename;
 }
+
+
+// get a filename in a subdir of the config directory
+gchar* get_config_subdir_file_name_clean(gchar* subdir, gchar* filename) {
+  gchar* configfilename0 = g_strconcat(homedir,
+                                      "/" ERLN8_CONFIG_DIR "/",
+                                      subdir,
+                                      "/",
+                                      filename,
+                                      (gchar*)0);
+  gchar* configfilename = clean_path(configfilename0);
+  g_free(configfilename0);
+  return configfilename;
+}
+
 
 GHashTable* group_hash(gchar* group, gboolean ignore_error) {
   GHashTable* h = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
@@ -366,17 +392,21 @@ GHashTable* get_system_roots() {
   return group_hash("SystemRoots", TRUE);
 }
 
+// CLN - OK
 void git_allbuildable() {
   GHashTable* repos = get_repos();
   GHashTableIter iter;
   gpointer repo, value;
   g_hash_table_iter_init (&iter, repos);
   while (g_hash_table_iter_next(&iter, &repo, &value)) {
-    gchar* source_path = get_config_subdir_file_name("repos", repo);
-    if(!g_file_test(source_path, G_FILE_TEST_EXISTS |
+    gchar* source_path0 = get_config_subdir_file_name("repos", repo);
+    gchar* source_path = clean_path(source_path0);
+    if(!g_file_test(source_path0, G_FILE_TEST_EXISTS |
                     G_FILE_TEST_IS_REGULAR)) {
+      g_free(source_path0);
       g_error("Missing repo for %s, which should be in %s\n", (gchar*)repo, source_path);
     }
+    g_free(source_path0);
     printf("Tags for repo %s:\n", (gchar*)repo);
     gchar* fetchcmd = g_strconcat("cd ",
                                  source_path,
@@ -836,6 +866,7 @@ void rm_config_kv(gchar* group, gchar* key) {
 }
 
 
+// CLN - OK
 void git_fetch(gchar* repo) {
   GHashTable* repos = get_repos();
   gboolean has_repo = g_hash_table_contains(repos, repo);
@@ -843,13 +874,16 @@ void git_fetch(gchar* repo) {
   if(!has_repo) {
     g_error("Unknown repo %s\n", repo);
   }
-  gchar* source_path = get_config_subdir_file_name("repos", repo);
+  gchar* source_path0 = get_config_subdir_file_name("repos", repo);
+  gchar* source_path = clean_path(source_path0);
   if(!g_file_test(source_path, G_FILE_TEST_EXISTS |
                   G_FILE_TEST_IS_REGULAR)) {
+    g_free(source_path0);
     g_error("Missing repo for %s, which should be in %s. Maybe you forgot to erln8 --clone repo_name\n",
             repo,
             source_path);
   }
+  g_free(source_path0);
   gchar* fetchcmd = g_strconcat("cd ",
                                source_path,
                                " && git fetch --all",
@@ -893,17 +927,20 @@ void show_build_progress(int current_step, int exit_code) {
   }
 }
 
+// CLN - OK
 void setup_binaries(gchar* otpid) {
   GHashTable* erlangs = get_erlangs();
   gboolean has_erlang = g_hash_table_contains(erlangs, otpid);
   gchar* path0 = (gchar*)g_hash_table_lookup(erlangs, otpid);
   // path0 is freed when the hashtable is freed
-  gchar* path = strdup(path0);
+  gchar* path1 = strdup(path0);
+  gchar* path = clean_path(path1);
+  g_free(path1);
   g_hash_table_destroy(erlangs);
   if(!has_erlang) {
     g_error("%s doesn't appear to be linked. Did something go wrong with the build?\n", otpid);
   }
-  gchar* genbins = g_strconcat("cd ", path, " && for i in `find -L . -perm -111 -type f | grep -v \"\\.so\" | grep -v \"\\.o\" | grep -v \"lib/erlang/bin\" | grep -v Install`; do  `ln -s -f $i $(basename $i)` ; done", NULL);
+  gchar* genbins = g_strconcat("cd \"", path, "\" && for i in `find -L . -perm -111 -type f | grep -v \"\\.so\" | grep -v \"\\.o\" | grep -v \"lib/erlang/bin\" | grep -v Install`; do  `ln -s -f $i $(basename $i)` ; done", NULL);
   g_debug("%s\n", genbins);
   if(!opt_dryrun) {
     int result = system(genbins);
@@ -917,6 +954,8 @@ void setup_binaries(gchar* otpid) {
   g_free(path);
 }
 
+
+// CLN - OK
 // THIS FUNCTION NEEDS TO BE BROKEN UP INTO SMALLER PIECES!
 void build_erlang(gchar* repo, gchar* tag, gchar* id, gchar* build_config) {
   // check to see if the ID has already been used
@@ -955,13 +994,19 @@ void build_erlang(gchar* repo, gchar* tag, gchar* id, gchar* build_config) {
   gchar* output_root = get_config_subdir_file_name("otps",id);
   gchar* output_path = g_strconcat(output_root, "/dist", NULL);
   gchar* source_path = get_config_subdir_file_name("repos", repo);
+
+  gchar* output_root_clean = clean_path(output_root);
+  gchar* output_path_clean = clean_path(output_path);
+  gchar* source_path_clean = clean_path(source_path);
+
   GTimeVal t;
   g_get_current_time(&t);
   gchar* ts = g_time_val_to_iso8601(&t);
   gchar* ld = g_strconcat("logs/build_", id, "_", ts, NULL);
   gchar* log_path    = get_configdir_file_name(ld);
+  gchar* log_path_clean = clean_path(log_path);
   // check that the branch or tag exists in the specified repo
-  gchar* check_obj = g_strconcat("cd ", source_path, "&& git show-ref ", tag, " > /dev/null", NULL);
+  gchar* check_obj = g_strconcat("cd ", source_path_clean, "&& git show-ref ", tag, " > /dev/null", NULL);
   if(system(check_obj) != 0) {
     g_free(check_obj);
     g_error("branch or tag %s does not exist in %s Git repo\n",
@@ -1004,25 +1049,25 @@ void build_erlang(gchar* repo, gchar* tag, gchar* id, gchar* build_config) {
   printf("Build log: %s\n", log_path);
   gchar* buildcmd0 = g_strconcat(env,
                                 " cd ",
-                                source_path,
+                                source_path_clean,
                                 " && git archive ",
                                 tag,
                                 " | (cd ", tmp, "; tar -f - -x)", NULL);
   gchar* buildcmd1 = g_strconcat(env, " cd ", tmp,
-                                " && ./otp_build autoconf > ", log_path, " 2>&1", NULL);
+                                " && ./otp_build autoconf > ", log_path_clean, " 2>&1", NULL);
   gchar* buildcmd2 = g_strconcat(env, " cd ", tmp,
-                                " && ./configure --prefix=", output_path," ",
+                                " && ./configure --prefix=\"", output_path_clean,"\" ",
                                 bc == NULL ? "" : bc,
-                                " >> ", log_path, " 2>&1",
+                                " >> ", log_path_clean, " 2>&1",
                                 NULL);
   gchar* buildcmd3 = g_strconcat(env, " cd ", tmp,
-                                " && make >> ", log_path,  " 2>&1", NULL);
+                                " && make >> ", log_path_clean,  " 2>&1", NULL);
 
   gchar* buildcmd4 = g_strconcat(env, " cd ", tmp,
-                                " && make install >> ", log_path,  " 2>&1", NULL);
+                                " && make install >> ", log_path_clean,  " 2>&1", NULL);
 
   gchar* buildcmd5 = g_strconcat(env, " cd ", tmp,
-                                " && make install-docs >> ", log_path, " 2>&1", NULL);
+                                " && make install-docs >> ", log_path_clean, " 2>&1", NULL);
   gchar* build_cmds[] = {
     buildcmd0,
     buildcmd1,
@@ -1039,10 +1084,10 @@ void build_erlang(gchar* repo, gchar* tag, gchar* id, gchar* build_config) {
     if(result != 0) {
       g_debug("STATUS = %d\n", result);
       printf("Here are the last 10 lines of the log file:\n");
-      gchar* tail = g_strconcat("tail -10 ", log_path, NULL);
+      gchar* tail = g_strconcat("tail -10 ", log_path_clean, NULL);
       int tailresult = system(tail);
       if(tailresult != 0) {
-        g_error("Cannot run tail -10 on %s\n", log_path);
+        g_error("Cannot run tail -10 on %s\n", log_path_clean);
       }
       g_free(tail);
       printf("---------------------------------------------------------\n");
@@ -1064,15 +1109,23 @@ void build_erlang(gchar* repo, gchar* tag, gchar* id, gchar* build_config) {
   printf("Generating links\n");
   setup_binaries(id);
   printf("%sBuild complete%s\n", green(), color_reset() );
+
   g_free(buildcmd0);
   g_free(buildcmd1);
   g_free(buildcmd2);
   g_free(buildcmd3);
   g_free(buildcmd4);
+  g_free(buildcmd5);
   g_free(log_path);
   g_free(source_path);
   g_free(output_path);
   g_free(output_root);
+
+  g_free(log_path_clean);
+  g_free(source_path_clean);
+  g_free(output_path_clean);
+  g_free(output_root_clean);
+
   // destroy close to the end so the string isn't freed before it's used
   g_hash_table_destroy(configs);
 }
@@ -1091,6 +1144,8 @@ gchar* get_bin(gchar* otpid, gchar* cmd) {
   return cmdpath;
 }
 
+
+// CLN - OK
 void doclone() {
   GHashTable* repos = get_repos();
   gchar* repo = g_hash_table_lookup(repos, opt_clone);
@@ -1098,7 +1153,9 @@ void doclone() {
     g_hash_table_destroy(repos);
     g_error("Unknown repository %s\n", opt_clone);
   } else {
-    gchar* path = get_config_subdir_file_name("repos",opt_clone);
+    gchar* path0 = get_config_subdir_file_name("repos",opt_clone);
+    gchar* path = clean_path(path0);
+    g_free(path0);
     gchar* cmd = g_strconcat("git clone ", repo, " ", path, NULL);
     int result = system(cmd);
     if(result != 0) {
@@ -1151,6 +1208,8 @@ void dobuild() {
   build_erlang(repo, opt_tag, opt_id, opt_config);
 }
 
+
+// CLN - OK
 void dolink() {
   if(!opt_id) {
     g_error("Please specify --id when linking\n");
@@ -1161,6 +1220,7 @@ void dolink() {
   if(opt_link[0] != '/') {
     g_error("An absolute path must be specified when linking\n");
   }
+  gchar* opt_link_clean = clean_path(opt_link);
   GHashTable* erlangs = get_erlangs();
   gboolean result = g_hash_table_contains(erlangs, opt_id);
   g_hash_table_destroy(erlangs);
@@ -1177,12 +1237,15 @@ void dolink() {
     g_error("Can't link to an empty Erlang installation\n");
   }
   gchar* output_root = get_config_subdir_file_name("otps", opt_id);
+  gchar* output_root_clean = clean_path(output_root);
   gchar* output_path = g_strconcat(output_root, "/dist", NULL);
+  gchar* output_path_clean = clean_path(output_path);
+
   if(g_mkdir_with_parents(output_root, 0755) == -1) {
     g_error("Cannot create OTP installation directory %s\n", output_path);
   }
   set_config_kv("Erlangs", opt_id, output_root);
-  gchar* cmd = g_strconcat("ln -s -f ", opt_link, " ", output_path, NULL);
+  gchar* cmd = g_strconcat("ln -s -f ", opt_link_clean, " ", output_path_clean, NULL);
   result = system(cmd);
   g_free(cmd);
   if(result != 0) {
@@ -1190,8 +1253,13 @@ void dolink() {
   } else {
     setup_binaries(opt_id);
   }
+  g_free(output_root);
+  g_free(output_root_clean);
+  g_free(output_path);
+  g_free(output_path_clean);
 }
 
+// CLN - OK
 void dounlink() {
   if(!opt_id) {
     g_error("Please specify --id when unlinking\n");
@@ -1203,11 +1271,13 @@ void dounlink() {
     g_error("Can't remove %s, it doesn't exist\n", opt_id);
   }
   gchar* output_root = get_config_subdir_file_name("otps", opt_id);
+  gchar* output_root_clean = clean_path(output_root);
   gchar* output_path = g_strconcat(output_root, "/dist", NULL);
+  gchar* output_path_clean = clean_path(output_path);
   if(!g_file_test(output_path, G_FILE_TEST_IS_SYMLINK)) {
       g_error("%s isn't a linked version of Erlang\n", opt_id);
   }
-  gchar* cmd = g_strconcat("rm ", output_path, " && rm -rf ", output_root, NULL);
+  gchar* cmd = g_strconcat("rm ", output_path_clean, " && rm -rf ", output_root_clean, NULL);
   g_debug("%s\n", cmd);
   rm_config_kv("Erlangs", opt_id);
   result = system(cmd);
@@ -1216,6 +1286,7 @@ void dounlink() {
   }
 }
 
+// CLN
 void display_latest_quickstart() {
   gchar* repo = "default";
   GHashTable* repos = get_repos();
@@ -1225,6 +1296,7 @@ void display_latest_quickstart() {
     g_error("Unknown repo %s\n", repo);
   }
   gchar* source_path = get_config_subdir_file_name("repos", repo);
+  gchar* source_path_clean = clean_path(source_path);
   if(!g_file_test(source_path, G_FILE_TEST_EXISTS |
                   G_FILE_TEST_IS_REGULAR)) {
     g_error("Missing repo for %s, which should be in %s. Maybe you forgot to erln8 --clone repo_name\n",
@@ -1234,7 +1306,7 @@ void display_latest_quickstart() {
   // too much color? I'd like this message to stand out
   printf("%sDetected latest Erlang/OTP tag: %s\n", blue(), green());
   gchar* fetchcmd = g_strconcat("cd ",
-                               source_path,
+                               source_path_clean,
                                " && git describe --abbrev=0 --tags",
                                NULL);
   int result = system(fetchcmd);
@@ -1243,6 +1315,7 @@ void display_latest_quickstart() {
   }
   printf("%s\n", color_reset());
   g_free(source_path);
+  g_free(source_path_clean);
   g_free(fetchcmd);
 }
 
@@ -1353,11 +1426,12 @@ int erln8(int argc, gchar* argv[]) {
     return 0;
   }
   printf("\nerln8: the sneaky Erlang version manager\n");
-  printf("(c) 2013 Dave Parfitt\n");
+  printf("(c) 2014 Dave Parfitt\n");
   printf("Licensed under the Apache License, Version 2.0\n\n");
   printf("%s\n", g_option_context_get_help(context, TRUE, NULL));
   return 0;
 }
+
 
 int main(int argc, char* argv[]) {
   // compiler will whine about it being deprecated, but taking it out
