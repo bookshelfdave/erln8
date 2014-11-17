@@ -1,7 +1,9 @@
 erln8 - an Erlang version manager
 =====
 
-[![Build Status](https://travis-ci.org/metadave/erln8.png)](https://travis-ci.org/metadave/erln8)
+## Status
+
+The current version of erln8 is stable, and has been serving me (us?) well for the past year+. However, I'm in the process of rewriting it from scratch to make maintainability easier in the future. I hope to have something usable by Nov/Dec 2014.
 
 ## What is it?
 
