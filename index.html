@@ -32,29 +32,32 @@
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
         <h1>
-<a name="erln8---an-erlang-version-manager" class="anchor" href="#erln8---an-erlang-version-manager"><span class="octicon octicon-link"></span></a>erln8 - an Erlang version manager</h1>
-
-<p><a href="https://travis-ci.org/metadave/erln8"><img src="https://travis-ci.org/metadave/erln8.png" alt="Build Status"></a></p>
+<a id="erln8---an-erlang-version-manager" class="anchor" href="#erln8---an-erlang-version-manager" aria-hidden="true"><span class="octicon octicon-link"></span></a>erln8 - an Erlang version manager</h1>
 
 <h2>
-<a name="what-is-it" class="anchor" href="#what-is-it"><span class="octicon octicon-link"></span></a>What is it?</h2>
+<a id="status" class="anchor" href="#status" aria-hidden="true"><span class="octicon octicon-link"></span></a>Status</h2>
+
+<p>The current version of erln8 is stable, and has been serving me (us?) well for the past year+. However, I'm in the process of rewriting it from scratch to make maintainability easier in the future. I hope to have something usable by Nov/Dec 2014.</p>
+
+<h2>
+<a id="what-is-it" class="anchor" href="#what-is-it" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is it?</h2>
 
 <p>erln8 (erl-in-ate) allows you to compile and manage multiple versions of Erlang from source. Instead of downloading individual source packages, it downloads the Github OTP mirror so you are essentially downloading all available versions at once.  Additionaly, you can add your own git repos to support custom OTP patches etc.</p>
 
 <p>The cool thing about erln8 is that you only need to add it to your PATH to use it. No funny environment tweaking ;-) It works by reading an <code>erln8.config</code> config file out of the <strong><em>current directory</em></strong>, or by <strong><em>searching up the directory tree until it finds one.</em></strong> This allows you to "set a version of Erlang to use for a project and forget it".</p>
 
 <h2>
-<a name="what-erln8-isnt" class="anchor" href="#what-erln8-isnt"><span class="octicon octicon-link"></span></a>What erln8 isn't</h2>
+<a id="what-erln8-isnt" class="anchor" href="#what-erln8-isnt" aria-hidden="true"><span class="octicon octicon-link"></span></a>What erln8 isn't</h2>
 
 <p>erln8 does not manage Erlang build dependencies. If you are using erln8, I'm assuming you are already capable enough to figure these out on your own. </p>
 
 <h2>
-<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
 
 <p><strong><em>NOTE:</em></strong> erln8 version 0.9.0 breaks backwards compatibility. You'll need to <code>rm -rf ~/.erln8.d</code> and reinitialize erln8.</p>
 
 <h3>
-<a name="osx" class="anchor" href="#osx"><span class="octicon octicon-link"></span></a>OSX</h3>
+<a id="osx" class="anchor" href="#osx" aria-hidden="true"><span class="octicon octicon-link"></span></a>OSX</h3>
 
 <pre><code>brew install https://raw.github.com/metadave/homebrew/erln8/Library/Formula/erln8.rb
  ## this will install the glib dependency if not already installed
@@ -63,7 +66,7 @@
 <p>See the Building section below to continue.</p>
 
 <h3>
-<a name="ubuntu" class="anchor" href="#ubuntu"><span class="octicon octicon-link"></span></a>Ubuntu</h3>
+<a id="ubuntu" class="anchor" href="#ubuntu" aria-hidden="true"><span class="octicon octicon-link"></span></a>Ubuntu</h3>
 
 <p>(Erlang + <em>general</em> erln8 deps)</p>
 
@@ -73,7 +76,7 @@
 <p>See the Building section below to continue.</p>
 
 <h3>
-<a name="fedora" class="anchor" href="#fedora"><span class="octicon octicon-link"></span></a>Fedora</h3>
+<a id="fedora" class="anchor" href="#fedora" aria-hidden="true"><span class="octicon octicon-link"></span></a>Fedora</h3>
 
 <p>(Erlang + <em>general</em> erln8 deps)</p>
 
@@ -88,7 +91,7 @@
 <p>See the Building section below to continue.</p>
 
 <h3>
-<a name="building" class="anchor" href="#building"><span class="octicon octicon-link"></span></a>Building</h3>
+<a id="building" class="anchor" href="#building" aria-hidden="true"><span class="octicon octicon-link"></span></a>Building</h3>
 
 <pre><code> # remove Erlang from your path!!
 
@@ -102,7 +105,7 @@ sudo make PREFIX=/opt install
 </code></pre>
 
 <h3>
-<a name="running-the-tests-optional" class="anchor" href="#running-the-tests-optional"><span class="octicon octicon-link"></span></a>Running the tests (Optional)</h3>
+<a id="running-the-tests-optional" class="anchor" href="#running-the-tests-optional" aria-hidden="true"><span class="octicon octicon-link"></span></a>Running the tests (Optional)</h3>
 
 <p>Running the tests requires Ruby 1.9.3 + iniparse (which is installed via <code>bundle install</code>).</p>
 
@@ -112,21 +115,23 @@ make
 </code></pre>
 
 <h3>
-<a name="uninstall" class="anchor" href="#uninstall"><span class="octicon octicon-link"></span></a>Uninstall</h3>
+<a id="uninstall" class="anchor" href="#uninstall" aria-hidden="true"><span class="octicon octicon-link"></span></a>Uninstall</h3>
 
 <pre><code>cd erln8
 sudo make uninstall
 </code></pre>
 
 <h2>
-<a name="dependencies" class="anchor" href="#dependencies"><span class="octicon octicon-link"></span></a>Dependencies</h2>
+<a id="dependencies" class="anchor" href="#dependencies" aria-hidden="true"><span class="octicon octicon-link"></span></a>Dependencies</h2>
 
 <ul>
 <li>git</li>
 <li>glib-2.0 </li>
 <li>gio-2.0</li>
-</ul><h2>
-<a name="quickstart" class="anchor" href="#quickstart"><span class="octicon octicon-link"></span></a>Quickstart</h2>
+</ul>
+
+<h2>
+<a id="quickstart" class="anchor" href="#quickstart" aria-hidden="true"><span class="octicon octicon-link"></span></a>Quickstart</h2>
 
 <p>To create erln8 config files, clone the default OTP repo, and build the latest version of Erlang (OTP-17.0.1 as of writing), simply run:</p>
 
@@ -148,7 +153,7 @@ sudo make uninstall
 </code></pre>
 
 <h2>
-<a name="initial-setup" class="anchor" href="#initial-setup"><span class="octicon octicon-link"></span></a>Initial setup</h2>
+<a id="initial-setup" class="anchor" href="#initial-setup" aria-hidden="true"><span class="octicon octicon-link"></span></a>Initial setup</h2>
 
 <p><strong><em>If you haven't added the erln8 directory to your path, do it now. If you already have Erlang in your path, REMOVE IT!</em></strong></p>
 
@@ -188,7 +193,7 @@ sudo make uninstall
 </code></pre>
 
 <h2>
-<a name="linking-an-existing-version-erlang" class="anchor" href="#linking-an-existing-version-erlang"><span class="octicon octicon-link"></span></a>Linking an existing version Erlang</h2>
+<a id="linking-an-existing-version-erlang" class="anchor" href="#linking-an-existing-version-erlang" aria-hidden="true"><span class="octicon octicon-link"></span></a>Linking an existing version Erlang</h2>
 
 <p>If you already have a version of Erlang build at an alternate location, you can <em>link</em> erlang to it.</p>
 
@@ -221,7 +226,7 @@ R16B02 -&gt; /Users/dparfitt/.erln8.d/otps/R16B02
 </code></pre>
 
 <h2>
-<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
 
 <p>To see which versions of Erlang are available for use from erln8, run:</p>
 
@@ -251,13 +256,15 @@ Erlang=r16b02
 </code></pre>
 
 <h3>
-<a name="all-commands" class="anchor" href="#all-commands"><span class="octicon octicon-link"></span></a>All Commands</h3>
+<a id="all-commands" class="anchor" href="#all-commands" aria-hidden="true"><span class="octicon octicon-link"></span></a>All Commands</h3>
 
 <table>
-<thead><tr>
+<thead>
+<tr>
 <th align="left">Command</th>
 <th align="left">Description</th>
-</tr></thead>
+</tr>
+</thead>
 <tbody>
 <tr>
 <td align="left"><code>--init</code></td>
@@ -344,8 +351,10 @@ Erlang=r16b02
 <td align="left">Debug erln8</td>
 </tr>
 </tbody>
-</table><h2>
-<a name="shell-completion" class="anchor" href="#shell-completion"><span class="octicon octicon-link"></span></a>Shell Completion</h2>
+</table>
+
+<h2>
+<a id="shell-completion" class="anchor" href="#shell-completion" aria-hidden="true"><span class="octicon octicon-link"></span></a>Shell Completion</h2>
 
 <p>erln8 provides shell completion for commands, available Erlang installations, and buildable Erlang installation. </p>
 
@@ -355,7 +364,7 @@ Erlang=r16b02
 <p>If you installed on OSX via Brew (above), bash_completion is installed automatically for you. </p>
 
 <h2>
-<a name="using-erln8-outside-of-home" class="anchor" href="#using-erln8-outside-of-home"><span class="octicon octicon-link"></span></a>Using erln8 outside of $HOME</h2>
+<a id="using-erln8-outside-of-home" class="anchor" href="#using-erln8-outside-of-home" aria-hidden="true"><span class="octicon octicon-link"></span></a>Using erln8 outside of $HOME</h2>
 
 <p>A section titled <code>SystemRoots</code> can be created and maintained inside of <code>~/.erln8.d/config</code> to specify versions of Erlang to use outside of $HOME. This can be useful if you don't have write access to these directories.</p>
 
@@ -367,17 +376,17 @@ Erlang=r16b02
 <p><em>NOTE</em>: a SystemRoot setting will NOT follow symlinks. On OSX, /tmp (among other paths) is actually a symlink to /private/tmp. Thanks Apple!</p>
 
 <h2>
-<a name="setting-up-a-default-version-to-use" class="anchor" href="#setting-up-a-default-version-to-use"><span class="octicon octicon-link"></span></a>Setting up a default version to use</h2>
+<a id="setting-up-a-default-version-to-use" class="anchor" href="#setting-up-a-default-version-to-use" aria-hidden="true"><span class="octicon octicon-link"></span></a>Setting up a default version to use</h2>
 
 <h3>
-<a name="a-if-you-wont-be-using-erlang-outside-of-home" class="anchor" href="#a-if-you-wont-be-using-erlang-outside-of-home"><span class="octicon octicon-link"></span></a>a) if you won't be using Erlang outside of $HOME</h3>
+<a id="a-if-you-wont-be-using-erlang-outside-of-home" class="anchor" href="#a-if-you-wont-be-using-erlang-outside-of-home" aria-hidden="true"><span class="octicon octicon-link"></span></a>a) if you won't be using Erlang outside of $HOME</h3>
 
 <p>Simply run <code>erln8</code> from your home directory with a version of Erlang that you'd like to use elsewhere. </p>
 
 <p><strong>NOTE</strong>: if you are building/running Erlang source from outside of your home directory, you'll need to run erln8 at a location higher up the directory tree.</p>
 
 <h3>
-<a name="b-specifying-a-system-wide-default" class="anchor" href="#b-specifying-a-system-wide-default"><span class="octicon octicon-link"></span></a>b) specifying a system wide default</h3>
+<a id="b-specifying-a-system-wide-default" class="anchor" href="#b-specifying-a-system-wide-default" aria-hidden="true"><span class="octicon octicon-link"></span></a>b) specifying a system wide default</h3>
 
 <p>you can specify a system default in <code>~/.erln8.d/config</code>:</p>
 
@@ -388,7 +397,7 @@ system_default=R16B02
 <p>Note, the ID that is specified (R16B02 in this example) must have already been built or linked to erln8.</p>
 
 <h2>
-<a name="keeping-your-source-repos-up-to-date" class="anchor" href="#keeping-your-source-repos-up-to-date"><span class="octicon octicon-link"></span></a>Keeping your source repos up-to-date</h2>
+<a id="keeping-your-source-repos-up-to-date" class="anchor" href="#keeping-your-source-repos-up-to-date" aria-hidden="true"><span class="octicon octicon-link"></span></a>Keeping your source repos up-to-date</h2>
 
 <p>To get the latest OTP tags/branchs, you'll need to issue a fetch:</p>
 
@@ -398,11 +407,13 @@ system_default=R16B02
 <p>where <code>default</code> is the repo name. If you have multiple repositories configured, you'll need to issue fetch once per repo.</p>
 
 <h2>
-<a name="customizing-your-shell-prompt" class="anchor" href="#customizing-your-shell-prompt"><span class="octicon octicon-link"></span></a>Customizing your shell prompt</h2>
+<a id="customizing-your-shell-prompt" class="anchor" href="#customizing-your-shell-prompt" aria-hidden="true"><span class="octicon octicon-link"></span></a>Customizing your shell prompt</h2>
 
 <ul>
 <li>Don't customize your prompt until you have erln8 fully installed.</li>
-</ul><p>The <code>--prompt</code> parameter displays the configured version of Erlang for the current working directory. </p>
+</ul>
+
+<p>The <code>--prompt</code> parameter displays the configured version of Erlang for the current working directory. </p>
 
 <pre><code>erln8 --prompt
 </code></pre>
@@ -422,12 +433,12 @@ PS1='\[$(tput bold)\]\[$(tput setaf 2)\]$(erl_version)\[$(tput sgr0)\]:\[\e[0;36
 <p><img src="https://www.evernote.com/shard/s55/sh/937bb22f-ac98-455b-8e6f-8367caf6fdea/0cd1beba8166544470fef351cb614c7e/deep/0/Shell.png" alt="foo"></p>
 
 <h2>
-<a name="specifying-a-build-config" class="anchor" href="#specifying-a-build-config"><span class="octicon octicon-link"></span></a>Specifying a build config</h2>
+<a id="specifying-a-build-config" class="anchor" href="#specifying-a-build-config" aria-hidden="true"><span class="octicon octicon-link"></span></a>Specifying a build config</h2>
 
 <p>erln8 allows you to pass arbitrary flags to the <code>configure</code> script as part of a <strong>config</strong>. To add a config, edit <code>~/.erln8.d/config</code> and append a <strong><em>name=configstring</em></strong> to the <code>[Configs]</code> section.</p>
 
 <h5>
-<a name="example" class="anchor" href="#example"><span class="octicon octicon-link"></span></a><em>Example:</em>
+<a id="example" class="anchor" href="#example" aria-hidden="true"><span class="octicon octicon-link"></span></a><em>Example:</em>
 </h5>
 
 <pre><code>[Configs]
@@ -437,7 +448,7 @@ osx_llvm=--disable-hipe --enable-smp-support --enable-threads --enable-kernel-po
 <p>To specify environment variables to be used during a build, create a config <strong><em>name=configstring</em></strong> as show above, as well as an additional <strong><em>name_env=vars</em></strong> setting. Any config that has an accompanying *</p>
 
 <h5>
-<a name="example-1" class="anchor" href="#example-1"><span class="octicon octicon-link"></span></a><em>Example:</em>
+<a id="example-1" class="anchor" href="#example-1" aria-hidden="true"><span class="octicon octicon-link"></span></a><em>Example:</em>
 </h5>
 
 <pre><code>[Configs]
@@ -446,7 +457,7 @@ osx_gcc_env=CC=gcc-4.2 CPPFLAGS='-DNDEBUG' MAKEFLAGS='-j 3'
 </code></pre>
 
 <h2>
-<a name="specifying-a-default-build-config" class="anchor" href="#specifying-a-default-build-config"><span class="octicon octicon-link"></span></a>Specifying a <em>default</em> build config</h2>
+<a id="specifying-a-default-build-config" class="anchor" href="#specifying-a-default-build-config" aria-hidden="true"><span class="octicon octicon-link"></span></a>Specifying a <em>default</em> build config</h2>
 
 <p>If <code>--config</code> isn't specified as a parameter to a <code>--build</code>, erln8 will use the <code>default_config</code> config variable specified in the <code>Erln8</code> section of <code>~/.erln8.d/config</code>. This is simply the name of a config as configured above.</p>
 
@@ -461,20 +472,24 @@ default_config=osx_llvm
 </code></pre>
 
 <h2>
-<a name="erln8-config-file-format" class="anchor" href="#erln8-config-file-format"><span class="octicon octicon-link"></span></a>erln8 config file format</h2>
+<a id="erln8-config-file-format" class="anchor" href="#erln8-config-file-format" aria-hidden="true"><span class="octicon octicon-link"></span></a>erln8 config file format</h2>
 
 <ul>
 <li>comments begin with the <code>#</code> character and may appear anywhere in the file</li>
 <li>all keys and values are <strong>case sensitive</strong>
 </li>
-</ul><h4>
-<a name="see-also" class="anchor" href="#see-also"><span class="octicon octicon-link"></span></a>See also:</h4>
+</ul>
+
+<h4>
+<a id="see-also" class="anchor" href="#see-also" aria-hidden="true"><span class="octicon octicon-link"></span></a>See also:</h4>
 
 <ol>
 <li><a href="https://developer.gnome.org/glib/2.38/glib-Key-value-file-parser.html">https://developer.gnome.org/glib/2.38/glib-Key-value-file-parser.html</a></li>
 <li><a href="http://freedesktop.org/wiki/Specifications/desktop-entry-spec/">http://freedesktop.org/wiki/Specifications/desktop-entry-spec/</a></li>
-</ol><h2>
-<a name="disabling-color-andor-the-erln8-startup-banner" class="anchor" href="#disabling-color-andor-the-erln8-startup-banner"><span class="octicon octicon-link"></span></a>Disabling color and/or the erln8 startup banner</h2>
+</ol>
+
+<h2>
+<a id="disabling-color-andor-the-erln8-startup-banner" class="anchor" href="#disabling-color-andor-the-erln8-startup-banner" aria-hidden="true"><span class="octicon octicon-link"></span></a>Disabling color and/or the erln8 startup banner</h2>
 
 <p>To disable the erln8 startup banner, change the appropriate config settings located in the <code>[Erln8]</code> section of <code>~/.erln8.d/config</code>. Boolean values are either <code>true</code> or <code>false</code>, and are case sensitive.</p>
 
@@ -498,8 +513,10 @@ default_config=osx_llvm
 </li>
 </ul>
 </li>
-</ul><h4>
-<a name="example-2" class="anchor" href="#example-2"><span class="octicon octicon-link"></span></a>Example:</h4>
+</ul>
+
+<h4>
+<a id="example-2" class="anchor" href="#example-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example:</h4>
 
 <pre><code>[Erln8]
 banner=false
@@ -507,7 +524,7 @@ color=false
 </code></pre>
 
 <h2>
-<a name="how-does-it-work-under-the-hoodbonnet" class="anchor" href="#how-does-it-work-under-the-hoodbonnet"><span class="octicon octicon-link"></span></a>How does it work under the hood/bonnet?</h2>
+<a id="how-does-it-work-under-the-hoodbonnet" class="anchor" href="#how-does-it-work-under-the-hoodbonnet" aria-hidden="true"><span class="octicon octicon-link"></span></a>How does it work under the hood/bonnet?</h2>
 
 <p>When erln8 is compiled, a single binary named <code>erln8</code> is built and installed by default to <code>/usr/local/bin</code>. Additionally, symbolic links to all the Erlang commands in a typical distribution are created <em>but linked to the single <code>erln8</code> binary</em> and are placed in <code>/usr/local/bin</code>. Thus, you have something like this:</p>
 
@@ -542,7 +559,7 @@ lrwxr-xr-x   1 dparfitt  staff    60 Dec 23 10:43 start_webtool -&gt; ./dist/lib
 <p>The <code>.dist</code> directory defined for each version of Erlang installed also allows erln8 to generate this list of symlinks for a <em>linked</em> version of Erlang (see above). Symlinks don't need to be placed in the linked directory (which could be anywhere in the filesystem).</p>
 
 <h1>
-<a name="contributing" class="anchor" href="#contributing"><span class="octicon octicon-link"></span></a>Contributing</h1>
+<a id="contributing" class="anchor" href="#contributing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Contributing</h1>
 
 <p>Fork this repo, create a feature branch using something like this:</p>
 
@@ -551,16 +568,18 @@ lrwxr-xr-x   1 dparfitt  staff    60 Dec 23 10:43 start_webtool -&gt; ./dist/lib
 
 <p>and submit a pull request. </p>
 
-<p>Please send me an email (dparfitt at basho dot com) and let me know if you want to work on any features.</p>
+<p>Please send me an email (dparfitt at getchef dot com) and let me know if you want to work on any features.</p>
 
 <p>Only friendly pull requests accepted.</p>
 
 <h1>
-<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h1>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h1>
 
 <p><a href="http://www.apache.org/licenses/LICENSE-2.0.html">http://www.apache.org/licenses/LICENSE-2.0.html</a></p>
 
-<hr><p>© 2014 Dave Parfitt</p>
+<hr>
+
+<p>© 2014 Dave Parfitt</p>
       </section>
     </div>
 
