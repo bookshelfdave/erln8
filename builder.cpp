@@ -97,7 +97,7 @@ BuildTask::BuildTask(string cmd, string description, string failMsg) :
 
 void BuildTask::run() {
   auto pos = description.length();
-  int max = 30;
+  int max = 40;
   cout << Color::blue() << description << "...";
   while(pos < max) {
     cout << " ";
