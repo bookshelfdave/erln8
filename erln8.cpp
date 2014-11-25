@@ -25,8 +25,9 @@ Config processOptions(int argc, char* argv[]) {
     string opt_fetch;
     string opt_tag;
     string opt_id;
-    string opt_config;
-    string opt_repo;
+    string opt_config = "default";
+    string opt_repo = "default";
+
     desc.add_options()
     ("help", "Display help message")
     ("debug", "Print erln8 debugging info")
@@ -45,9 +46,11 @@ Config processOptions(int argc, char* argv[]) {
     ("id", bpo::value<string>(&opt_id), "A user assigned name for a version of Erlang")
     ("repo", bpo::value<string>(&opt_repo)->implicit_value("default"),
               "Specifies repo name to build from")
-    ("config", bpo::value<string>(&opt_config), "Build configuration")
+    ("config", bpo::value<string>(&opt_config)->implicit_value("default"),
+              "Build configuration")
     //("build-rebar", "Build a version of Rebar")
     //("use-rebar", "Build a version of Rebar")
+    ("list", "List available Erlang installations")
     ("build", "Build a version of Erlang");
 
     /*
@@ -70,6 +73,10 @@ Config processOptions(int argc, char* argv[]) {
 
         Config cfg;
         if (vm.count("help")) {
+            cout << endl << "erln8 v" << Erln8_VERSION_MAJOR << "." << Erln8_VERSION_MINOR << 
+              ": the sneaky Erlang version manager" << endl;
+            cout << "(c) 2014 Dave Parfitt" << endl;
+            cout << "Licensed under the Apache License, Version 2.0" << endl << endl;
             cout << desc << "\n";
             exit(0);
         }
@@ -85,7 +92,12 @@ Config processOptions(int argc, char* argv[]) {
         cfg.load();
 
         if(vm.count("use")) {
-          cout << "USE:" << opt_use << endl;
+          auto found = cfg.erlangs.find(opt_use);
+          if(found == cfg.erlangs.end()) {
+            cerr << opt_use << " isn't a version of Erlang managed by erln8" << endl;
+            exit(-1);
+          }
+
           bfs::path cwd(bfs::current_path());
           BOOST_LOG_TRIVIAL(trace) << "Checking path from cwd: " << cwd;
 
@@ -94,8 +106,20 @@ Config processOptions(int argc, char* argv[]) {
           return cfg;
         }
 
+        if(vm.count("list")) {
+            for(auto k : cfg.erlangs | boost::adaptors::map_keys) {
+              cout << k << endl;
+            }
+        }
+
         if(vm.count("clone")) {
             string repoName = opt_clone;
+            auto found = cfg.repos.find(opt_clone);
+            if(found == cfg.repos.end()) {
+              cerr << opt_clone << " isn't an Erlang repo managed by erln8" << endl;
+              exit(-1);
+            }
+
             BOOST_LOG_TRIVIAL(trace) << "Cloning repo " << repoName;
             Repo repo(repoName);
             repo.clone(cfg);
@@ -104,6 +128,12 @@ Config processOptions(int argc, char* argv[]) {
 
         if(vm.count("fetch")) {
             string repoName = opt_fetch;
+            auto found = cfg.repos.find(opt_fetch);
+            if(found == cfg.repos.end()) {
+              cerr << opt_fetch << " isn't an Erlang repo managed by erln8" << endl;
+              exit(-1);
+            }
+            cout << "Fetching from repo " << opt_fetch << endl;
             BOOST_LOG_TRIVIAL(trace) << "Fetch repo " << repoName;
             Repo repo(repoName);
             repo.fetch(cfg);
@@ -134,10 +164,28 @@ Config processOptions(int argc, char* argv[]) {
 
 
         if(vm.count("build")) {
-            string repo = "default";
-            string tag = "OTP-17.0";
-            string id = "test_build";
-            string config = "";
+            auto foundRepo = cfg.repos.find(opt_repo);
+            if(foundRepo == cfg.repos.end()) {
+              cerr << opt_repo << "X isn't an Erlang repo managed by erln8" << endl;
+              exit(-1);
+            }
+
+            auto foundConfig = cfg.configs.find(opt_config);
+            if(foundRepo == cfg.repos.end()) {
+              cerr << opt_config << "X isn't an erln8 build config" << endl;
+              exit(-1);
+            }
+
+            if(!vm.count("id")) {
+              cerr << "Please specify --id" << endl;
+              exit(-1);
+            }
+
+            if(!vm.count("tag")) {
+              cerr << "Please specify a tag/branch to build with --tag" << endl;
+              exit(-1);
+            }
+
             // look for VALID config, otherwise, use system default
             // use default repo if not specified
             // check if ID already exists
@@ -145,6 +193,8 @@ Config processOptions(int argc, char* argv[]) {
             b.build(cfg);
             return cfg;
         }
+
+
 
       return cfg;
     } catch (boost::program_options::invalid_command_line_syntax s) {

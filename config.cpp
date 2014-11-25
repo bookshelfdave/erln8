@@ -214,7 +214,6 @@ void DirConfig::load() {
 
 }
 
-
 void DirConfig::create(string erlangVersion, bool force) {
   bfs::path configFile = p / ERLN8_CONFIG_FILE;
   BOOST_LOG_TRIVIAL(trace) << "Does " << configFile << " already exist?" << endl;

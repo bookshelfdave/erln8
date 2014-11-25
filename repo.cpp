@@ -29,7 +29,6 @@ void Repo::fetch(Config cfg) {
     string cmd = "cd " + string(getPathToRepo(cfg).c_str()) + " && git fetch --all --verbose";
     BOOST_LOG_TRIVIAL(trace) << "Exec " << cmd;
     system(cmd.c_str());
-    
 }
 
 
