@@ -74,9 +74,12 @@ private:
 class DirConfig {
 public:
     DirConfig(bfs::path);
+    void load();
+    void create(string erlangVersion, bool force);
     string erlangTag;
     string rebarTag;
 private:
+    bfs::path p;
     boost::property_tree::ptree pt;
 };
 

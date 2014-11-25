@@ -15,3 +15,5 @@ INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 
 add_executable(erln8 erln8.cpp config.cpp builder.cpp builder.h config.h repo.cpp repo.h)
 TARGET_LINK_LIBRARIES( erln8 ${Boost_LIBRARIES} )
+
+

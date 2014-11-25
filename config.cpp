@@ -179,8 +179,12 @@ boost::optional<bfs::path> Config::configCheck(bfs::path d) {
     }
 }
 
-DirConfig::DirConfig(bfs::path p) {
-    BOOST_LOG_TRIVIAL(trace) << "Reading dirconfig from " << p;
+DirConfig::DirConfig(bfs::path p) : p(p){
+
+}
+
+void DirConfig::load() {
+ BOOST_LOG_TRIVIAL(trace) << "Reading dirconfig from " << p;
 
     try {
         read_ini(p.c_str(), pt);
@@ -207,8 +211,20 @@ DirConfig::DirConfig(bfs::path p) {
         cout << "DEFAULT REBAR" << endl;
         BOOST_LOG_TRIVIAL(trace) << "Using default version of Rebar";
     }
+
 }
 
 
-
+void DirConfig::create(string erlangVersion, bool force) {
+  bfs::path configFile = p / ERLN8_CONFIG_FILE;
+  BOOST_LOG_TRIVIAL(trace) << "Does " << configFile << " already exist?" << endl;
+  if(exists(configFile) && force==false) {
+        cerr << configFile << " already exists, call with --force to overwrite" << endl;
+        exit(-1);
+  }
+  BOOST_LOG_TRIVIAL(trace) << "Creating " << configFile << endl;
+  pt.put("Config.Erlang", erlangVersion);
+  write_ini(configFile.c_str(), pt);
+  BOOST_LOG_TRIVIAL(trace) << "Wrote " << configFile << endl;
+}
 
