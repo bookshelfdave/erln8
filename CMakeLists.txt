@@ -13,7 +13,7 @@ SET(Boost_USE_STATIC_LIBS ON)
 FIND_PACKAGE( Boost 1.56 COMPONENTS system thread program_options log_setup log filesystem REQUIRED )
 INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 
-add_executable(erln8 erln8.cpp config.cpp builder.cpp builder.h config.h repo.cpp repo.h)
+add_executable(erln8 erln8.cpp config.cpp builder.cpp link.cpp builder.h config.h repo.cpp repo.h link.h)
 TARGET_LINK_LIBRARIES( erln8 ${Boost_LIBRARIES} )
 
 

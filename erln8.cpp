@@ -6,6 +6,7 @@
 #include "config.h"
 #include "repo.h"
 #include "builder.h"
+#include "link.h"
 
 namespace bpo = boost::program_options;
 
@@ -27,6 +28,8 @@ Config processOptions(int argc, char* argv[]) {
     string opt_id;
     string opt_config = "default";
     string opt_repo = "default";
+    string opt_link;
+    string opt_unlink;
 
     desc.add_options()
     ("help", "Display help message")
@@ -50,6 +53,11 @@ Config processOptions(int argc, char* argv[]) {
               "Build configuration")
     //("build-rebar", "Build a version of Rebar")
     //("use-rebar", "Build a version of Rebar")
+    ("link", bpo::value<string>(&opt_link),
+              "Link a non-erln8 build of Erlang to erln8")
+    ("unlink", bpo::value<string>(&opt_unlink),
+              "Unlink a non-erln8 build of Erlang from erln8")
+
     ("list", "List available Erlang installations")
     ("build", "Build a version of Erlang");
 
@@ -194,6 +202,14 @@ Config processOptions(int argc, char* argv[]) {
             return cfg;
         }
 
+        if(vm.count("link")) {
+            if(!vm.count("id")) {
+                cerr << "Please specify --id" << endl;
+                exit(-1);
+            }
+            LinkedErlang le(opt_id, bfs::path(opt_link));
+            le.link(cfg);
+        }
 
 
       return cfg;
