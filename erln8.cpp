@@ -118,6 +118,7 @@ Config processOptions(int argc, char* argv[]) {
             for(auto k : cfg.erlangs | boost::adaptors::map_keys) {
               cout << k << endl;
             }
+            return cfg;
         }
 
         if(vm.count("clone")) {
@@ -209,6 +210,8 @@ Config processOptions(int argc, char* argv[]) {
             }
             LinkedErlang le(opt_id, bfs::path(opt_link));
             le.link(cfg);
+            cout << "DONE!" << endl;
+            return cfg;
         }
 
 
@@ -225,6 +228,11 @@ Config processOptions(int argc, char* argv[]) {
 }
 
 int main(int argc, char* argv[]) {
+
+    char* custom_elrn8_home = getenv("ERLN8_HOME");
+    if(custom_elrn8_home) {
+        cout << "Using custom erln8_home " << custom_elrn8_home << endl;
+    }
 
     //Config cfg;
     // processOptions sets up logging too

@@ -7,6 +7,12 @@ Config::Config() {
 
 }
 
+Config::Config(string customHome) {
+    BOOST_LOG_TRIVIAL(trace) << "Config in : " ERLN8_CONFIG_DIR;
+    detectHomeDir();
+
+}
+
 void Config::save() {
     bfs::path configFilePath = getConfigFilePath();
 

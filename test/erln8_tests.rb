@@ -344,7 +344,7 @@ class Erln8Test < Test::Unit::TestCase
   end
 
   def run_cmd(cmd)
-    c = "ERLN8_HOME=#{@@testhome}/testconfig #{@@testhome}/../erln8 #{cmd} 2>&1"
+    c = "ERLN8_HOME=#{@@testhome}/testconfig #{@@testhome}/../build/erln8 #{cmd} 2>&1"
     `#{c}`
   end
 

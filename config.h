@@ -37,6 +37,7 @@ using namespace std;
 class Config {
 public:
     Config();
+    Config(string customHome);
     ~Config();
     void load();
     void save();

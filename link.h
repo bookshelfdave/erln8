@@ -25,6 +25,7 @@ public:
     void link(Config &cfg);
     void isLinked();
     void unlink();
+    void generateLinks(Config &cfg);
 private:
     string name;
     bfs::path p;
