@@ -1,5 +1,5 @@
 test:
-	cd ../ && make
+	cd ../build && make
 	ruby erln8_tests.rb
 
 setup:

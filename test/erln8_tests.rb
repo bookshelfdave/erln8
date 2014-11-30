@@ -24,9 +24,9 @@ class TestRepo
 \tgcc -o erl erln8_test.c
 \tgcc -o erlc erln8_test.c
 install:
-\tmkdir -p #{testdir}/.erln8.d/otps/foo/dist/bin
-\tcp erl #{testdir}/.erln8.d/otps/foo/dist/bin
-\tcp erlc #{testdir}/.erln8.d/otps/foo/dist/bin
+\tmkdir -p #{testdir}/.erln8.d/otps/build#{tag}/dist/bin
+\tcp erl #{testdir}/.erln8.d/otps/build#{tag}/dist/bin
+\tcp erlc #{testdir}/.erln8.d/otps/build#{tag}/dist/bin
   "
 
     configure =
@@ -79,7 +79,6 @@ class Erln8Test < Test::Unit::TestCase
     result = run_cmd "--init"
     lines = result.split("\n")
     d = `pwd`.strip()
-    assert_equal("Creating erln8.config file: #{d}/testconfig/.erln8.d/config", lines[0])
     assert File.exist?("./testconfig/.erln8.d/config")
     assert File.exist?("./testconfig/.erln8.d/repos")
     assert File.exist?("./testconfig/.erln8.d/logs")
@@ -139,7 +138,7 @@ class Erln8Test < Test::Unit::TestCase
     l = result.split("\n")[0]
     assert_equal("fatal: repository './repo_c' does not exist", l)
     result = run_cmd "--clone test_repo_d"
-    assert_equal("ERROR: Unknown repository test_repo_d\n", result)
+    assert_equal("test_repo_d isn't an Erlang repo managed by erln8\n", result)
   end
 
   def test_fetch
@@ -170,13 +169,13 @@ class Erln8Test < Test::Unit::TestCase
     assert_equal(%w[d e f], tags.split("\n").sort)
 
     `cd ./repo_b && git tag xxx`
-    result = run_cmd "--fetch --repo test_repo_b"
+    result = run_cmd "--fetch test_repo_b"
     tags = `cd ./testconfig/.erln8.d/repos/test_repo_b/ && git tag`
     assert_equal(%w[d e f xxx], tags.split("\n").sort)
 
     # test for unknown repos
-    result = run_cmd "--fetch --repo x"
-    assert_equal("ERROR: Unknown repo x\n", result)
+    result = run_cmd "--fetch x"
+    assert_equal("x isn't an Erlang repo managed by erln8\n", result)
   end
 
 
@@ -197,19 +196,19 @@ class Erln8Test < Test::Unit::TestCase
   def test_simple_build
     default_setup
     result = run_cmd "--build --id foo --repo default --tag a"
-    assert File.exist?("./testconfig/.erln8.d/otps/foo/dist/bin/erl")
+    assert File.exist?("./testconfig/.erln8.d/otps/builda/dist/bin/erl")
   end
 
   def test_default_repo
     default_setup
     result = run_cmd "--build --id foo --tag a"
-    assert File.exist?("./testconfig/.erln8.d/otps/foo/dist/bin/erl")
+    assert File.exist?("./testconfig/.erln8.d/otps/builda/dist/bin/erl")
   end
 
   def test_default_noid
     default_setup
     result = run_cmd "--build --tag a"
-    assert_equal("ERROR: build id not specified", result.split("\n")[0])
+    assert_equal("Please specify --id", result.split("\n")[0])
   end
 
   def test_unknown_tag
@@ -233,7 +232,7 @@ class Erln8Test < Test::Unit::TestCase
     run_cmd "--clone repo_b"
 
     result = run_cmd "--build --id foo --tag d --repo repo_b"
-    assert File.exist?("./testconfig/.erln8.d/otps/foo/dist/bin/erl")
+    assert File.exist?("./testconfig/.erln8.d/otps/buildd/dist/bin/erl")
   end
 
   def test_basic_use
@@ -345,6 +344,7 @@ class Erln8Test < Test::Unit::TestCase
 
   def run_cmd(cmd)
     c = "ERLN8_HOME=#{@@testhome}/testconfig #{@@testhome}/../build/erln8 #{cmd} 2>&1"
+    #c = "ERLN8_HOME=#{@@testhome}/testconfig #{@@testhome}/../build/erln8 #{cmd}"
     `#{c}`
   end
 

@@ -229,11 +229,6 @@ Config processOptions(int argc, char* argv[]) {
 
 int main(int argc, char* argv[]) {
 
-    char* custom_elrn8_home = getenv("ERLN8_HOME");
-    if(custom_elrn8_home) {
-        cout << "Using custom erln8_home " << custom_elrn8_home << endl;
-    }
-
     //Config cfg;
     // processOptions sets up logging too
     Config cfg = processOptions(argc, argv);

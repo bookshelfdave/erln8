@@ -7,12 +7,6 @@ Config::Config() {
 
 }
 
-Config::Config(string customHome) {
-    BOOST_LOG_TRIVIAL(trace) << "Config in : " ERLN8_CONFIG_DIR;
-    detectHomeDir();
-
-}
-
 void Config::save() {
     bfs::path configFilePath = getConfigFilePath();
 
@@ -116,6 +110,7 @@ void Config::initialize() {
     pt.put("Configs.osx_gcc", "--disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll --enable-darwin-64bit");
     pt.put("Configs.osx_gcc_env", "CC=gcc-4.2 CPPFLAGS=\'-DNDEBUG\' MAKEFLAGS=\'-j 3\'");
     pt.put("SystemRoots.none", "");
+    BOOST_LOG_TRIVIAL(trace) << "Config file: " << getConfigFilePath().c_str();
     write_ini(getConfigFilePath().c_str(), pt);
 }
 
@@ -133,21 +128,26 @@ bfs::path Config::getConfigDir() {
 }
 
 void Config::detectHomeDir() {
-    int bufsize;
+    char* custom_elrn8_home = getenv("ERLN8_HOME");
+    if(custom_elrn8_home) {
+        BOOST_LOG_TRIVIAL(trace) << "Using ERLN8_HOME: " << custom_elrn8_home;
+        homedir = string(custom_elrn8_home);
+    } else {
+        int bufsize;
 
-    if ((bufsize = sysconf(_SC_GETPW_R_SIZE_MAX)) == -1)
-        abort();
+        if ((bufsize = sysconf(_SC_GETPW_R_SIZE_MAX)) == -1)
+            abort();
 
-    char buffer[bufsize];
-    struct passwd pwd, *result = NULL;
+        char buffer[bufsize];
+        struct passwd pwd, *result = NULL;
 
-    if (getpwuid_r(getuid(), &pwd, buffer, bufsize, &result) != 0 || !result) {
-        cerr << "Can't find home directory" << endl;
-        abort();
+        if (getpwuid_r(getuid(), &pwd, buffer, bufsize, &result) != 0 || !result) {
+            cerr << "Can't find home directory" << endl;
+            abort();
+        }
+        homedir = string(pwd.pw_dir);
+        BOOST_LOG_TRIVIAL(trace) << "Home directory: " << homedir;
     }
-
-    homedir = string(pwd.pw_dir);
-    BOOST_LOG_TRIVIAL(trace) << "Home directory: " << homedir;
 }
 
 Config::~Config() {
@@ -214,7 +214,7 @@ void DirConfig::load() {
         rebarTag = string(rebar.get());
         BOOST_LOG_TRIVIAL(trace) << "Rebar tag to use: " << rebarTag;
     } else {
-        cout << "DEFAULT REBAR" << endl;
+        //cout << "DEFAULT REBAR" << endl;
         BOOST_LOG_TRIVIAL(trace) << "Using default version of Rebar";
     }
 

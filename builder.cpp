@@ -73,6 +73,7 @@ void Builder::build(Config& cfg) {
 
   // create links
   string createLinksCmd = string("cd ") + outputPath.c_str() + " && for i in `find -L . -perm -111 -type f | grep -v \"\\.so\" | grep -v \"\\.o\" | grep -v \"lib/erlang/bin\" | grep -v Install`; do  `ln -s -f $i $(basename $i)` ; done";
+  cout << createLinksCmd << endl;
   BuildTask createLinksTask(createLinksCmd, "Creating erln8 links", "Failed to create erln8 links");
   tasks.push_back(createLinksTask);
 
