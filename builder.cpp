@@ -13,15 +13,10 @@ Builder::Builder(std::string repo, std::string tag, std::string id, std::string 
 void Builder::build(Config& cfg) {
   cout << "Building " << tag << endl;
 
-
   bfs::path tmp = bfs::temp_directory_path() / bfs::unique_path();
-  cout << tmp.c_str() << endl;
   create_directories(tmp);
 
-
-
   bfs::path outputPath = cfg.getConfigDir() / "otps" / id;
-
   bfs::path logFile = cfg.getConfigDir() / "logs" / id;
   cout << "Log file: " << logFile << endl;
 
@@ -41,7 +36,7 @@ void Builder::build(Config& cfg) {
   // check tag
   string checkObj = string("cd ") + repoPath.c_str() + " && git show-ref " + tag + " > /dev/null";
   BuildTask checkObjTask(checkObj, "Ensure Git object exists",
-      string("Git object") + tag + " does not exist");
+      string("Git object ") + tag + " does not exist");
   tasks.push_back(checkObjTask);
 
   string copySourceCmd = string(" cd ") + repoPath.c_str() + " && git archive " + tag +
@@ -73,14 +68,13 @@ void Builder::build(Config& cfg) {
 
   // create links
   string createLinksCmd = string("cd ") + outputPath.c_str() + " && for i in `find -L . -perm -111 -type f | grep -v \"\\.so\" | grep -v \"\\.o\" | grep -v \"lib/erlang/bin\" | grep -v Install`; do  `ln -s -f $i $(basename $i)` ; done";
-  cout << createLinksCmd << endl;
   BuildTask createLinksTask(createLinksCmd, "Creating erln8 links", "Failed to create erln8 links");
   tasks.push_back(createLinksTask);
 
   int i = 0;
   for(BuildTask& task : tasks) {
-    cout << Color::yellow() << "[" << i++ << "] ";
-    task.run();
+    cout << Color::yellow(cfg) << "[" << i++ << "] ";
+    task.run(cfg);
   }
 
   cout << "Adding " << id << " to ~/.erln8.d/config" << endl;
@@ -96,20 +90,20 @@ BuildTask::BuildTask(string cmd, string description, string failMsg) :
 
 }
 
-void BuildTask::run() {
+void BuildTask::run(Config &cfg) {
   auto pos = description.length();
   int max = 40;
-  cout << Color::blue() << description << "...";
+  cout << Color::blue(cfg) << description << "...";
   while(pos < max) {
     cout << " ";
     pos++;
   }
   cout.flush();
   if(system(cmd.c_str()) != 0) {
-    cerr << Color::red() << " Failed:" <<  failMsg << endl;
+    cerr << Color::red(cfg) << " Failed:" <<  failMsg << endl;
     exit(-1);
   } else {
-    cout << Color::green() << "Success" << Color::reset() << endl;
+    cout << Color::green(cfg) << "Success" << Color::reset(cfg) << endl;
   }
 }
 

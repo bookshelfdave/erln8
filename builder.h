@@ -40,7 +40,7 @@ class RebarBuilder {
 class BuildTask {
   public:
     BuildTask(string cmd, string description, string failMsg);
-    void run();
+    void run(Config &cfg);
   private:
     string cmd;
     string description;
@@ -49,10 +49,18 @@ class BuildTask {
 
 class Color {
   public:
-  static string blue() { return ANSI_COLOR_BLUE; }
-  static string red() { return ANSI_COLOR_RED; }
-  static string yellow() { return ANSI_COLOR_YELLOW; }
-  static string green() { return ANSI_COLOR_GREEN; }
-  static string reset() { return ANSI_COLOR_RESET; }
-};
+  static string blue(Config& cfg) { return returnIfColorEnabled(cfg, ANSI_COLOR_BLUE); }
+  static string red(Config& cfg) { return returnIfColorEnabled(cfg, ANSI_COLOR_RED); }
+  static string yellow(Config& cfg) { return returnIfColorEnabled(cfg, ANSI_COLOR_YELLOW); }
+  static string green(Config& cfg) { return returnIfColorEnabled(cfg, ANSI_COLOR_GREEN); }
+  static string reset(Config& cfg) { return returnIfColorEnabled(cfg, ANSI_COLOR_RESET); }
+  static string returnIfColorEnabled(Config &cfg, string value) {
+      if (cfg.color == "true") {
+        return value;
+      }
+      else {
+        return "";
+      }
+    }
+  };
 #endif

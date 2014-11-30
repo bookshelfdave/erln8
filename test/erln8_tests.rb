@@ -214,7 +214,7 @@ class Erln8Test < Test::Unit::TestCase
   def test_unknown_tag
     default_setup
     result = run_cmd "--build --id foo --tag xyz"
-    assert_equal("ERROR: branch or tag xyz does not exist in default Git repo", result.split("\n")[0])
+    assert_equal("[0] Ensure Git object exists...                 Failed:Git object xyz does not exist", result.split("\n")[4])
   end
 
   def test_alt_repo
