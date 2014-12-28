@@ -50,6 +50,9 @@ public:
     boost::optional<bfs::path> configCheckFromCwd();
     boost::optional<bfs::path> configCheck(bfs::path d);
 
+    boost::optional<string> systemRootCheckFromCwd();
+    boost::optional<string> systemRootCheck(bfs::path d);
+
     void addErlang(string id, string path);
     /*
     void addRepo(string, string);

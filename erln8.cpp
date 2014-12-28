@@ -18,6 +18,42 @@ void initLogging(bool debug) {
     );
 }
 
+boost::optional<string> getErlangTagFromCwd(Config cfg) {
+  auto result = cfg.configCheckFromCwd();
+  if(result) {
+    DirConfig dc(result.get());
+    dc.load();
+    if(cfg.erlangs.find(dc.erlangTag) == cfg.erlangs.end()) {
+      // TODO: bail
+      cerr << "Unconfigured version of Erlang detected: " << dc.erlangTag << std::endl;
+      return boost::none;
+    } else {
+      return dc.erlangTag;
+    }
+  } else {
+    BOOST_LOG_TRIVIAL(trace) << "CWD Check fail";
+    boost::optional<string> systemRootResult = cfg.systemRootCheckFromCwd();
+    if(systemRootResult) {
+      // use the system root
+      if(cfg.erlangs.find(systemRootResult.get()) == cfg.erlangs.end()) {
+        cerr << "Unconfigured version of Erlang detected in system_root: "
+          << systemRootResult << std::endl;
+        return boost::none;
+      } else {
+        return systemRootResult.get();
+      }
+    } else {
+      BOOST_LOG_TRIVIAL(trace) << "No system root";
+      string defaultErlTag = cfg.system_default;
+      if(defaultErlTag == "") {
+        cerr << "Trying to a system default, but system_default is empty" << endl;
+        return boost::none;
+      } else {
+        return defaultErlTag;
+      }
+    }
+  }
+}
 
 Config processOptions(int argc, char* argv[]) {
     bpo::options_description desc("erln8 options");
@@ -159,18 +195,16 @@ Config processOptions(int argc, char* argv[]) {
             return cfg;
         }
         if(vm.count("show") || vm.count("prompt")) {
-          auto result = cfg.configCheckFromCwd();
-          if(result) {
-            DirConfig dc(result.get());
-            dc.load();
-            cout << dc.erlangTag;
+          // TODO
+          boost::optional<string> erlTag = getErlangTagFromCwd(cfg);
+          if(erlTag) {
+            cout << erlTag.get();
             if(vm.count("show")) {
-              cout << std::endl;
+                cout << std::endl;
             }
           }
           return cfg;
         }
-
 
         if(vm.count("build")) {
             auto foundRepo = cfg.repos.find(opt_repo);
@@ -236,30 +270,23 @@ int main(int argc, char* argv[]) {
     bfs::path called_as(argv[0]);
     string basename = called_as.filename().string();
     BOOST_LOG_TRIVIAL(trace) << "Called as " << basename << endl;
-
     if(basename == "erln8") {
       //cout << "erln8 v" << Erln8_VERSION_MAJOR << "." << Erln8_VERSION_MINOR << std::endl;
       //cout << "Try erln8 --help for more info" << endl;
     } else {
         BOOST_LOG_TRIVIAL(trace) << "Erlang command";
 
-        auto result = cfg.configCheckFromCwd();
+        boost::optional<string> erlTag = getErlangTagFromCwd(cfg);
 
-        if(result) {
-            DirConfig dc(result.get());
-            dc.load();
-            if(cfg.erlangs.find(dc.erlangTag) == cfg.erlangs.end()) {
-                // TODO: bail
-                cerr << "Unconfigured version of Erlang detected: " << dc.erlangTag << std::endl;
-            } else {
-                string erlangPath = cfg.erlangs[dc.erlangTag];
-                BOOST_LOG_TRIVIAL(trace) << "Erlang path = " << erlangPath;
-                bfs::path cmdPath = bfs::path(erlangPath) / bfs::path(basename);
-                execv(cmdPath.c_str(), argv);
-            }
+        if(erlTag) {
+          string erlangPath = cfg.erlangs[erlTag.get()];
+          BOOST_LOG_TRIVIAL(trace) << "Erlang path = " << erlangPath;
+          bfs::path cmdPath = bfs::path(erlangPath) / bfs::path(basename);
+          execv(cmdPath.c_str(), argv);
         } else {
-            cout << "FAIL" << std::endl;
+          exit(-1);
         }
     }
 }
+
 

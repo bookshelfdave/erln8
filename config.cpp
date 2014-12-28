@@ -41,11 +41,11 @@ void Config::load() {
             erlangs[kv.first] = kv.second.data();
         }
 
-        /*ptree systemRootsTree = pt.get_child("SystemRoots");
-        for(const auto& kv : systemRootsTree) {
+        boost::optional< ptree&> systemRootsTree = pt.get_child_optional("SystemRoots");
+        for(const auto& kv : *systemRootsTree) {
             BOOST_LOG_TRIVIAL(trace) << "SystemRoot: " << kv.first << "->" << kv.second.data();
             systemRoots[kv.first] = kv.second.data();
-        }*/
+        }
 
         ptree reposTree = pt.get_child("Repos");
 
@@ -163,6 +163,23 @@ string Config::getHomeDir() {
     return homedir;
 }
 
+boost::optional<string> Config::systemRootCheckFromCwd() {
+    bfs::path cwd(bfs::current_path());
+    BOOST_LOG_TRIVIAL(trace) << "Checking system_roots from cwd: " << cwd;
+    return systemRootCheck(cwd);
+}
+
+boost::optional<string> Config::systemRootCheck(bfs::path d) {
+  if(systemRoots.count(d.c_str())) {
+    return systemRoots[d.c_str()];
+  } else {
+    if(d.has_parent_path()) {
+      return systemRootCheck(d.parent_path());
+    } else {
+      return boost::none;
+    }
+  }
+}
 
 boost::optional<bfs::path> Config::configCheckFromCwd() {
     bfs::path cwd(bfs::current_path());
@@ -185,12 +202,12 @@ boost::optional<bfs::path> Config::configCheck(bfs::path d) {
     }
 }
 
-DirConfig::DirConfig(bfs::path p) : p(p){
+DirConfig::DirConfig(bfs::path p) : p(p) {
 
 }
 
 void DirConfig::load() {
- BOOST_LOG_TRIVIAL(trace) << "Reading dirconfig from " << p;
+    BOOST_LOG_TRIVIAL(trace) << "Reading dirconfig from " << p;
 
     try {
         read_ini(p.c_str(), pt);
