@@ -159,6 +159,20 @@ You can specify alternate Git repos to build from. `erln8 --repos` lists availab
   erln8 --build --repo basho --tag OTP_R15B01 --id r15b01p --config osx_llvm
 ```
 
+
+### Using gmake instead of make
+
+If your platform requires the use of `gmake` instead of `make`, erln8 will
+honor the `MAKE_BIN` environment variable.
+
+
+```
+export MAKE_BIN=gmake
+or
+setenv MAKE_BIN gmake
+// depending on the shell you use
+```
+
 ##Linking an existing version Erlang
 
 If you already have a version of Erlang build at an alternate location, you can *link* erlang to it.

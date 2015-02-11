@@ -949,6 +949,14 @@ void build_erlang(gchar* repo, gchar* tag, gchar* id, gchar* build_config) {
     }
     g_hash_table_destroy(e8);
   }
+
+
+  // CHECK FOR MAKE VS GMAKE  
+  const gchar* make_bin = g_getenv("MAKE_BIN");
+  if(make_bin == NULL) {
+    make_bin = "make";
+  }
+
   gchar pattern[] = "/tmp/erln8.buildXXXXXX";
   gchar* tmp = g_mkdtemp(pattern);
   g_debug("building in %s\n", tmp);
@@ -1001,6 +1009,7 @@ void build_erlang(gchar* repo, gchar* tag, gchar* id, gchar* build_config) {
   printf("Building %s from tag/branch %s of repo %s\n", id, tag, repo);
   printf("Custom build config: %s\n", bc);
   printf("Custom build env: %s\n", env);
+  printf("Using %s command to exec build\n", make_bin);
   printf("Build log: %s\n", log_path);
   gchar* buildcmd0 = g_strconcat(env,
                                 " cd ",
@@ -1016,13 +1025,13 @@ void build_erlang(gchar* repo, gchar* tag, gchar* id, gchar* build_config) {
                                 " >> ", log_path, " 2>&1",
                                 NULL);
   gchar* buildcmd3 = g_strconcat(env, " cd ", tmp,
-                                " && make >> ", log_path,  " 2>&1", NULL);
+                                " && ",make_bin," >> ", log_path,  " 2>&1", NULL);
 
   gchar* buildcmd4 = g_strconcat(env, " cd ", tmp,
-                                " && make install >> ", log_path,  " 2>&1", NULL);
+                                " && ",make_bin," install >> ", log_path,  " 2>&1", NULL);
 
   gchar* buildcmd5 = g_strconcat(env, " cd ", tmp,
-                                " && make install-docs >> ", log_path, " 2>&1", NULL);
+                                " && ",make_bin," install-docs >> ", log_path, " 2>&1", NULL);
   gchar* build_cmds[] = {
     buildcmd0,
     buildcmd1,
