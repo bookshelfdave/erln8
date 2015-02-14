@@ -53,6 +53,33 @@ yum groupinstall "Development tools"
 
 See the Building section below to continue.
 
+### FreeBSD
+
+[Install](https://www.freebsd.org/doc/handbook/ports-using.html) the `glib20` port:
+
+```
+# as root
+cd /usr/ports/devel/glib20
+make install
+```
+
+Install additional dependencies:
+
+```
+pkg install git-2.3.0
+pkg install autoconf-2.69
+pkg install gmake
+```
+
+Use `gmake` instead of `make`:
+
+```
+export MAKE_BIN=gmake
+```
+
+See the Building section below to continue.
+
+
 ### Building
 
 ```
