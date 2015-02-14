@@ -37,7 +37,7 @@
 <h2>
 <a id="status" class="anchor" href="#status" aria-hidden="true"><span class="octicon octicon-link"></span></a>Status</h2>
 
-<p>The current version of erln8 is stable, and has been serving me (us?) well for the past year+. However, I'm in the process of rewriting it from scratch to make maintainability easier in the future. I hope to have something usable by Nov/Dec 2014.</p>
+<p>The current version of erln8 is stable, and has been serving me (us?) well for the past year+. However, I'm in the process of rewriting it from scratch to make maintainability easier in the future. I hope to have something usable by soonish. Ping me if you'd like to help.</p>
 
 <h2>
 <a id="what-is-it" class="anchor" href="#what-is-it" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is it?</h2>
@@ -91,6 +91,35 @@
 <p>See the Building section below to continue.</p>
 
 <h3>
+<a id="freebsd" class="anchor" href="#freebsd" aria-hidden="true"><span class="octicon octicon-link"></span></a>FreeBSD</h3>
+
+<p><a href="https://www.freebsd.org/doc/handbook/ports-using.html">Install</a> the <code>glib20</code> port:</p>
+
+<pre><code># as root
+cd /usr/ports/devel/glib20
+make install
+</code></pre>
+
+<p>Install additional dependencies:</p>
+
+<pre><code>pkg install git-2.3.0
+pkg install autoconf-2.69
+pkg install gmake
+</code></pre>
+
+<p>Use <code>gmake</code> instead of <code>make</code>:</p>
+
+<pre><code>export MAKE_BIN=gmake
+</code></pre>
+
+<p><strong><em>NOTE</em></strong> to install erln8 on FreeBSD, you'll need to run:</p>
+
+<pre><code>sudo gmake install
+</code></pre>
+
+<p>See the Building section below to continue.</p>
+
+<h3>
 <a id="building" class="anchor" href="#building" aria-hidden="true"><span class="octicon octicon-link"></span></a>Building</h3>
 
 <pre><code> # remove Erlang from your path!!
@@ -99,6 +128,9 @@ git clone https://github.com/metadave/erln8.git
 cd erln8
 make
 sudo make install
+ # NOTE: on FreeBSD, you MUST use
+ #   sudo gmake install
+
  # the default location is /usr/local/bin/erln8
  # OR
 sudo make PREFIX=/opt install
@@ -190,6 +222,18 @@ sudo make uninstall
 <p>You can specify alternate Git repos to build from. <code>erln8 --repos</code> lists available repos or look in ~/.erln8.d/config</p>
 
 <pre><code>  erln8 --build --repo basho --tag OTP_R15B01 --id r15b01p --config osx_llvm
+</code></pre>
+
+<h3>
+<a id="using-gmake-instead-of-make" class="anchor" href="#using-gmake-instead-of-make" aria-hidden="true"><span class="octicon octicon-link"></span></a>Using gmake instead of make</h3>
+
+<p>If your platform requires the use of <code>gmake</code> instead of <code>make</code>, erln8 will
+honor the <code>MAKE_BIN</code> environment variable.</p>
+
+<pre><code>export MAKE_BIN=gmake
+or
+setenv MAKE_BIN gmake
+// depending on the shell you use
 </code></pre>
 
 <h2>
