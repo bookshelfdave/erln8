@@ -77,6 +77,12 @@ Use `gmake` instead of `make`:
 export MAKE_BIN=gmake
 ```
 
+***NOTE*** to install erln8 on FreeBSD, you'll need to run:
+
+```
+sudo gmake install
+```
+
 See the Building section below to continue.
 
 
@@ -89,6 +95,9 @@ git clone https://github.com/metadave/erln8.git
 cd erln8
 make
 sudo make install
+ # NOTE: on FreeBSD, you MUST use
+ #   sudo gmake install
+
  # the default location is /usr/local/bin/erln8
  # OR
 sudo make PREFIX=/opt install
