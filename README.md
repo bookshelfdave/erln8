@@ -53,6 +53,33 @@ yum groupinstall "Development tools"
 
 See the Building section below to continue.
 
+### FreeBSD
+
+[Install](https://www.freebsd.org/doc/handbook/ports-using.html) the `glib20` port:
+
+```
+# as root
+cd /usr/ports/devel/glib20
+make install
+```
+
+Install additional dependencies:
+
+```
+pkg install git-2.3.0
+pkg install autoconf-2.69
+pkg install gmake
+```
+
+Use `gmake` instead of `make`:
+
+```
+export MAKE_BIN=gmake
+```
+
+See the Building section below to continue.
+
+
 ### Building
 
 ```
@@ -157,6 +184,20 @@ You can specify alternate Git repos to build from. `erln8 --repos` lists availab
 
 ```
   erln8 --build --repo basho --tag OTP_R15B01 --id r15b01p --config osx_llvm
+```
+
+
+### Using gmake instead of make
+
+If your platform requires the use of `gmake` instead of `make`, erln8 will
+honor the `MAKE_BIN` environment variable.
+
+
+```
+export MAKE_BIN=gmake
+or
+setenv MAKE_BIN gmake
+// depending on the shell you use
 ```
 
 ##Linking an existing version Erlang
