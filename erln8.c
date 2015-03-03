@@ -93,7 +93,7 @@ static gboolean  opt_fetch      = FALSE;
 static gboolean  opt_build      = FALSE;
 static gboolean  opt_show       = FALSE;
 static gchar*    opt_clone      = NULL;
-static gboolean  opt_color      = TRUE;
+static gboolean  opt_color      = FALSE;
 static gboolean  opt_banner     = FALSE;
 static gchar*    opt_repo       = NULL;
 static gchar*    opt_tag        = NULL;
@@ -1270,6 +1270,13 @@ int erln8(int argc, gchar* argv[]) {
   }
   g_debug("argv[0] = [%s]\n",argv[0]);
   g_debug("opt_id = %s\n", opt_id);
+
+  if(opt_color == 1) {
+    opt_color = FALSE;
+  } else {
+    opt_color = TRUE;
+  }
+  
   if(opt_quickstart) {
     initialize();
     opt_clone = "default";
@@ -1294,7 +1301,7 @@ int erln8(int argc, gchar* argv[]) {
   }
   GHashTable* runtime_options = get_erln8();
   gchar* use_color = (gchar*)g_hash_table_lookup(runtime_options, "color");
-  if(g_strcmp0(use_color, "true") == 0) {
+  if(g_strcmp0(use_color, "true") == 0 && opt_color) {
     opt_color = TRUE;
   } else {
     opt_color = FALSE;
@@ -1389,6 +1396,8 @@ int main(int argc, char* argv[]) {
       g_error("ERLN8_HOME must be an absolute path\n");
     }
   }
+
+  
   g_debug("home directory = %s\n", homedir);
   gchar* basename = g_path_get_basename(argv[0]);
   g_debug("basename = %s\n", basename);
