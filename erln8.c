@@ -1271,6 +1271,7 @@ int erln8(int argc, gchar* argv[]) {
   g_debug("argv[0] = [%s]\n",argv[0]);
   g_debug("opt_id = %s\n", opt_id);
 
+  // the option is "--no-color", so negate it's value :-(
   if(opt_color == 1) {
     opt_color = FALSE;
   } else {
