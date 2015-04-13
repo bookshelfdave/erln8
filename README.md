@@ -3,7 +3,8 @@ erln8 - an Erlang version manager
 
 ## Status
 
-The current version of erln8 is stable, and has been serving me (us?) well for the past year+. However, I'm in the process of rewriting it from scratch to make maintainability easier in the future. I hope to have something usable by soonish. Ping me if you'd like to help.
+The current version of erln8 is stable, and has been serving me (us?) well for the past year+. However, I'm in the process of rewriting it (April/May 2015) from scratch to make maintainability easier in the future. I'm also adding support for rebar/rebar3 versioning. Are there any other tools you'd like to be able to version w/ erln8?
+Ping me if you'd like to help.
 
 ## What is it?
 
