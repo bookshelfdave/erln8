@@ -86,6 +86,17 @@ sudo gmake install
 
 See the Building section below to continue.
 
+### Arch
+
+Install erln8 from AUR:
+
+```
+yaourt erln8
+```
+
+Or grab the package tarball/PKGBUILD from: https://aur.archlinux.org/packages/erln8/
+
+The PKBUILD repo lives at https://github.com/aerosol/erln8-aur
 
 ### Building
 
