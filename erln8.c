@@ -575,7 +575,10 @@ void list_erlangs() {
       while(*it) {
         GError* valerror = NULL;
         gchar* v = g_key_file_get_string(kf, "Erlangs", *it, &valerror);
-        printf("%s -> %s\n",*it++, v);
+        if (g_strcmp0(*it, "none") != 0) {
+            printf("%s -> %s\n",*it, v);
+        }
+        it++;
         g_free(v);
       }
     }
