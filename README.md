@@ -1,4 +1,4 @@
-erln8 - an Erlang version manager
+![erln8 - an Erlang version manager](https://raw.githubusercontent.com/metadave/erln8/master/erln8.png)
 =====
 
 ## Status
