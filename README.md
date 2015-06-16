@@ -429,6 +429,12 @@ For example, if `--config` isn't specified as a parameter to a `--build`, the co
 default_config=osx_llvm
 ```
 
+## Getting help
+
+You can ask questions on the Freenode #erln8 IRC channel.
+
+You can also ask questions on the [erln8](https://groups.google.com/forum/?hl=en#!forum/erln8) mailing list.
+
 ## erln8 config file format
 
 * comments begin with the `#` character and may appear anywhere in the file
