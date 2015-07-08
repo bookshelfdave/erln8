@@ -1,9 +1,8 @@
-![erln8 - an Erlang version manager](https://raw.githubusercontent.com/metadave/erln8/master/erln8.png)
-
 ## Status
 
-The current version of erln8 is stable, and has been serving me (us?) well for the past year+. However, I'm in the process of rewriting it (April/May 2015) from scratch to make maintainability easier in the future. I'm also adding support for rebar/rebar3 versioning. Are there any other tools you'd like to be able to version w/ erln8?
-Ping me if you'd like to help.
+**This is the "old" version of erln8, it's been completely rewritten and is now located at [https://github.com/erln8/erln8](https://github.com/erln8/erln8).**
+
+---
 
 ## What is it?
 
