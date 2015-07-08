@@ -1,6 +1,6 @@
 ## Status
 
-**This is the "old" version of erln8, it's been completely rewritten and is now located at [https://github.com/erln8/erln8](https://github.com/erln8/erln8).**
+**This is the "old" version of erln8, it's been completely rewritten and is now located at [http://erln8.github.io/erln8/](http://erln8.github.io/erln8/).**
 
 ---
 
