@@ -1,5 +1,7 @@
 ## Status
 
+http://unmaintained.tech/badge.svg
+
 **This is the original version of erln8 written in C. Theres a new version written in D that's buggy:  [http://erln8.github.io/erln8/](http://erln8.github.io/erln8/).**
 
 ---
