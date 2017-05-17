@@ -1444,7 +1444,7 @@ int main(int argc, char* argv[]) {
     if(!result) {
       g_hash_table_destroy(erlangs);
       g_hash_table_destroy(runtime_options);
-      g_error("Can't run %s, hello check to see if the file exists\n", s);
+      g_error("Can't run %s, check to see if the file exists\n", s);
     }
     if(opt_banner) {
       printf("%s", red());
