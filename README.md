@@ -2,9 +2,7 @@
 
 [![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
 
-No maintenance intended, however, I'm happy to merge your PR's if they're detailed.
-
-**This is the original version of erln8 written in C. Theres a new version written in D that's buggy:  [http://erln8.github.io/erln8/](http://erln8.github.io/erln8/).**
+**This is the original version of erln8 written in C. Theres another version written in D that's buggy:  [http://erln8.github.io/erln8/](http://erln8.github.io/erln8/).**
 
 ---
 
